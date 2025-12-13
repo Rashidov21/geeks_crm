@@ -27,6 +27,11 @@ class Attendance(models.Model):
         verbose_name_plural = _('Attendances')
         unique_together = ['lesson', 'student']
         ordering = ['-lesson__date', '-lesson__start_time']
+        indexes = [
+            models.Index(fields=['student', 'lesson']),
+            models.Index(fields=['status', 'lesson']),
+            models.Index(fields=['created_at']),
+        ]
     
     def __str__(self):
         return f"{self.student.username} - {self.lesson} - {self.get_status_display()}"

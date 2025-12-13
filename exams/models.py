@@ -31,6 +31,11 @@ class Exam(models.Model):
         verbose_name = _('Exam')
         verbose_name_plural = _('Exams')
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date', 'is_active']),
+            models.Index(fields=['course', 'date']),
+            models.Index(fields=['group', 'date']),
+        ]
     
     def __str__(self):
         return f"{self.title} - {self.course.name}"
@@ -98,6 +103,11 @@ class ExamResult(models.Model):
         verbose_name_plural = _('Exam Results')
         unique_together = ['exam', 'student']
         ordering = ['-score', '-submitted_at']
+        indexes = [
+            models.Index(fields=['student', 'exam']),
+            models.Index(fields=['score', 'is_passed']),
+            models.Index(fields=['submitted_at']),
+        ]
     
     def __str__(self):
         return f"{self.student.username} - {self.exam.title} - {self.score} ball"
@@ -147,6 +157,12 @@ class ExamResult(models.Model):
         
         self.save()
         return self.score
+    
+    def clean(self):
+        """Model validatsiyasi"""
+        from django.core.exceptions import ValidationError
+        if self.score < 0 or self.score > self.exam.max_score:
+            raise ValidationError(f"Ball 0-{self.exam.max_score} orasida bo'lishi kerak.")
 
 
 class StudentAnswer(models.Model):

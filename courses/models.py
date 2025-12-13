@@ -21,6 +21,10 @@ class Course(models.Model):
         verbose_name = _('Course')
         verbose_name_plural = _('Courses')
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['is_active', 'branch']),
+            models.Index(fields=['created_at']),
+        ]
     
     def __str__(self):
         return self.name
@@ -203,6 +207,11 @@ class Lesson(models.Model):
         verbose_name = _('Lesson')
         verbose_name_plural = _('Lessons')
         ordering = ['-date', '-start_time']
+        indexes = [
+            models.Index(fields=['date', 'start_time']),
+            models.Index(fields=['group', 'date']),
+            models.Index(fields=['mentor', 'date']),
+        ]
     
     def __str__(self):
         return f"{self.group.name} - {self.date} {self.start_time}"

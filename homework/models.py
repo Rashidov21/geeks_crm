@@ -28,9 +28,20 @@ class Homework(models.Model):
         verbose_name = _('Homework')
         verbose_name_plural = _('Homeworks')
         ordering = ['-deadline', '-submitted_at']
+        indexes = [
+            models.Index(fields=['student', 'deadline']),
+            models.Index(fields=['is_submitted', 'deadline']),
+            models.Index(fields=['lesson', 'student']),
+        ]
     
     def __str__(self):
         return f"{self.student.username} - {self.lesson} - {self.title or 'No title'}"
+    
+    def clean(self):
+        """Model validatsiyasi"""
+        from django.core.exceptions import ValidationError
+        if self.deadline and self.deadline < timezone.now() and not self.is_submitted:
+            raise ValidationError("Deadline o'tib ketgan bo'lishi mumkin emas.")
     
     def save(self, *args, **kwargs):
         if self.submitted_at and self.deadline:
@@ -38,6 +49,8 @@ class Homework(models.Model):
                 self.is_late = True
             else:
                 self.is_late = False
+        if self.submitted_at and not self.is_submitted:
+            self.is_submitted = True
         super().save(*args, **kwargs)
     
     @property

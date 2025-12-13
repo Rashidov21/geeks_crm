@@ -31,6 +31,11 @@ class User(AbstractUser):
         verbose_name = _('User')
         verbose_name_plural = _('Users')
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['role', 'is_active']),
+            models.Index(fields=['telegram_id']),
+            models.Index(fields=['created_at']),
+        ]
     
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

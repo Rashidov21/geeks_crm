@@ -8,11 +8,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('accounts/', include('accounts.urls')),
-    # path('courses/', include('courses.urls')),
-    # path('attendance/', include('attendance.urls')),
-    # path('homework/', include('homework.urls')),
-    # path('exams/', include('exams.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('courses/', include('courses.urls')),
+    path('attendance/', include('attendance.urls')),
+    path('homework/', include('homework.urls')),
+    path('exams/', include('exams.urls')),
     # path('gamification/', include('gamification.urls')),
     # path('mentors/', include('mentors.urls')),
     # path('parents/', include('parents.urls')),

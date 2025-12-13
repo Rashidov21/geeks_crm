@@ -167,6 +167,23 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+# Celery Beat Schedule (optional - can be configured in celery.py)
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'send-lesson-reminders': {
+        'task': 'telegram_bot.tasks.send_lesson_reminder',
+        'schedule': crontab(minute='*/5'),  # Har 5 daqiqada
+    },
+    'send-homework-deadline-reminders': {
+        'task': 'telegram_bot.tasks.send_homework_deadline_reminder',
+        'schedule': crontab(hour=9, minute=0),  # Har kuni soat 9:00
+    },
+    'send-attendance-notifications': {
+        'task': 'telegram_bot.tasks.send_attendance_notification_to_parents',
+        'schedule': crontab(hour=20, minute=0),  # Har kuni soat 20:00
+    },
+}
+
 # Redis Cache
 CACHES = {
     'default': {

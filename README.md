@@ -87,13 +87,36 @@ geeks_crm/
 - [x] Database indexlar optimizatsiyasi
 - [x] Model validators va xavfsizlik
 
+## 📝 Faza 2: LMS Asosiy Funksiyalar ✅
+
+- [x] Kurslar va mavzular (materiallar, progress tracking)
+- [x] Darslar moduli
+- [x] Davomat tizimi (Keldi/Kelmadi/Kech qoldi)
+- [x] Uy vazifalari (deadline, baholash)
+- [x] Imtihonlar (Test, Yozma, Amaliy)
+
+## 📝 Faza 3: Gamifikatsiya ✅
+
+- [x] Ball tizimi (PointTransaction, StudentPoints)
+- [x] Avtomatik ball berish (signals):
+  - Darsga qatnashish: +5
+  - Uy vazifani vaqtida topshirish: +10
+  - Kech topshirish: +3
+  - Darsni qoldirish: -5
+  - Imtihondan yuqori ball: +20
+- [x] Badge tizimi (Badge, StudentBadge)
+- [x] Reytinglar:
+  - Guruh bo'yicha (GroupRanking)
+  - Filial bo'yicha (BranchRanking)
+  - Markaz bo'yicha (OverallRanking)
+  - Oylik (MonthlyRanking - Top 10/25/50/100)
+- [x] Celery tasks (avtomatik reyting yangilanish)
+
 ## 🔄 Keyingi Fazalar
 
-- Faza 2: LMS Asosiy Funksiyalar
-- Faza 3: Gamifikatsiya
 - Faza 4: Mentor KPI
 - Faza 5: Ota-onalar Moduli
-- Faza 6: Telegram Bot
+- Faza 6: Telegram Bot (handlers)
 - Faza 7: CRM - Lead Management
 - Faza 8: Moliya Moduli
 - Faza 9: Frontend va UI

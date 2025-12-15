@@ -182,6 +182,23 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'telegram_bot.tasks.send_attendance_notification_to_parents',
         'schedule': crontab(hour=20, minute=0),  # Har kuni soat 20:00
     },
+    # Gamification rankings
+    'update-group-rankings': {
+        'task': 'gamification.tasks.update_group_rankings',
+        'schedule': crontab(hour='*/2', minute=0),  # Har 2 soatda
+    },
+    'update-branch-rankings': {
+        'task': 'gamification.tasks.update_branch_rankings',
+        'schedule': crontab(hour='*/4', minute=0),  # Har 4 soatda
+    },
+    'update-overall-rankings': {
+        'task': 'gamification.tasks.update_overall_rankings',
+        'schedule': crontab(hour='*/6', minute=0),  # Har 6 soatda
+    },
+    'update-monthly-rankings': {
+        'task': 'gamification.tasks.update_monthly_rankings',
+        'schedule': crontab(day_of_month=1, hour=0, minute=0),  # Har oy 1-kuni
+    },
 }
 
 # Redis Cache

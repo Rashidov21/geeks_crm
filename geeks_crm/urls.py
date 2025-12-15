@@ -13,7 +13,7 @@ urlpatterns = [
     path('attendance/', include('attendance.urls')),
     path('homework/', include('homework.urls')),
     path('exams/', include('exams.urls')),
-    # path('gamification/', include('gamification.urls')),
+    path('gamification/', include('gamification.urls')),
     # path('mentors/', include('mentors.urls')),
     # path('parents/', include('parents.urls')),
     # path('crm/', include('crm.urls')),

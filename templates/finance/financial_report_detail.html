@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Moliya hisoboti - GEEKS CRM{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">Moliya hisoboti</h1>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Umumiy ma'lumotlar</h2>
+        <dl class="grid grid-cols-2 gap-4">
+            <dt class="font-medium">Turi:</dt>
+            <dd>{{ report.get_report_type_display }}</dd>
+            <dt class="font-medium">Davr:</dt>
+            <dd>{{ report.period_start }} - {{ report.period_end }}</dd>
+            <dt class="font-medium">Filial:</dt>
+            <dd>{{ report.branch.name|default:"Barcha" }}</dd>
+            <dt class="font-medium">Jami shartnomalar:</dt>
+            <dd>{{ report.total_contracts }}</dd>
+            <dt class="font-medium">Jami daromad:</dt>
+            <dd>{{ report.total_revenue|floatformat:0 }} so'm</dd>
+            <dt class="font-medium">Jami to'lovlar:</dt>
+            <dd>{{ report.total_payments|floatformat:0 }} so'm</dd>
+            <dt class="font-medium">Jami qarzlar:</dt>
+            <dd>{{ report.total_debts|floatformat:0 }} so'm</dd>
+            <dt class="font-medium">Jami chegirmalar:</dt>
+            <dd>{{ report.total_discounts|floatformat:0 }} so'm</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}
+

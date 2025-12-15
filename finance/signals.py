@@ -3,6 +3,7 @@ Django signals for Finance app
 Avtomatik yangilanishlar
 """
 from django.db.models.signals import post_save, pre_save
+from django.db.models import Sum
 from django.dispatch import receiver
 from .models import Contract, Payment, PaymentPlan, PaymentHistory
 

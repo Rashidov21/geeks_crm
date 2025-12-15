@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Lead: {{ lead.full_name|default:lead.first_name }}{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="bg-white shadow rounded-lg p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-500">Status: {{ lead.status.name }}</p>
+        <h1 class="text-2xl font-bold">{{ lead.full_name|default:lead.first_name }}</h1>
+        <p class="text-sm text-gray-600">Tel: {{ lead.phone }} · Kurs: {{ lead.course.name|default:"-" }}</p>
+      </div>
+      <a href="{% url 'crm:lead_edit' lead.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Tahrirlash</a>
+    </div>
+    <p class="text-sm text-gray-600 mt-2">{{ lead.notes|default:"" }}</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white shadow rounded-lg p-4">
+      <h2 class="text-lg font-semibold mb-2">Follow-up</h2>
+      <ul class="space-y-2 text-sm">
+        {% for f in followups %}
+        <li class="flex justify-between">
+          <span>{{ f.title }}</span>
+          <span class="text-gray-500">{{ f.scheduled_at|date:"d.m H:i" }}</span>
+        </li>
+        {% empty %}
+        <p class="text-gray-500 text-sm">Follow-up yo'q.</p>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="bg-white shadow rounded-lg p-4">
+      <h2 class="text-lg font-semibold mb-2">Sinov darslari</h2>
+      <ul class="space-y-2 text-sm">
+        {% for t in trial_lessons %}
+        <li class="flex justify-between">
+          <span>{{ t.date }} {{ t.start_time|default:"" }}</span>
+          <span class="text-gray-500">{{ t.group.name|default:"" }}</span>
+        </li>
+        {% empty %}
+        <p class="text-gray-500 text-sm">Sinov darsi yo'q.</p>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

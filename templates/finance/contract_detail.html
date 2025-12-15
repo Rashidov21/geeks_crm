@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Shartnoma - GEEKS CRM{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">Shartnoma: {{ contract.contract_number }}</h1>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">Asosiy ma'lumotlar</h2>
+        <dl class="grid grid-cols-2 gap-4">
+            <dt class="font-medium">O'quvchi:</dt>
+            <dd>{{ contract.student.username }}</dd>
+            <dt class="font-medium">Kurs:</dt>
+            <dd>{{ contract.course.name }}</dd>
+            <dt class="font-medium">Status:</dt>
+            <dd>{{ contract.get_status_display }}</dd>
+            <dt class="font-medium">Jami summa:</dt>
+            <dd>{{ contract.total_amount }} so'm</dd>
+            <dt class="font-medium">To'langan:</dt>
+            <dd>{{ contract.paid_amount }} so'm</dd>
+            <dt class="font-medium">Qolgan:</dt>
+            <dd>{{ contract.remaining_amount }} so'm</dd>
+        </dl>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4">To'lov rejasi</h2>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">№</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Miqdor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Muddati</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for plan in payment_plans %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ plan.installment_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ plan.amount }} so'm</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ plan.due_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if plan.is_paid %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">To'langan</span>
+                        {% elif plan.is_overdue %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Muddati o'tgan</span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Kutilmoqda</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">To'lov rejasi mavjud emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

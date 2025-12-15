@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Badgeler{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <h1 class="text-2xl font-bold">Badgeler</h1>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for b in badges %}
+    <div class="bg-white shadow rounded-lg p-4">
+      <h3 class="font-semibold">{{ b.badge.name }}</h3>
+      <p class="text-sm text-gray-600">{{ b.badge.description|default:"" }}</p>
+    </div>
+    {% empty %}
+    <p class="text-gray-500 text-sm">Badgeler yo'q.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

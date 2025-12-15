@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Uy vazifalari{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Uy vazifalari</h1>
+    <a href="{% url 'homework:homework_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Yangi vazifa</a>
+  </div>
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sarlavha</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deadline</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amal</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for hw in homeworks %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm">{{ hw.title }}</td>
+          <td class="px-4 py-3 text-sm">{{ hw.deadline }}</td>
+          <td class="px-4 py-3 text-sm">
+            <span class="px-2 py-1 text-xs rounded-full
+              {% if hw.is_submitted %}bg-green-100 text-green-800
+              {% elif hw.is_overdue %}bg-red-100 text-red-800
+              {% else %}bg-amber-100 text-amber-800{% endif %}">
+              {% if hw.is_submitted %}Topshirildi{% elif hw.is_overdue %}Kechikdi{% else %}Kutilmoqda{% endif %}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-sm">
+            <a href="{% url 'homework:homework_detail' hw.pk %}" class="text-blue-600 hover:text-blue-800">Ko'rish</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="px-4 py-4 text-center text-gray-500">Ma'lumot yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

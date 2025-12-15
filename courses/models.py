@@ -216,7 +216,6 @@ class GroupTransfer(models.Model):
             self.to_group.students.add(self.student)
             
             # Progress yangilash (yangi guruhga ko'chirish)
-            from .models import StudentProgress
             old_progress = StudentProgress.objects.filter(
                 student=self.student,
                 course=self.from_group.course

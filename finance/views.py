@@ -1,4 +1,4 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
@@ -7,7 +7,7 @@ from django.db.models import Sum, Count, Q
 from .models import (
     Contract, Payment, PaymentPlan, Debt, PaymentReminder, FinancialReport
 )
-from accounts.mixins import RoleRequiredMixin, AdminRequiredMixin
+from accounts.mixins import RoleRequiredMixin, AdminRequiredMixin, TailwindFormMixin
 
 
 class ContractListView(RoleRequiredMixin, ListView):
@@ -72,7 +72,7 @@ class ContractDetailView(RoleRequiredMixin, DetailView):
         return context
 
 
-class ContractCreateView(RoleRequiredMixin, CreateView):
+class ContractCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     Yangi shartnoma yaratish
     """
@@ -116,7 +116,7 @@ class PaymentListView(RoleRequiredMixin, ListView):
         return queryset.order_by('-paid_at', '-created_at')
 
 
-class PaymentCreateView(RoleRequiredMixin, CreateView):
+class PaymentCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     To'lov yaratish
     """
@@ -211,7 +211,7 @@ class FinancialReportDetailView(AdminRequiredMixin, DetailView):
         return context
 
 
-class DashboardView(RoleRequiredMixin, ListView):
+class DashboardView(RoleRequiredMixin, TemplateView):
     """
     Moliya dashboard
     """

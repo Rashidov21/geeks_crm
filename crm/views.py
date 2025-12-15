@@ -8,7 +8,7 @@ from .models import (
     Lead, LeadStatus, FollowUp, TrialLesson, SalesProfile,
     WorkSchedule, Leave, SalesKPI, Message
 )
-from accounts.mixins import RoleRequiredMixin, AdminRequiredMixin
+from accounts.mixins import RoleRequiredMixin, AdminRequiredMixin, TailwindFormMixin
 from courses.models import Group, Room
 
 
@@ -80,7 +80,7 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class LeadCreateView(RoleRequiredMixin, CreateView):
+class LeadCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     Yangi lead yaratish
     """
@@ -96,7 +96,7 @@ class LeadCreateView(RoleRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class LeadUpdateView(RoleRequiredMixin, UpdateView):
+class LeadUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
     """
     Leadni tahrirlash
     """
@@ -146,7 +146,7 @@ class FollowUpListView(LoginRequiredMixin, ListView):
         return queryset.order_by('scheduled_at')
 
 
-class FollowUpCreateView(RoleRequiredMixin, CreateView):
+class FollowUpCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     Follow-up yaratish
     """
@@ -161,7 +161,7 @@ class FollowUpCreateView(RoleRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class FollowUpUpdateView(RoleRequiredMixin, UpdateView):
+class FollowUpUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
     """
     Follow-up ni tahrirlash yoki bajarilgan deb belgilash
     """
@@ -183,7 +183,7 @@ class FollowUpUpdateView(RoleRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class TrialLessonCreateView(RoleRequiredMixin, CreateView):
+class TrialLessonCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     Sinov darsiga yozish
     """
@@ -197,7 +197,7 @@ class TrialLessonCreateView(RoleRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class TrialLessonUpdateView(RoleRequiredMixin, UpdateView):
+class TrialLessonUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
     """
     Sinov darsi natijasini kiritish
     """

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Natija{% endblock %}
+{% block content %}
+<div class="bg-white shadow rounded-lg p-6 space-y-2">
+  <h1 class="text-2xl font-bold">Natija</h1>
+  <p class="text-sm text-gray-500">{{ result.exam.title }}</p>
+  <p class="text-3xl font-bold">{{ result.score }} / {{ result.exam.max_score }}</p>
+  <p class="text-lg font-semibold text-blue-700">{{ result.percentage }}%</p>
+  <p class="text-sm text-gray-600">Status: {% if result.is_passed %}<span class="text-green-600">O'tdi</span>{% else %}<span class="text-red-600">O'tmadi</span>{% endif %}</p>
+</div>
+{% endblock %}
+

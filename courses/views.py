@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.shortcuts import redirect
 from .models import Course, Module, Topic, Group, GroupTransfer, Lesson, StudentProgress
-from accounts.mixins import RoleRequiredMixin
+from accounts.mixins import RoleRequiredMixin, TailwindFormMixin
 
 
 class CourseListView(LoginRequiredMixin, ListView):
@@ -98,7 +98,7 @@ class StudentProgressView(LoginRequiredMixin, DetailView):
         return progress
 
 
-class GroupTransferCreateView(RoleRequiredMixin, CreateView):
+class GroupTransferCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     """
     O'quvchini bir guruhdan boshqasiga ko'chirish
     """

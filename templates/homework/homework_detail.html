@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Uy vazifasi{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="bg-white shadow rounded-lg p-6 space-y-2">
+    <h1 class="text-2xl font-bold">{{ homework.title }}</h1>
+    <p class="text-sm text-gray-500">Deadline: {{ homework.deadline }}</p>
+    <p class="text-sm text-gray-600">{{ homework.description|default:"" }}</p>
+    {% if homework.file %}
+      <a href="{{ homework.file.url }}" class="text-blue-600 hover:text-blue-800 text-sm">Faylni yuklab olish</a>
+    {% endif %}
+    {% if homework.link %}
+      <a href="{{ homework.link }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Link</a>
+    {% endif %}
+    {% if homework.grade %}
+      <p class="text-sm text-gray-600">Bahosi: {{ homework.grade.grade }} · Izoh: {{ homework.grade.comment|default:"" }}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

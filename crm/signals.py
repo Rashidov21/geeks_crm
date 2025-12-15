@@ -3,7 +3,7 @@ Django signals for CRM app
 """
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Lead, FollowUp, TrialLesson
+from .models import Lead, FollowUp, TrialLesson, LeadHistory, LeadStatus
 from telegram_bot.tasks import send_lead_assignment_notification, send_followup_reminder, send_trial_reminder
 
 

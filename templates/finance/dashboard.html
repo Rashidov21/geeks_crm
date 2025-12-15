@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Moliya Dashboard - GEEKS CRM{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">Moliya Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-600 text-sm font-medium mb-2">Jami Shartnomalar</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ total_contracts }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-600 text-sm font-medium mb-2">Faol Shartnomalar</h3>
+            <p class="text-3xl font-bold text-green-600">{{ active_contracts }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-600 text-sm font-medium mb-2">Jami Daromad</h3>
+            <p class="text-3xl font-bold text-purple-600">{{ total_revenue|floatformat:0 }} so'm</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-gray-600 text-sm font-medium mb-2">To'langan</h3>
+            <p class="text-3xl font-bold text-indigo-600">{{ total_paid|floatformat:0 }} so'm</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Bu oy statistikasi</h2>
+            <ul class="space-y-2">
+                <li class="flex justify-between">
+                    <span>Shartnomalar:</span>
+                    <span class="font-bold">{{ contracts_this_month }}</span>
+                </li>
+                <li class="flex justify-between">
+                    <span>Daromad:</span>
+                    <span class="font-bold">{{ revenue_this_month|floatformat:0 }} so'm</span>
+                </li>
+                <li class="flex justify-between">
+                    <span>To'lovlar:</span>
+                    <span class="font-bold">{{ payments_this_month|floatformat:0 }} so'm</span>
+                </li>
+            </ul>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Qarzlar</h2>
+            <ul class="space-y-2">
+                <li class="flex justify-between">
+                    <span>Jami qarzlar:</span>
+                    <span class="font-bold text-red-600">{{ total_debts|floatformat:0 }} so'm</span>
+                </li>
+                <li class="flex justify-between">
+                    <span>Muddati o'tgan:</span>
+                    <span class="font-bold text-red-800">{{ overdue_debts|floatformat:0 }} so'm</span>
+                </li>
+                <li class="flex justify-between">
+                    <span>Kutilayotgan eslatmalar:</span>
+                    <span class="font-bold">{{ pending_reminders }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

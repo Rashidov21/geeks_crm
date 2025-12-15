@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Kurs statistikasi{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <h1 class="text-2xl font-bold">Kurs statistikasi</h1>
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kurs</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Guruhlar</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">O'quvchilar</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for c in courses %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-sm">{{ c.name }}</td>
+          <td class="px-4 py-3 text-sm">{{ c.group_count|default:"-" }}</td>
+          <td class="px-4 py-3 text-sm">{{ c.student_count|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Ma'lumot yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

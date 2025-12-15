@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Moliya hisobotlari - GEEKS CRM{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold">Moliya hisobotlari</h1>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Turi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Davr</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Filial</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Daromad</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To'lovlar</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harakatlar</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for report in reports %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ report.get_report_type_display }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ report.period_start }} - {{ report.period_end }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ report.branch.name|default:"Barcha" }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ report.total_revenue|floatformat:0 }} so'm</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">{{ report.total_payments|floatformat:0 }} so'm</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <a href="{% url 'finance:financial_report_detail' report.pk %}" class="text-blue-600 hover:text-blue-800">Batafsil</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Hisobotlar mavjud emas</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

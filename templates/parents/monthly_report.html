@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Oylik hisobot{% endblock %}
+{% block content %}
+<div class="bg-white shadow rounded-lg p-6 space-y-2">
+  <h1 class="text-2xl font-bold">Oylik hisobot</h1>
+  <p class="text-sm text-gray-500">{{ report.month }}/{{ report.year }}</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-700 mt-2">
+    <p><span class="font-semibold">Davomat:</span> {{ report.attendance }}</p>
+    <p><span class="font-semibold">Uy vazifalari:</span> {{ report.homework }}</p>
+    <p><span class="font-semibold">Imtihon:</span> {{ report.exams }}</p>
+    <p><span class="font-semibold">Kuchli tomonlar:</span> {{ report.strengths|default:"-" }}</p>
+    <p><span class="font-semibold">Zaif tomonlar:</span> {{ report.weaknesses|default:"-" }}</p>
+  </div>
+</div>
+{% endblock %}
+

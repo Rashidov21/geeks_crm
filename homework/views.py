@@ -2,7 +2,7 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from .models import Homework, HomeworkGrade
-from accounts.mixins import MentorRequiredMixin
+from accounts.mixins import MentorRequiredMixin, TailwindFormMixin
 
 
 class HomeworkListView(LoginRequiredMixin, ListView):
@@ -19,7 +19,7 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         return queryset.order_by('-deadline', '-submitted_at')
 
 
-class HomeworkCreateView(LoginRequiredMixin, CreateView):
+class HomeworkCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView):
     model = Homework
     template_name = 'homework/homework_form.html'
     fields = ['lesson', 'title', 'description', 'file', 'link', 'code', 'deadline']
@@ -39,7 +39,7 @@ class HomeworkDetailView(LoginRequiredMixin, DetailView):
         return Homework.objects.select_related('student', 'lesson', 'grade__mentor')
 
 
-class HomeworkGradeView(MentorRequiredMixin, UpdateView):
+class HomeworkGradeView(TailwindFormMixin, MentorRequiredMixin, UpdateView):
     model = HomeworkGrade
     template_name = 'homework/homework_grade_form.html'
     fields = ['grade', 'comment']

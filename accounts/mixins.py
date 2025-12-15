@@ -57,3 +57,21 @@ class MentorRequiredMixin:
         
         return super().dispatch(request, *args, **kwargs)
 
+
+class TailwindFormMixin:
+    """
+    Form mixin to add Tailwind CSS classes to fields.
+    """
+    input_class = "w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        for name, field in form.fields.items():
+            widget = field.widget
+            existing = widget.attrs.get("class", "")
+            widget.attrs["class"] = f"{existing} {self.input_class}".strip()
+            if widget.__class__.__name__ == "CheckboxInput":
+                widget.attrs["class"] = widget.attrs["class"].replace(self.input_class, "").strip()
+                widget.attrs["class"] += " rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        return form
+

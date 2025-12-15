@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Guruhlar{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <h1 class="text-2xl font-bold">Guruhlar</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for group in group_list %}
+    <div class="bg-white shadow rounded-lg p-4 space-y-2">
+      <p class="text-sm text-gray-500">{{ group.course.name }}</p>
+      <h3 class="text-lg font-semibold">{{ group.name }}</h3>
+      <p class="text-sm text-gray-600">Xona: {{ group.room.name }}</p>
+      <div class="flex items-center justify-between text-sm text-gray-600">
+        <span>Asosiy: {{ group.enrolled_students_count }}</span>
+        <span>Trial: {{ group.trial_students_count }}</span>
+      </div>
+      <a href="{% url 'courses:group_detail' group.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Batafsil</a>
+    </div>
+    {% empty %}
+    <p class="text-gray-500 text-sm">Guruhlar topilmadi.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

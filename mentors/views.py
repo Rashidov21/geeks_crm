@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
 from .models import MentorKPI, MentorRanking, MonthlyReport, LessonQuality, ParentFeedback
-from accounts.mixins import MentorRequiredMixin, AdminRequiredMixin
+from accounts.mixins import MentorRequiredMixin, AdminRequiredMixin, TailwindFormMixin
 
 
 class MentorKPIView(LoginRequiredMixin, DetailView):
@@ -73,7 +73,7 @@ class MonthlyReportListView(MentorRequiredMixin, ListView):
         return queryset.select_related('student', 'group').order_by('-year', '-month')
 
 
-class MonthlyReportCreateView(MentorRequiredMixin, CreateView):
+class MonthlyReportCreateView(TailwindFormMixin, MentorRequiredMixin, CreateView):
     """
     Oylik hisobot yaratish
     """
@@ -90,7 +90,7 @@ class MonthlyReportCreateView(MentorRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class MonthlyReportUpdateView(MentorRequiredMixin, UpdateView):
+class MonthlyReportUpdateView(TailwindFormMixin, MentorRequiredMixin, UpdateView):
     """
     Oylik hisobotni tahrirlash
     """
@@ -108,7 +108,7 @@ class MonthlyReportUpdateView(MentorRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class LessonQualityCreateView(LoginRequiredMixin, CreateView):
+class LessonQualityCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView):
     """
     Dars sifati baholash (o'quvchi tomonidan)
     """
@@ -126,7 +126,7 @@ class LessonQualityCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ParentFeedbackCreateView(LoginRequiredMixin, CreateView):
+class ParentFeedbackCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView):
     """
     Ota-ona feedback yaratish
     """

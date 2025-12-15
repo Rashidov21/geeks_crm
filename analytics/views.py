@@ -12,20 +12,20 @@ from exams.models import Exam, ExamResult
 from gamification.models import StudentPoints, GroupRanking, BranchRanking, OverallRanking
 from crm.models import Lead, FollowUp
 from mentors.models import MentorKPI
+from finance.models import Contract, Payment, PaymentPlan, Debt, PaymentReminder
 
 
 class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
     """
     Umumiy statistika dashboard (Admin/Manager uchun)
     """
-    template_name = 'analytics/dashboard.html'
+    template_name = 'analytics/admin_dashboard.html'
     allowed_roles = ['admin', 'manager']
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         now = timezone.now()
         this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        last_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
         
         # 1. Umumiy statistika
         context['total_students'] = User.objects.filter(role='student', is_active=True).count()
@@ -40,7 +40,6 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
             is_active=True,
             student_groups__is_active=True
         ).distinct().count()
-        
         context['new_students_this_month'] = User.objects.filter(
             role='student',
             created_at__gte=this_month_start
@@ -62,14 +61,9 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
         context['present_count'] = this_month_attendances.filter(status='present').count()
         context['late_count'] = this_month_attendances.filter(status='late').count()
         context['absent_count'] = this_month_attendances.filter(status='absent').count()
-        
-        if context['total_attendances_this_month'] > 0:
-            context['attendance_percentage'] = (
-                (context['present_count'] + context['late_count']) / 
-                context['total_attendances_this_month'] * 100
-            )
-        else:
-            context['attendance_percentage'] = 0
+        context['attendance_percentage'] = (
+            (context['present_count'] + context['late_count']) / context['total_attendances_this_month'] * 100
+        ) if context['total_attendances_this_month'] else 0
         
         # 5. Uy vazifalari statistikasi
         context['total_homeworks'] = Homework.objects.count()
@@ -77,25 +71,17 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
         context['graded_homeworks'] = Homework.objects.filter(
             homework_grade__isnull=False
         ).count()
-        
-        if context['total_homeworks'] > 0:
-            context['homework_submission_rate'] = (
-                context['submitted_homeworks'] / context['total_homeworks'] * 100
-            )
-        else:
-            context['homework_submission_rate'] = 0
+        context['homework_submission_rate'] = (
+            context['submitted_homeworks'] / context['total_homeworks'] * 100
+        ) if context['total_homeworks'] else 0
         
         # 6. Imtihonlar statistikasi
         context['total_exams'] = Exam.objects.filter(is_active=True).count()
         context['total_exam_results'] = ExamResult.objects.count()
         context['passed_exams'] = ExamResult.objects.filter(is_passed=True).count()
-        
-        if context['total_exam_results'] > 0:
-            context['exam_pass_rate'] = (
-                context['passed_exams'] / context['total_exam_results'] * 100
-            )
-        else:
-            context['exam_pass_rate'] = 0
+        context['exam_pass_rate'] = (
+            context['passed_exams'] / context['total_exam_results'] * 100
+        ) if context['total_exam_results'] else 0
         
         # 7. Filiallar statistikasi
         branches_stats = []
@@ -106,18 +92,14 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
                 student_profile__branch=branch,
                 is_active=True
             ).count()
-            
             groups_count = Group.objects.filter(
                 course__branch=branch,
                 is_active=True
             ).count()
-            
             courses_count = Course.objects.filter(
                 branch=branch,
                 is_active=True
             ).count()
-            
-            # O'rtacha davomat
             branch_attendances = Attendance.objects.filter(
                 lesson__group__course__branch=branch,
                 lesson__date__gte=this_month_start
@@ -133,7 +115,6 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
                 'courses_count': courses_count,
                 'avg_attendance': avg_attendance,
             })
-        
         context['branches_stats'] = branches_stats
         
         # 8. CRM statistikasi
@@ -152,14 +133,23 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
         
         # 9. Mentor KPI statistikasi
         context['mentors_with_kpi'] = MentorKPI.objects.values('mentor').distinct().count()
-        avg_kpi = MentorKPI.objects.aggregate(avg=Avg('total_kpi_score'))['avg'] or 0
-        context['avg_mentor_kpi'] = avg_kpi
+        context['avg_mentor_kpi'] = MentorKPI.objects.aggregate(avg=Avg('total_kpi_score'))['avg'] or 0
         
         # 10. Gamification statistikasi
         context['total_points_awarded'] = StudentPoints.objects.aggregate(
             total=Sum('total_points')
         )['total'] or 0
         context['top_students'] = OverallRanking.objects.select_related('student').order_by('rank')[:10]
+        
+        # 11. Finance statistikasi
+        context['finance_total_contracts'] = Contract.objects.count()
+        context['finance_active_contracts'] = Contract.objects.filter(status='active').count()
+        context['finance_total_revenue'] = Contract.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+        context['finance_total_paid'] = Contract.objects.aggregate(total=Sum('paid_amount'))['total'] or 0
+        context['finance_total_debts'] = Debt.objects.filter(is_paid=False).aggregate(total=Sum('amount'))['total'] or 0
+        context['finance_pending_reminders'] = PaymentReminder.objects.filter(is_sent=False).count()
+        context['finance_upcoming_payments'] = PaymentPlan.objects.filter(is_paid=False, due_date__gte=now.date()).count()
+        context['finance_overdue_payments'] = PaymentPlan.objects.filter(is_paid=False, due_date__lt=now.date()).count()
         
         return context
 

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Xabar{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6 space-y-3">
+  <div class="flex justify-between text-sm text-gray-500">
+    <span>Kimdan: {{ message.sender.username }}</span>
+    <span>Kimgа: {{ message.recipient.username|default:"Hamma" }}</span>
+  </div>
+  <p class="text-gray-800 whitespace-pre-line">{{ message.body }}</p>
+  <p class="text-xs text-gray-500">Yuborilgan: {{ message.created_at|date:"d.m.Y H:i" }}</p>
+</div>
+{% endblock %}
+

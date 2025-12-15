@@ -2,7 +2,7 @@ from django.views.generic import ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Attendance, AttendanceStatistics
 from courses.models import Lesson
-from accounts.mixins import MentorRequiredMixin
+from accounts.mixins import MentorRequiredMixin, TailwindFormMixin
 
 
 class AttendanceListView(LoginRequiredMixin, ListView):
@@ -19,7 +19,7 @@ class AttendanceListView(LoginRequiredMixin, ListView):
         return queryset.order_by('-lesson__date', '-lesson__start_time')
 
 
-class AttendanceCreateView(MentorRequiredMixin, CreateView):
+class AttendanceCreateView(TailwindFormMixin, MentorRequiredMixin, CreateView):
     model = Attendance
     template_name = 'attendance/attendance_form.html'
     fields = ['student', 'status', 'notes']

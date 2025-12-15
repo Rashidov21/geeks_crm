@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Kurs: {{ course.name }}{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <div class="bg-white shadow rounded-lg p-6">
+    <p class="text-sm text-gray-500">{{ course.branch.name }}</p>
+    <h1 class="text-3xl font-bold">{{ course.name }}</h1>
+    <p class="text-gray-700 mt-2">{{ course.description|default:"Tavsif mavjud emas" }}</p>
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600 mt-4">
+      <span>Davomiyligi: {{ course.duration_weeks }} hafta</span>
+      <span>Narx: {{ course.price }} so'm</span>
+      <span>Status: {% if course.is_active %}<span class="text-green-600">Faol</span>{% else %}<span class="text-gray-500">Nofaol</span>{% endif %}</span>
+    </div>
+  </div>
+
+  <div class="bg-white shadow rounded-lg p-6 space-y-3">
+    <h2 class="text-xl font-semibold">Modullar</h2>
+    <div class="space-y-3">
+      {% for module in course.modules.all %}
+      <div class="border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">{{ module.name }}</h3>
+          <a href="{% url 'courses:module_detail' module.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Batafsil</a>
+        </div>
+        <p class="text-sm text-gray-600">{{ module.description|default:"" }}</p>
+      </div>
+      {% empty %}
+      <p class="text-gray-500 text-sm">Modullar mavjud emas.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

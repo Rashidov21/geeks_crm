@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Third party apps
-    'django_extensions',
+    # 'django_extensions',  # Optional - comment qilindi
     'corsheaders',
     
     # Local apps
@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'crm',
     'finance',
     'telegram_bot',
+    'analytics',
 ]
 
 MIDDLEWARE = [
@@ -198,6 +199,62 @@ CELERY_BEAT_SCHEDULE = {
     'update-monthly-rankings': {
         'task': 'gamification.tasks.update_monthly_rankings',
         'schedule': crontab(day_of_month=1, hour=0, minute=0),  # Har oy 1-kuni
+    },
+    # Mentor KPI
+    'calculate-all-mentors-kpi': {
+        'task': 'mentors.tasks.calculate_all_mentors_kpi',
+        'schedule': crontab(day_of_month=1, hour=2, minute=0),  # Har oy 1-kuni soat 2:00
+    },
+    'update-mentor-rankings': {
+        'task': 'mentors.tasks.update_mentor_rankings',
+        'schedule': crontab(day_of_month=1, hour=3, minute=0),  # Har oy 1-kuni soat 3:00
+    },
+    # Parents monthly reports
+    'generate-monthly-parent-reports': {
+        'task': 'parents.tasks.generate_monthly_parent_reports',
+        'schedule': crontab(day_of_month=1, hour=4, minute=0),  # Har oy 1-kuni soat 4:00
+    },
+    # CRM tasks
+    'assign-leads-to-sales': {
+        'task': 'crm.tasks.assign_leads_to_sales',
+        'schedule': crontab(minute='*/10'),  # Har 10 daqiqada
+    },
+    'check-overdue-followups': {
+        'task': 'crm.tasks.check_overdue_followups',
+        'schedule': crontab(minute='*/5'),  # Har 5 daqiqada
+    },
+    'create-contacted-followups': {
+        'task': 'crm.tasks.create_contacted_followups',
+        'schedule': crontab(hour='*/2', minute=0),  # Har 2 soatda
+    },
+    'reactivate-lost-leads': {
+        'task': 'crm.tasks.reactivate_lost_leads',
+        'schedule': crontab(hour=8, minute=0),  # Har kuni soat 8:00
+    },
+    'calculate-sales-kpi': {
+        'task': 'crm.tasks.calculate_sales_kpi',
+        'schedule': crontab(day_of_month=1, hour=5, minute=0),  # Har oy 1-kuni soat 5:00
+    },
+    'check-leave-expiry': {
+        'task': 'crm.tasks.check_leave_expiry',
+        'schedule': crontab(hour=0, minute=0),  # Har kuni yarim tun
+    },
+    'send-followup-reminders': {
+        'task': 'telegram_bot.tasks.send_followup_reminder',
+        'schedule': crontab(minute='*/30'),  # Har 30 daqiqada
+    },
+    # Finance tasks
+    'create-payment-reminders': {
+        'task': 'finance.tasks.create_payment_reminders',
+        'schedule': crontab(hour=9, minute=0),  # Har kuni soat 9:00
+    },
+    'check-overdue-payments': {
+        'task': 'finance.tasks.check_overdue_payments',
+        'schedule': crontab(hour=10, minute=0),  # Har kuni soat 10:00
+    },
+    'generate-monthly-financial-report': {
+        'task': 'finance.tasks.generate_monthly_financial_report',
+        'schedule': crontab(day_of_month=1, hour=6, minute=0),  # Har oy 1-kuni soat 6:00
     },
 }
 

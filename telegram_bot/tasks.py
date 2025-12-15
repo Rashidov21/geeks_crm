@@ -150,6 +150,84 @@ def send_attendance_notification_to_parents():
 
 
 @shared_task
+def send_monthly_report_to_parent(report_id):
+    """
+    Oylik hisobotni ota-onalarga yuborish
+    """
+    try:
+        from telegram import Bot
+        from mentors.models import MonthlyReport
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        report = MonthlyReport.objects.select_related('mentor', 'student', 'group').get(pk=report_id)
+        
+        # Ota-onalarni topish
+        parents = User.objects.filter(
+            role='parent',
+            parent_profile__students=report.student,
+            telegram_id__isnull=False
+        )
+        
+        character_text = {
+            'excellent': 'A\'lo',
+            'good': 'Yaxshi',
+            'satisfactory': 'Qoniqarli',
+            'needs_improvement': 'Yaxshilash kerak',
+        }
+        
+        attendance_text = {
+            'excellent': 'A\'lo (95-100%)',
+            'good': 'Yaxshi (85-94%)',
+            'satisfactory': 'Qoniqarli (70-84%)',
+            'poor': 'Qoniqarsiz (<70%)',
+        }
+        
+        mastery_text = {
+            'excellent': 'A\'lo',
+            'good': 'Yaxshi',
+            'satisfactory': 'Qoniqarli',
+            'needs_improvement': 'Yaxshilash kerak',
+        }
+        
+        progress_text = {
+            'improved': 'Yaxshilandi',
+            'stable': 'Barqaror',
+            'declined': 'Pasaydi',
+        }
+        
+        for parent in parents:
+            try:
+                message = f"📊 Oylik hisobot\n\n"
+                message += f"Farzand: {report.student.get_full_name() or report.student.username}\n"
+                message += f"Guruh: {report.group.name}\n"
+                message += f"Oy: {report.year}-{report.month:02d}\n"
+                message += f"Mentor: {report.mentor.get_full_name() or report.mentor.username}\n\n"
+                
+                if report.character:
+                    message += f"Xulq: {character_text.get(report.character, report.character)}\n"
+                if report.attendance:
+                    message += f"Davomat: {attendance_text.get(report.attendance, report.attendance)}\n"
+                if report.mastery:
+                    message += f"O'zlashtirish: {mastery_text.get(report.mastery, report.mastery)}\n"
+                if report.progress_change:
+                    message += f"O'zgarish: {progress_text.get(report.progress_change, report.progress_change)}\n"
+                
+                if report.additional_notes:
+                    message += f"\nQo'shimcha izoh:\n{report.additional_notes}"
+                
+                bot.send_message(chat_id=parent.telegram_id, text=message)
+            except Exception as e:
+                logger.error(f"Error sending monthly report to parent: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error in send_monthly_report_to_parent: {e}")
+
+
+@shared_task
 def send_lesson_completion_notification(lesson_id):
     """
     Dars tugaganda o'quvchilar va ota-onalarga xabar
@@ -197,4 +275,226 @@ def send_lesson_completion_notification(lesson_id):
     
     except Exception as e:
         logger.error(f"Error in send_lesson_completion_notification: {e}")
+
+
+@shared_task
+def send_lead_assignment_notification(lead_id):
+    """
+    Sotuvchiga yangi lid tayinlanganda xabar
+    """
+    try:
+        from telegram import Bot
+        from crm.models import Lead
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        lead = Lead.objects.select_related('sales', 'course', 'branch').get(pk=lead_id)
+        
+        if lead.sales and lead.sales.telegram_id:
+            try:
+                message = f"🆕 Yangi lid tayinlandi\n\n"
+                message += f"Ism: {lead.full_name}\n"
+                message += f"Telefon: {lead.phone}\n"
+                if lead.email:
+                    message += f"Email: {lead.email}\n"
+                if lead.course:
+                    message += f"Kurs: {lead.course.name}\n"
+                if lead.branch:
+                    message += f"Filial: {lead.branch.name}\n"
+                message += f"\n5 daqiqadan keyin follow-up yaratiladi."
+                
+                bot.send_message(chat_id=lead.sales.telegram_id, text=message)
+            except Exception as e:
+                logger.error(f"Error sending lead assignment notification: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error in send_lead_assignment_notification: {e}")
+
+
+@shared_task
+def send_followup_reminder():
+    """
+    Follow-up eslatmalari (ish vaqtida)
+    """
+    try:
+        from telegram import Bot
+        from crm.models import FollowUp, WorkSchedule
+        from datetime import datetime
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        now = timezone.now()
+        weekday = now.weekday()
+        current_time = now.time()
+        
+        # Bugungi follow-up'lar (1 soatdan keyin)
+        one_hour_later = now + timedelta(hours=1)
+        
+        followups = FollowUp.objects.filter(
+            scheduled_at__gte=now,
+            scheduled_at__lte=one_hour_later,
+            is_completed=False
+        ).select_related('lead', 'sales')
+        
+        for followup in followups:
+            # Sotuvchi ish vaqtida bo'lishi kerak
+            work_schedule = WorkSchedule.objects.filter(
+                sales=followup.sales,
+                weekday=weekday,
+                is_active=True,
+                start_time__lte=current_time,
+                end_time__gte=current_time
+            ).exists()
+            
+            if work_schedule and followup.sales.telegram_id:
+                try:
+                    message = f"⏰ Follow-up eslatmasi\n\n"
+                    message += f"Lid: {followup.lead.full_name}\n"
+                    message += f"Telefon: {followup.lead.phone}\n"
+                    message += f"Vaqt: {followup.scheduled_at.strftime('%Y-%m-%d %H:%M')}\n"
+                    message += f"Qolgan vaqt: {(followup.scheduled_at - now).seconds // 60} daqiqa"
+                    
+                    bot.send_message(chat_id=followup.sales.telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending followup reminder: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error in send_followup_reminder: {e}")
+
+
+@shared_task
+def send_trial_reminder(trial_lesson_id):
+    """
+    Sinov darsi eslatmalari (8-10 soat va 2 soat oldin)
+    """
+    try:
+        from telegram import Bot
+        from crm.models import TrialLesson
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        trial = TrialLesson.objects.select_related('lead', 'group', 'room').get(pk=trial_lesson_id)
+        
+        # Sinov vaqti
+        trial_datetime = timezone.make_aware(
+            datetime.combine(trial.date, trial.start_time)
+        )
+        now = timezone.now()
+        
+        # 8-10 soat oldin
+        hours_before = (trial_datetime - now).total_seconds() / 3600
+        
+        if 8 <= hours_before <= 10:
+            # Sotuvchiga xabar
+            if trial.lead.sales and trial.lead.sales.telegram_id:
+                try:
+                    message = f"📅 Sinov darsi eslatmasi\n\n"
+                    message += f"Lid: {trial.lead.full_name}\n"
+                    message += f"Guruh: {trial.group.name}\n"
+                    message += f"Vaqt: {trial.date} {trial.start_time.strftime('%H:%M')}\n"
+                    if trial.room:
+                        message += f"Xona: {trial.room.name}\n"
+                    message += f"\n8-10 soatdan keyin sinov boshlanadi."
+                    
+                    bot.send_message(chat_id=trial.lead.sales.telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending trial reminder: {e}")
+        
+        # 2 soat oldin
+        elif 1.5 <= hours_before <= 2.5:
+            # Sotuvchiga xabar
+            if trial.lead.sales and trial.lead.sales.telegram_id:
+                try:
+                    message = f"⏰ Sinov darsi 2 soatdan keyin boshlanadi\n\n"
+                    message += f"Lid: {trial.lead.full_name}\n"
+                    message += f"Guruh: {trial.group.name}\n"
+                    message += f"Vaqt: {trial.start_time.strftime('%H:%M')}\n"
+                    if trial.room:
+                        message += f"Xona: {trial.room.name}\n"
+                    
+                    bot.send_message(chat_id=trial.lead.sales.telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending trial reminder: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error in send_trial_reminder: {e}")
+
+
+@shared_task
+def send_payment_reminder(reminder_id):
+    """
+    To'lov eslatmasini Telegram orqali yuborish
+    """
+    try:
+        from telegram import Bot
+        from finance.models import PaymentReminder
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        reminder = PaymentReminder.objects.select_related(
+            'contract', 'contract__student', 'payment_plan', 'debt'
+        ).get(pk=reminder_id)
+        
+        student = reminder.contract.student
+        
+        if student.telegram_id:
+            try:
+                message = f"💳 To'lov eslatmasi\n\n"
+                message += f"O'quvchi: {student.get_full_name() or student.username}\n"
+                message += f"Shartnoma: {reminder.contract.contract_number}\n"
+                
+                if reminder.payment_plan:
+                    message += f"Oylik to'lov: {reminder.payment_plan.installment_number}\n"
+                    message += f"Miqdor: {reminder.payment_plan.amount} so'm\n"
+                    message += f"Muddati: {reminder.payment_plan.due_date}\n"
+                    if reminder.payment_plan.is_overdue:
+                        message += f"⚠️ Muddati o'tgan: {reminder.payment_plan.days_overdue} kun\n"
+                
+                if reminder.debt:
+                    message += f"Qarz miqdori: {reminder.debt.amount} so'm\n"
+                    message += f"Muddati: {reminder.debt.due_date}\n"
+                    if reminder.debt.is_overdue:
+                        message += f"⚠️ Muddati o'tgan: {reminder.debt.days_overdue} kun\n"
+                
+                if reminder.notes:
+                    message += f"\n{reminder.notes}"
+                
+                bot.send_message(chat_id=student.telegram_id, text=message)
+                
+                # Eslatma yuborilgan deb belgilash
+                reminder.is_sent = True
+                reminder.sent_at = timezone.now()
+                reminder.save()
+                
+            except Exception as e:
+                logger.error(f"Error sending payment reminder: {e}")
+        
+        # Ota-onalarga ham yuborish
+        from accounts.models import ParentProfile
+        parents = User.objects.filter(
+            role='parent',
+            parent_profile__students=student,
+            telegram_id__isnull=False
+        )
+        
+        for parent in parents:
+            try:
+                bot.send_message(chat_id=parent.telegram_id, text=message)
+            except Exception as e:
+                logger.error(f"Error sending payment reminder to parent: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error in send_payment_reminder: {e}")
 

@@ -14,11 +14,12 @@ urlpatterns = [
     path('homework/', include('homework.urls')),
     path('exams/', include('exams.urls')),
     path('gamification/', include('gamification.urls')),
-    # path('mentors/', include('mentors.urls')),
-    # path('parents/', include('parents.urls')),
-    # path('crm/', include('crm.urls')),
-    # path('finance/', include('finance.urls')),
-    # path('telegram/', include('telegram_bot.urls')),
+    path('mentors/', include('mentors.urls')),
+    path('parents/', include('parents.urls')),
+    path('crm/', include('crm.urls')),
+    path('analytics/', include('analytics.urls')),
+    path('finance/', include('finance.urls')),
+    path('telegram/', include('telegram_bot.urls')),
 ]
 
 # Media files

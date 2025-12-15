@@ -22,5 +22,9 @@ urlpatterns = [
     
     # Progress
     path('progress/', views.StudentProgressView.as_view(), name='progress'),
+    
+    # Group Transfers
+    path('transfers/', views.GroupTransferListView.as_view(), name='group_transfer_list'),
+    path('transfers/create/', views.GroupTransferCreateView.as_view(), name='group_transfer_create'),
 ]
 

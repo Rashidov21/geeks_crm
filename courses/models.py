@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from accounts.models import User, Branch
 
 
@@ -9,10 +10,9 @@ class Course(models.Model):
     """
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    duration_months = models.IntegerField(default=6)  # Oylar soni
-    total_lessons = models.IntegerField(default=0)  # Jami darslar soni
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='courses')
+    duration_weeks = models.IntegerField(default=12)  # Haftalar soni
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -23,7 +23,6 @@ class Course(models.Model):
         ordering = ['name']
         indexes = [
             models.Index(fields=['is_active', 'branch']),
-            models.Index(fields=['created_at']),
         ]
     
     def __str__(self):
@@ -32,12 +31,12 @@ class Course(models.Model):
 
 class Module(models.Model):
     """
-    Kurs modullari
+    Modullar (kurs ichidagi bo'limlar)
     """
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    order = models.IntegerField(default=0)  # Tartib raqami
+    order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -45,7 +44,6 @@ class Module(models.Model):
         verbose_name = _('Module')
         verbose_name_plural = _('Modules')
         ordering = ['course', 'order']
-        unique_together = ['course', 'order']
     
     def __str__(self):
         return f"{self.course.name} - {self.name}"
@@ -53,12 +51,13 @@ class Module(models.Model):
 
 class Topic(models.Model):
     """
-    Mavzular
+    Mavzular (modul ichidagi darslar)
     """
     module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='topics')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     order = models.IntegerField(default=0)
+    duration_minutes = models.IntegerField(default=90)  # Dars davomiyligi
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -73,25 +72,24 @@ class Topic(models.Model):
 
 class TopicMaterial(models.Model):
     """
-    Mavzu materiallari (video, PDF, matn, topshiriq)
+    Mavzu materiallari (video, fayl, link)
     """
     MATERIAL_TYPE_CHOICES = [
         ('video', 'Video'),
-        ('text', 'Matn'),
-        ('pdf', 'PDF'),
         ('file', 'Fayl'),
-        ('assignment', 'Amaliy topshiriq'),
+        ('link', 'Link'),
+        ('text', 'Matn'),
     ]
     
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='materials')
-    material_type = models.CharField(max_length=20, choices=MATERIAL_TYPE_CHOICES)
+    material_type = models.CharField(max_length=10, choices=MATERIAL_TYPE_CHOICES, default='text')
     title = models.CharField(max_length=200)
-    content = models.TextField(blank=True, null=True)  # Matn uchun
-    file = models.FileField(upload_to='materials/', blank=True, null=True)  # PDF, video, fayl uchun
-    video_url = models.URLField(blank=True, null=True)  # Video link uchun
+    description = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to='materials/', blank=True, null=True)
+    link = models.URLField(blank=True, null=True)
+    content = models.TextField(blank=True, null=True)  # Matn materiallar uchun
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = _('Topic Material')
@@ -108,8 +106,8 @@ class Room(models.Model):
     """
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='rooms')
     name = models.CharField(max_length=100)
-    capacity = models.IntegerField(default=20)  # Sig'imi
-    description = models.TextField(blank=True, null=True)
+    capacity = models.IntegerField(default=20)
+    equipment = models.TextField(blank=True, null=True)  # Uskunalar ro'yxati
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -168,7 +166,7 @@ class Group(models.Model):
         from crm.models import Lead
         return Lead.objects.filter(
             trial_group=self,
-            status__in=['trial_registered', 'trial_attended']
+            status__code__in=['trial_registered', 'trial_attended']
         ).count()
     
     @property
@@ -184,6 +182,60 @@ class Group(models.Model):
         return (self.total_students_count / self.capacity) * 100
 
 
+class GroupTransfer(models.Model):
+    """
+    O'quvchini bir guruhdan boshqasiga ko'chirish
+    """
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_transfers',
+                               limit_choices_to={'role': 'student'})
+    from_group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='transfers_from')
+    to_group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='transfers_to')
+    reason = models.TextField(blank=True, null=True)
+    transferred_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='transfers_made',
+                                     limit_choices_to={'role__in': ['admin', 'manager']})
+    transferred_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = _('Group Transfer')
+        verbose_name_plural = _('Group Transfers')
+        ordering = ['-transferred_at']
+        indexes = [
+            models.Index(fields=['student', 'transferred_at']),
+            models.Index(fields=['from_group', 'to_group']),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.username}: {self.from_group.name} → {self.to_group.name}"
+    
+    def save(self, *args, **kwargs):
+        # O'quvchini eski guruhdan olib tashlash va yangi guruhga qo'shish
+        if not self.pk:  # Yangi transfer
+            self.from_group.students.remove(self.student)
+            self.to_group.students.add(self.student)
+            
+            # Progress yangilash (yangi guruhga ko'chirish)
+            from .models import StudentProgress
+            old_progress = StudentProgress.objects.filter(
+                student=self.student,
+                course=self.from_group.course
+            ).first()
+            
+            if old_progress:
+                # Yangi guruh kursiga progress yaratish/yangilash
+                new_progress, created = StudentProgress.objects.get_or_create(
+                    student=self.student,
+                    course=self.to_group.course
+                )
+                # Agar kurs bir xil bo'lsa, progressni saqlab qolish
+                if self.from_group.course == self.to_group.course:
+                    new_progress.completed_topics.set(old_progress.completed_topics.all())
+                    new_progress.calculate_progress()
+        
+        super().save(*args, **kwargs)
+
+
 class Lesson(models.Model):
     """
     Darslar
@@ -197,9 +249,6 @@ class Lesson(models.Model):
     description = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)  # Mentor uchun eslatmalar
     questions = models.TextField(blank=True, null=True)  # Savollar ro'yxati
-    homework_description = models.TextField(blank=True, null=True)  # Uy vazifasi
-    mentor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                              related_name='lessons', limit_choices_to={'role': 'mentor'})
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -208,9 +257,8 @@ class Lesson(models.Model):
         verbose_name_plural = _('Lessons')
         ordering = ['-date', '-start_time']
         indexes = [
-            models.Index(fields=['date', 'start_time']),
             models.Index(fields=['group', 'date']),
-            models.Index(fields=['mentor', 'date']),
+            models.Index(fields=['date', 'start_time']),
         ]
     
     def __str__(self):
@@ -219,32 +267,34 @@ class Lesson(models.Model):
 
 class StudentProgress(models.Model):
     """
-    O'quvchi progressi (har bir kurs uchun)
+    O'quvchi progressi (kurs bo'yicha)
     """
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progresses',
-                                limit_choices_to={'role': 'student'})
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='student_progresses')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_progress',
+                               limit_choices_to={'role': 'student'})
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='student_progress')
     progress_percentage = models.FloatField(default=0.0)  # 0-100%
-    completed_topics = models.ManyToManyField(Topic, related_name='completed_by_students', blank=True)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
+    completed_topics = models.ManyToManyField(Topic, blank=True, related_name='completed_by_students')
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = _('Student Progress')
         verbose_name_plural = _('Student Progresses')
         unique_together = ['student', 'course']
-        ordering = ['-updated_at']
+        ordering = ['-progress_percentage']
     
     def __str__(self):
         return f"{self.student.username} - {self.course.name} ({self.progress_percentage}%)"
     
     def calculate_progress(self):
         """Progress foizini hisoblash"""
+        # Kursdagi barcha topiclar soni
         total_topics = Topic.objects.filter(module__course=self.course).count()
-        if total_topics == 0:
-            self.progress_percentage = 0.0
-        else:
+        
+        if total_topics > 0:
             completed_count = self.completed_topics.count()
             self.progress_percentage = (completed_count / total_topics) * 100
+        else:
+            self.progress_percentage = 0.0
+        
         self.save()
         return self.progress_percentage

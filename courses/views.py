@@ -1,7 +1,9 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Course, Module, Topic, Group, Lesson, StudentProgress
-from accounts.decorators import role_required
+from django.contrib import messages
+from django.shortcuts import redirect
+from .models import Course, Module, Topic, Group, GroupTransfer, Lesson, StudentProgress
+from accounts.mixins import RoleRequiredMixin
 
 
 class CourseListView(LoginRequiredMixin, ListView):
@@ -94,3 +96,38 @@ class StudentProgressView(LoginRequiredMixin, DetailView):
         if created or not progress.progress_percentage:
             progress.calculate_progress()
         return progress
+
+
+class GroupTransferCreateView(RoleRequiredMixin, CreateView):
+    """
+    O'quvchini bir guruhdan boshqasiga ko'chirish
+    """
+    model = GroupTransfer
+    template_name = 'courses/group_transfer_form.html'
+    fields = ['student', 'from_group', 'to_group', 'reason', 'notes']
+    allowed_roles = ['admin', 'manager']
+    
+    def form_valid(self, form):
+        form.instance.transferred_by = self.request.user
+        messages.success(self.request, f"O'quvchi {form.instance.from_group.name} dan {form.instance.to_group.name} ga muvaffaqiyatli ko'chirildi.")
+        return super().form_valid(form)
+
+
+class GroupTransferListView(RoleRequiredMixin, ListView):
+    """
+    Guruh ko'chirishlar tarixi
+    """
+    model = GroupTransfer
+    template_name = 'courses/group_transfer_list.html'
+    context_object_name = 'transfers'
+    allowed_roles = ['admin', 'manager']
+    
+    def get_queryset(self):
+        queryset = GroupTransfer.objects.select_related('student', 'from_group', 'to_group', 'transferred_by')
+        
+        # Filtrlash
+        student_id = self.request.GET.get('student')
+        if student_id:
+            queryset = queryset.filter(student_id=student_id)
+        
+        return queryset.order_by('-transferred_at')

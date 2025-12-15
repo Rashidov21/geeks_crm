@@ -19,7 +19,7 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
     """
     Umumiy statistika dashboard (Admin/Manager uchun)
     """
-    template_name = 'analytics/admin_dashboard.html'
+    template_name = 'analytics/dashboard.html'
     allowed_roles = ['admin', 'manager']
     
     def get_context_data(self, **kwargs):
@@ -69,7 +69,7 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
         context['total_homeworks'] = Homework.objects.count()
         context['submitted_homeworks'] = Homework.objects.filter(is_submitted=True).count()
         context['graded_homeworks'] = Homework.objects.filter(
-            homework_grade__isnull=False
+            grade__isnull=False
         ).count()
         context['homework_submission_rate'] = (
             context['submitted_homeworks'] / context['total_homeworks'] * 100

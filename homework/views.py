@@ -11,12 +11,23 @@ class HomeworkListView(LoginRequiredMixin, ListView):
     context_object_name = 'homeworks'
     
     def get_queryset(self):
-        queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group')
+        queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'grade')
         if self.request.user.is_student:
             queryset = queryset.filter(student=self.request.user)
         elif self.request.user.is_mentor:
-            queryset = queryset.filter(lesson__mentor=self.request.user)
+            queryset = queryset.filter(lesson__group__mentor=self.request.user)
         return queryset.order_by('-deadline', '-submitted_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Stats for cards
+        homeworks = self.get_queryset()
+        from django.utils import timezone
+        context['total_homeworks'] = homeworks.count()
+        context['submitted_count'] = homeworks.filter(is_submitted=True).count()
+        context['pending_count'] = homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
+        context['overdue_count'] = homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
+        return context
 
 
 class HomeworkCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView):

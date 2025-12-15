@@ -5,31 +5,31 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractUser):
     """
-    Custom User model with role-based access control
+    Foydalanuvchi modeli - rol asosida ruxsat tizimi bilan
     """
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('manager', 'Manager'),
+        ('admin', 'Administrator'),
+        ('manager', 'Menejer'),
         ('mentor', 'Mentor'),
-        ('student', 'Student'),
-        ('parent', 'Parent'),
-        ('accountant', 'Accountant'),
-        ('sales', 'Sales'),
-        ('sales_manager', 'Sales Manager'),
+        ('student', "O'quvchi"),
+        ('parent', 'Ota-ona'),
+        ('accountant', 'Buxgalter'),
+        ('sales', 'Sotuvchi'),
+        ('sales_manager', 'Sotuvchilar menejeri'),
     ]
     
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    telegram_id = models.BigIntegerField(blank=True, null=True, unique=True)
-    telegram_username = models.CharField(max_length=100, blank=True, null=True)
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student', verbose_name='Rol')
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Telefon')
+    telegram_id = models.BigIntegerField(blank=True, null=True, unique=True, verbose_name='Telegram ID')
+    telegram_username = models.CharField(max_length=100, blank=True, null=True, verbose_name='Telegram username')
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='Avatar')
+    is_active = models.BooleanField(default=True, verbose_name='Faol')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
     
     class Meta:
-        verbose_name = _('User')
-        verbose_name_plural = _('Users')
+        verbose_name = 'Foydalanuvchi'
+        verbose_name_plural = 'Foydalanuvchilar'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['role', 'is_active']),
@@ -75,19 +75,19 @@ class User(AbstractUser):
 
 class Branch(models.Model):
     """
-    Filiallar (branches)
+    Filiallar
     """
-    name = models.CharField(max_length=200)
-    address = models.TextField(blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    name = models.CharField(max_length=200, verbose_name='Nomi')
+    address = models.TextField(blank=True, null=True, verbose_name='Manzil')
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Telefon')
+    email = models.EmailField(blank=True, null=True, verbose_name='Email')
+    is_active = models.BooleanField(default=True, verbose_name='Faol')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
     
     class Meta:
-        verbose_name = _('Branch')
-        verbose_name_plural = _('Branches')
+        verbose_name = 'Filial'
+        verbose_name_plural = 'Filiallar'
         ordering = ['name']
     
     def __str__(self):
@@ -96,39 +96,41 @@ class Branch(models.Model):
 
 class StudentProfile(models.Model):
     """
-    Student profili
+    O'quvchi profili
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile', 
-                                limit_choices_to={'role': 'student'})
-    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
-    birth_date = models.DateField(blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    parent_name = models.CharField(max_length=200, blank=True, null=True)
-    parent_phone = models.CharField(max_length=20, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+                                limit_choices_to={'role': 'student'}, verbose_name='Foydalanuvchi')
+    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True, 
+                              related_name='students', verbose_name='Filial')
+    birth_date = models.DateField(blank=True, null=True, verbose_name="Tug'ilgan sana")
+    address = models.TextField(blank=True, null=True, verbose_name='Manzil')
+    parent_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Ota-ona ismi')
+    parent_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Ota-ona telefoni')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
     
     class Meta:
-        verbose_name = _('Student Profile')
-        verbose_name_plural = _('Student Profiles')
+        verbose_name = "O'quvchi profili"
+        verbose_name_plural = "O'quvchi profillari"
     
     def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} - Student"
+        return f"{self.user.get_full_name() or self.user.username} - O'quvchi"
 
 
 class ParentProfile(models.Model):
     """
-    Parent profili
+    Ota-ona profili
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent_profile',
-                                limit_choices_to={'role': 'parent'})
-    students = models.ManyToManyField(User, related_name='parents', limit_choices_to={'role': 'student'})
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+                                limit_choices_to={'role': 'parent'}, verbose_name='Foydalanuvchi')
+    students = models.ManyToManyField(User, related_name='parents', limit_choices_to={'role': 'student'},
+                                     verbose_name="O'quvchilar")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
     
     class Meta:
-        verbose_name = _('Parent Profile')
-        verbose_name_plural = _('Parent Profiles')
+        verbose_name = 'Ota-ona profili'
+        verbose_name_plural = 'Ota-ona profillari'
     
     def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} - Parent"
+        return f"{self.user.get_full_name() or self.user.username} - Ota-ona"

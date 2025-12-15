@@ -1,30 +1,143 @@
-{% extends 'base.html' %}
-
-{% block title %}Kirish - GEEKS CRM{% endblock %}
-
-{% block content %}
-<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
-    <h2 class="text-2xl font-bold mb-6 text-center">Tizimga kirish</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="id_username">
-                Foydalanuvchi nomi
-            </label>
-            <input type="text" name="username" id="id_username" required
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirish | GEEKS CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-900 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo & Title -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full shadow-2xl mb-4 p-4">
+                <img src="{% static 'img/logo_dark.png' %}" alt="GEEKS Logo" class="w-full h-full object-contain">
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                <img src="{% static 'img/logo_white.png' %}" alt="GEEKS Logo" class="h-10 w-auto">
+                <span>GEEKS CRM</span>
+            </h1>
+            <p class="text-slate-300">Ta'lim markazlari uchun zamonaviy tizim</p>
         </div>
-        <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="id_password">
-                Parol
-            </label>
-            <input type="password" name="password" id="id_password" required
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-lg">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-sign-in-alt text-blue-600"></i>
+                    Tizimga kirish
+                </h2>
+                <p class="text-gray-600 text-sm mt-1">Hisobingizga kirish uchun ma'lumotlarni kiriting</p>
+            </div>
+
+            {% if form.errors or form.non_field_errors %}
+                <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-exclamation-circle text-red-500 text-lg mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-red-800 font-semibold text-sm">Xato yuz berdi</p>
+                            <p class="text-red-600 text-sm mt-1">Foydalanuvchi nomi yoki parol noto'g'ri.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <form method="post" class="space-y-5" x-data="{showPassword: false}">
+                {% csrf_token %}
+                
+                <!-- Username Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-semibold mb-2" for="id_username">
+                        <i class="fas fa-user text-blue-600 mr-1"></i>
+                        Foydalanuvchi nomi
+                    </label>
+                    <div class="relative">
+                        <input type="text" 
+                               name="username" 
+                               id="id_username" 
+                               required
+                               autofocus
+                               placeholder="Foydalanuvchi nomingizni kiriting"
+                               class="w-full px-4 py-3 pl-11 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label class="block text-gray-700 text-sm font-semibold mb-2" for="id_password">
+                        <i class="fas fa-lock text-blue-600 mr-1"></i>
+                        Parol
+                    </label>
+                    <div class="relative">
+                        <input :type="showPassword ? 'text' : 'password'" 
+                               name="password" 
+                               id="id_password" 
+                               required
+                               placeholder="Parolingizni kiriting"
+                               class="w-full px-4 py-3 pl-11 pr-11 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <button type="button" 
+                                @click="showPassword = !showPassword"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500">
+                        <span class="text-gray-700">Meni eslab qol</span>
+                    </label>
+                    <a href="{% url 'accounts:password_reset' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Parolni unutdingizmi?
+                    </a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                        class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-4 focus:ring-indigo-300 font-semibold text-lg shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Kirish</span>
+                </button>
+            </form>
+
+            <!-- Help Section -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <p class="text-center text-sm text-gray-600">
+                    Hisobingiz yo'qmi? Administrator bilan bog'laning
+                </p>
+                <div class="flex justify-center gap-4 mt-3">
+                    <a href="tel:+998901234567" class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
+                        <i class="fas fa-phone"></i>
+                        <span>Qo'ng'iroq</span>
+                    </a>
+                    <a href="https://t.me/geeks_support" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
+                        <i class="fab fa-telegram"></i>
+                        <span>Telegram</span>
+                    </a>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            Kirish
-        </button>
-    </form>
-</div>
-{% endblock %}
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-white text-sm">
+            <div class="flex items-center justify-center gap-2 mb-2">
+                <img src="{% static 'img/logo_white.png' %}" alt="GEEKS Logo" class="h-6 w-auto opacity-90">
+                <span class="font-semibold">GEEKS ANDIJAN</span>
+            </div>
+            <p class="text-slate-300">&copy; 2024 Barcha huquqlar himoyalangan.</p>
+        </div>
+    </div>
+</body>
+</html>
 

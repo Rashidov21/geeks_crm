@@ -1,21 +1,207 @@
 {% extends 'base.html' %}
-{% block title %}Ota-ona Dashboard{% endblock %}
+{% load static %}
+{% block title %}Ota-ona Dashboard | GEEKS CRM{% endblock %}
 {% block content %}
-<div class="space-y-4">
-  <h1 class="text-2xl font-bold">Ota-ona Dashboard</h1>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for s in students %}
-    <div class="bg-white shadow rounded-lg p-4 space-y-2">
-      <h3 class="text-lg font-semibold">{{ s.get_full_name|default:s.username }}</h3>
-      <p class="text-sm text-gray-600">Telefon: {{ s.phone|default:"-" }}</p>
-      <div class="flex items-center justify-between text-sm text-gray-600">
-        <span>Guruh: {{ s.group.name|default:"-" }}</span>
-        <a href="{% url 'parents:student_detail' s.pk %}" class="text-blue-600 hover:text-blue-800">Ko'rish</a>
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <i class="fas fa-home text-teal-600"></i>
+        Ota-ona Dashboard
+      </h1>
+      <p class="text-gray-600 mt-1">Salom, {{ user.get_full_name|default:user.username }}! Farzandlaringizning o'qish jarayonini kuzating.</p>
+    </div>
+    <a href="{% url 'parents:monthly_report_list' %}" class="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white px-5 py-3 rounded-lg hover:shadow-lg transition">
+      <i class="fas fa-file-pdf"></i>
+      <span class="font-medium">Oylik hisobotlar</span>
+    </a>
+  </div>
+
+  <!-- Children Cards -->
+  {% if students %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for student in students %}
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-t-4 border-teal-500">
+          <!-- Header -->
+          <div class="bg-gradient-to-r from-teal-50 to-blue-50 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="w-16 h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                {{ student.first_name.0|upper }}{{ student.last_name.0|upper }}
+              </div>
+              <a href="{% url 'parents:student_detail' student.pk %}" 
+                 class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition text-sm font-medium flex items-center gap-2">
+                <span>Ko'rish</span>
+                <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800">{{ student.get_full_name|default:student.username }}</h3>
+            <p class="text-sm text-gray-600 mt-1 flex items-center gap-2">
+              <i class="fas fa-phone"></i>
+              {{ student.phone|default:"Tel. raqam kiritilmagan" }}
+            </p>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-4">
+            <!-- Groups -->
+            {% if student.student_groups.all %}
+              <div>
+                <p class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">Guruhlar</p>
+                <div class="space-y-2">
+                  {% for group in student.student_groups.all %}
+                    <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                      <i class="fas fa-users text-blue-600"></i>
+                      <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-800">{{ group.name }}</p>
+                        <p class="text-xs text-gray-600">{{ group.course.name }}</p>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% else %}
+              <div class="text-center py-4 text-gray-500">
+                <i class="fas fa-users-slash text-2xl mb-2 opacity-30"></i>
+                <p class="text-sm">Guruhga tayinlanmagan</p>
+              </div>
+            {% endif %}
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-600 mb-1">Davomat</p>
+                <div class="flex items-center justify-center gap-1">
+                  <i class="fas fa-calendar-check text-green-600"></i>
+                  <p class="text-lg font-bold text-green-700">{{ student.attendance_percentage|default:"0" }}%</p>
+                </div>
+              </div>
+              <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-600 mb-1">Progress</p>
+                <div class="flex items-center justify-center gap-1">
+                  <i class="fas fa-chart-line text-blue-600"></i>
+                  <p class="text-lg font-bold text-blue-700">{{ student.progress_percentage|default:"0" }}%</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="pt-4 border-t border-gray-200 space-y-2">
+              <a href="{% url 'parents:lesson_history' student.pk %}" 
+                 class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-book text-gray-600 group-hover:text-blue-600"></i>
+                  <span class="text-sm font-medium text-gray-700 group-hover:text-blue-700">Darslar tarixi</span>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600"></i>
+              </a>
+              <a href="{% url 'parents:homework_status' student.pk %}" 
+                 class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-tasks text-gray-600 group-hover:text-orange-600"></i>
+                  <span class="text-sm font-medium text-gray-700 group-hover:text-orange-700">Uy vazifalari</span>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-orange-600"></i>
+              </a>
+              <a href="{% url 'parents:exam_results' student.pk %}" 
+                 class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-file-alt text-gray-600 group-hover:text-red-600"></i>
+                  <span class="text-sm font-medium text-gray-700 group-hover:text-red-700">Imtihon natijalari</span>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-red-600"></i>
+              </a>
+              <a href="{% url 'parents:attendance_list' student.pk %}" 
+                 class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition group">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-calendar-check text-gray-600 group-hover:text-green-600"></i>
+                  <span class="text-sm font-medium text-gray-700 group-hover:text-green-700">Davomat</span>
+                </div>
+                <i class="fas fa-chevron-right text-gray-400 group-hover:text-green-600"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+      <div class="max-w-md mx-auto">
+        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-child text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Farzandlar topilmadi</h3>
+        <p class="text-gray-600 mb-6">Sizning profilingizga hech qanday farzand bog'lanmagan. Iltimos, administrator bilan bog'laning.</p>
+        <a href="{% url 'accounts:profile' %}" class="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 transition">
+          <i class="fas fa-user"></i>
+          <span>Profilga o'tish</span>
+        </a>
       </div>
     </div>
-    {% empty %}
-    <p class="text-gray-500 text-sm">Farzandlar topilmadi.</p>
-    {% endfor %}
+  {% endif %}
+
+  <!-- Info Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Monthly Reports Card -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-file-pdf text-2xl"></i>
+        </div>
+        <span class="text-3xl font-bold">{{ monthly_reports_count|default:"0" }}</span>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Oylik hisobotlar</h3>
+      <p class="text-purple-100 text-sm mb-4">Mentorlardan kelgan batafsil hisobotlar</p>
+      <a href="{% url 'parents:monthly_report_list' %}" 
+         class="block text-center bg-white bg-opacity-20 hover:bg-opacity-30 py-2 rounded-lg transition text-sm font-medium">
+        Ko'rish →
+      </a>
+    </div>
+
+    <!-- Contact Card -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-phone text-2xl"></i>
+        </div>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Bog'lanish</h3>
+      <p class="text-blue-100 text-sm mb-4">Savol yoki muammo bo'lsa biz bilan bog'laning</p>
+      <div class="space-y-2 text-sm">
+        <a href="tel:+998901234567" class="flex items-center gap-2 hover:text-blue-200 transition">
+          <i class="fas fa-phone-alt"></i>
+          <span>+998 (90) 123-45-67</span>
+        </a>
+        <a href="https://t.me/geeks_support" target="_blank" class="flex items-center gap-2 hover:text-blue-200 transition">
+          <i class="fab fa-telegram"></i>
+          <span>@geeks_support</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Tips Card -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-lightbulb text-2xl"></i>
+        </div>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Maslahat</h3>
+      <ul class="space-y-2 text-sm text-green-50">
+        <li class="flex items-start gap-2">
+          <i class="fas fa-check mt-1"></i>
+          <span>Farzandingiz progressini muntazam kuzatib boring</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <i class="fas fa-check mt-1"></i>
+          <span>Mentorlar bilan aloqada bo'ling</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <i class="fas fa-check mt-1"></i>
+          <span>Uy vazifalarni nazorat qiling</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 {% endblock %}

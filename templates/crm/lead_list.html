@@ -1,26 +1,205 @@
 {% extends 'base.html' %}
-{% block title %}Leadlar{% endblock %}
+{% load static %}
+{% block title %}Leadlar | GEEKS CRM{% endblock %}
 {% block content %}
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Leadlar</h1>
-    <a href="{% url 'crm:lead_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Yangi lead</a>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for lead in leads %}
-    <div class="bg-white shadow rounded-lg p-4 space-y-2">
-      <div class="flex items-center justify-between text-sm text-gray-500">
-        <span>{{ lead.branch.name|default:"" }}</span>
-        <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ lead.status.name }}</span>
-      </div>
-      <h3 class="text-lg font-semibold">{{ lead.full_name|default:lead.first_name }}</h3>
-      <p class="text-sm text-gray-600">{{ lead.phone }}</p>
-      <a href="{% url 'crm:lead_detail' lead.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Batafsil</a>
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <i class="fas fa-users text-purple-600"></i>
+        Leadlar
+      </h1>
+      <p class="text-gray-600 mt-1">Potensial mijozlar bilan ishlash</p>
     </div>
-    {% empty %}
-    <p class="text-gray-500 text-sm">Leadlar topilmadi.</p>
-    {% endfor %}
+    <div class="flex gap-2">
+      <a href="{% url 'crm:lead_create' %}" 
+         class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-medium">
+        <i class="fas fa-plus-circle"></i>
+        <span>Yangi lead</span>
+      </a>
+    </div>
   </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-blue-100 text-sm">Umumiy leadlar</p>
+          <p class="text-3xl font-bold mt-1">{{ total_leads|default:"0" }}</p>
+        </div>
+        <i class="fas fa-users text-3xl opacity-30"></i>
+      </div>
+    </div>
+    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-green-100 text-sm">Ro'yxatdan o'tgan</p>
+          <p class="text-3xl font-bold mt-1">{{ enrolled_leads|default:"0" }}</p>
+        </div>
+        <i class="fas fa-user-check text-3xl opacity-30"></i>
+      </div>
+    </div>
+    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-lg shadow-lg p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-yellow-100 text-sm">Jarayonda</p>
+          <p class="text-3xl font-bold mt-1">{{ pending_leads|default:"0" }}</p>
+        </div>
+        <i class="fas fa-hourglass-half text-3xl opacity-30"></i>
+      </div>
+    </div>
+    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-red-100 text-sm">Follow-up kerak</p>
+          <p class="text-3xl font-bold mt-1">{{ overdue_followups|default:"0" }}</p>
+        </div>
+        <i class="fas fa-exclamation-triangle text-3xl opacity-30"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl shadow-md p-4">
+    <div class="flex flex-col md:flex-row gap-3">
+      <div class="flex-1 relative">
+        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input type="text" placeholder="Ism, telefon bo'yicha qidirish..." 
+               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+      </div>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+        <option value="">Barcha statuslar</option>
+        <option>Yangi</option>
+        <option>Aloqa qilindi</option>
+        <option>Sinov darsida</option>
+        <option>Ro'yxatdan o'tdi</option>
+      </select>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+        <option value="">Barcha filiallar</option>
+        <option>Andijon</option>
+        <option>Toshkent</option>
+      </select>
+      <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
+        <i class="fas fa-filter"></i>
+        <span>Filtrlash</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Leads Grid -->
+  {% if leads %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for lead in leads %}
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-l-4 
+                    {% if lead.status.code == 'enrolled' %}border-green-500
+                    {% elif lead.status.code == 'new' %}border-blue-500
+                    {% elif lead.status.code == 'contacted' %}border-yellow-500
+                    {% elif lead.status.code == 'trial' %}border-orange-500
+                    {% else %}border-gray-300{% endif %}">
+          <!-- Header -->
+          <div class="p-5 bg-gradient-to-r {% if lead.status.code == 'enrolled' %}from-green-50 to-emerald-50
+                      {% elif lead.status.code == 'new' %}from-blue-50 to-indigo-50
+                      {% elif lead.status.code == 'contacted' %}from-yellow-50 to-orange-50
+                      {% else %}from-gray-50 to-gray-100{% endif %}">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  {{ lead.first_name.0|upper }}{{ lead.last_name.0|default:""|upper }}
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800">{{ lead.full_name|default:lead.first_name }}</h3>
+                  <p class="text-xs text-gray-600"><i class="fas fa-map-marker-alt"></i> {{ lead.branch.name|default:"Filial ko'rsatilmagan" }}</p>
+                </div>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full 
+                          {% if lead.status.code == 'enrolled' %}bg-green-500 text-white
+                          {% elif lead.status.code == 'new' %}bg-blue-500 text-white
+                          {% elif lead.status.code == 'contacted' %}bg-yellow-500 text-white
+                          {% elif lead.status.code == 'trial' %}bg-orange-500 text-white
+                          {% else %}bg-gray-500 text-white{% endif %}">
+                {{ lead.status.name }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="p-5 space-y-3">
+            <!-- Contact Info -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-sm">
+                <i class="fas fa-phone text-blue-600 w-5"></i>
+                <a href="tel:{{ lead.phone }}" class="text-gray-700 hover:text-blue-600 transition">{{ lead.phone }}</a>
+              </div>
+              {% if lead.email %}
+                <div class="flex items-center gap-2 text-sm">
+                  <i class="fas fa-envelope text-green-600 w-5"></i>
+                  <a href="mailto:{{ lead.email }}" class="text-gray-700 hover:text-green-600 transition">{{ lead.email }}</a>
+                </div>
+              {% endif %}
+              {% if lead.course %}
+                <div class="flex items-center gap-2 text-sm">
+                  <i class="fas fa-book text-purple-600 w-5"></i>
+                  <span class="text-gray-700">{{ lead.course.name }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Timestamps -->
+            <div class="pt-3 border-t border-gray-200 text-xs text-gray-500 space-y-1">
+              <div class="flex items-center justify-between">
+                <span><i class="fas fa-clock"></i> Yaratildi:</span>
+                <span class="font-medium">{{ lead.created_at|date:"d M, H:i" }}</span>
+              </div>
+              {% if lead.last_contact_at %}
+                <div class="flex items-center justify-between">
+                  <span><i class="fas fa-phone-alt"></i> Oxirgi aloqa:</span>
+                  <span class="font-medium">{{ lead.last_contact_at|date:"d M, H:i" }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 pt-3">
+              <a href="{% url 'crm:lead_detail' lead.pk %}" 
+                 class="flex-1 text-center bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-eye"></i>
+                <span>Ko'rish</span>
+              </a>
+              <a href="tel:{{ lead.phone }}" 
+                 class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition" 
+                 title="Qo'ng'iroq qilish">
+                <i class="fas fa-phone"></i>
+              </a>
+              {% if user.role == 'admin' or user.role == 'manager' or user.role == 'sales' %}
+                <a href="{% url 'crm:lead_edit' lead.pk %}" 
+                   class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition" 
+                   title="Tahrirlash">
+                  <i class="fas fa-edit"></i>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+      <div class="max-w-md mx-auto">
+        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-users text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Leadlar topilmadi</h3>
+        <p class="text-gray-600 mb-6">Hozircha hech qanday lead mavjud emas.</p>
+        <a href="{% url 'crm:lead_create' %}" 
+           class="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+          <i class="fas fa-plus"></i>
+          <span>Birinchi leadni yaratish</span>
+        </a>
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
 

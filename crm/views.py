@@ -45,6 +45,19 @@ class LeadListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         # Barcha statuslar
         context['statuses'] = LeadStatus.objects.filter(is_active=True).order_by('order')
+        
+        # Stats for cards
+        context['total_leads'] = Lead.objects.count()
+        context['enrolled_leads'] = Lead.objects.filter(status__code='enrolled').count()
+        context['pending_leads'] = Lead.objects.filter(
+            status__code__in=['new', 'contacted', 'interested']
+        ).count()
+        from crm.models import FollowUp
+        context['overdue_followups'] = FollowUp.objects.filter(
+            is_completed=False,
+            scheduled_at__lt=timezone.now()
+        ).count()
+        
         return context
 
 

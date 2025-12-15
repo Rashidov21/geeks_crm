@@ -3,13 +3,13 @@ URL configuration for geeks_crm project.
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
+from accounts.dashboard_views import DashboardView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', RedirectView.as_view(pattern_name='analytics:dashboard', permanent=False)),
+    path('', DashboardView.as_view(), name='dashboard'),
     path('accounts/', include('accounts.urls')),
     path('courses/', include('courses.urls')),
     path('attendance/', include('attendance.urls')),

@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import dashboard_views
 
 app_name = 'accounts'
 
@@ -20,5 +21,9 @@ urlpatterns = [
     # Profile
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
+    
+    # Dashboards
+    path('dashboard/student/', dashboard_views.StudentDashboardView.as_view(), name='student_dashboard'),
+    path('dashboard/mentor/', dashboard_views.MentorDashboardView.as_view(), name='mentor_dashboard'),
 ]
 

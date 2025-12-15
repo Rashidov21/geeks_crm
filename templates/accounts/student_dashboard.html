@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mening Dashboard | GEEKS CRM{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <i class="fas fa-home text-blue-600"></i>
+        Salom, {{ user.first_name|default:user.username }}!
+      </h1>
+      <p class="text-gray-600 mt-1">Sizning o'qish jarayoningiz</p>
+    </div>
+    <div class="text-right">
+      <div class="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-4 py-2 rounded-lg shadow-md">
+        <i class="fas fa-star text-xl"></i>
+        <div>
+          <p class="text-xs opacity-90">Mening ballarim</p>
+          <p class="text-2xl font-bold">{{ my_points }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Progress Card -->
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-blue-100 text-sm">O'zlashtirish</p>
+          <p class="text-3xl font-bold mt-1">{{ avg_progress|floatformat:0 }}%</p>
+        </div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-chart-line text-2xl"></i>
+        </div>
+      </div>
+      <div class="mt-3 bg-white bg-opacity-20 rounded-full h-2">
+        <div class="bg-white h-2 rounded-full transition-all" style="width: {{ avg_progress }}%"></div>
+      </div>
+    </div>
+
+    <!-- Attendance Card -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-green-100 text-sm">Davomat (bu oy)</p>
+          <p class="text-3xl font-bold mt-1">{{ my_attendance_percentage|floatformat:0 }}%</p>
+        </div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-calendar-check text-2xl"></i>
+        </div>
+      </div>
+      <p class="text-green-100 text-xs mt-2">
+        <i class="fas fa-check-circle"></i> {{ my_present_count }} keldi / {{ my_attendance_count }} jami
+      </p>
+    </div>
+
+    <!-- Homework Card -->
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl shadow-lg p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-orange-100 text-sm">Vazifalar</p>
+          <p class="text-3xl font-bold mt-1">{{ pending_homeworks.count }}</p>
+        </div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-tasks text-2xl"></i>
+        </div>
+      </div>
+      {% if overdue_homeworks > 0 %}
+        <p class="text-orange-100 text-xs mt-2">
+          <i class="fas fa-exclamation-triangle"></i> {{ overdue_homeworks }} kechikkan
+        </p>
+      {% else %}
+        <p class="text-orange-100 text-xs mt-2">
+          <i class="fas fa-check"></i> Kechikish yo'q
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Level Card -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-5">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-purple-100 text-sm">Mening darajam</p>
+          <p class="text-3xl font-bold mt-1">Level {{ my_level }}</p>
+        </div>
+        <div class="bg-white bg-opacity-20 rounded-full p-3">
+          <i class="fas fa-trophy text-2xl"></i>
+        </div>
+      </div>
+      <p class="text-purple-100 text-xs mt-2">
+        <i class="fas fa-award"></i> {{ my_badges.count }} badgega ega
+      </p>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column (2/3) -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Pending Homeworks -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-tasks text-orange-600"></i>
+            Bajarilmagan vazifalar
+          </h2>
+          <a href="{% url 'homework:homework_list' %}" class="text-sm text-blue-600 hover:underline">Barchasi →</a>
+        </div>
+        {% if pending_homeworks %}
+          <div class="space-y-3">
+            {% for hw in pending_homeworks %}
+              <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <div class="flex items-start gap-3 flex-1">
+                  <div class="bg-orange-100 text-orange-600 rounded-lg p-2">
+                    <i class="fas fa-clipboard-list"></i>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-semibold text-gray-800">{{ hw.lesson.topic_covered|truncatewords:8 }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ hw.lesson.group.name }}</p>
+                    <div class="flex items-center gap-2 mt-1 text-xs">
+                      <span class="{% if hw.deadline < now.date %}text-red-600{% else %}text-gray-500{% endif %}">
+                        <i class="fas fa-clock"></i> Muddati: {{ hw.deadline }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <a href="{% url 'homework:homework_detail' hw.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                  Bajarish
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-check-circle text-5xl mb-3 text-green-500"></i>
+            <p class="font-medium">Barcha vazifalar bajarildi!</p>
+            <p class="text-sm mt-1">Sizda bajarilmagan vazifalar yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Recent Lessons -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-calendar text-blue-600"></i>
+            Bu haftaning darslari
+          </h2>
+        </div>
+        {% if recent_lessons %}
+          <div class="space-y-2">
+            {% for lesson in recent_lessons %}
+              <div class="flex items-center justify-between p-3 border-l-4 {% if lesson.date == today %}border-blue-500 bg-blue-50{% else %}border-gray-300 bg-gray-50{% endif %} rounded-r-lg">
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="text-center min-w-[50px]">
+                    <p class="text-xs text-gray-500">{{ lesson.date|date:"D" }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ lesson.date|date:"d" }}</p>
+                    <p class="text-xs text-gray-500">{{ lesson.date|date:"M" }}</p>
+                  </div>
+                  <div class="flex-1">
+                    <p class="font-semibold text-gray-800">{{ lesson.group.name }}</p>
+                    <p class="text-sm text-gray-600">{{ lesson.topic_covered|default:"Mavzu belgilanmagan" }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-medium text-gray-700">{{ lesson.start_time }} - {{ lesson.end_time }}</p>
+                    <p class="text-xs text-gray-500">{{ lesson.room.name }}</p>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-calendar-times text-4xl mb-2 opacity-30"></i>
+            <p>Bu hafta darslar rejalashtirilmagan</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Upcoming Exams -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-file-alt text-red-600"></i>
+            Yaqinlashayotgan imtihonlar
+          </h2>
+          <a href="{% url 'exams:exam_list' %}" class="text-sm text-blue-600 hover:underline">Barchasi →</a>
+        </div>
+        {% if upcoming_exams %}
+          <div class="space-y-3">
+            {% for exam in upcoming_exams %}
+              <div class="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg">
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="bg-red-100 text-red-600 rounded-lg p-3">
+                    <i class="fas fa-pencil-alt text-xl"></i>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-800">{{ exam.title }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ exam.group.name }} • {{ exam.get_exam_type_display }}</p>
+                    <p class="text-xs text-red-600 mt-1">
+                      <i class="fas fa-calendar"></i> {{ exam.date }} • {{ exam.duration }} daqiqa
+                    </p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                    {{ exam.total_marks }} ball
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-clipboard-check text-4xl mb-2 opacity-30"></i>
+            <p>Hozircha rejalashtirilgan imtihonlar yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column (1/3) -->
+    <div class="space-y-6">
+      <!-- My Groups -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+          <i class="fas fa-users text-indigo-600"></i>
+          Mening guruhlarim
+        </h2>
+        {% if my_groups %}
+          <div class="space-y-3">
+            {% for group in my_groups %}
+              <a href="{% url 'courses:group_detail' group.id %}" class="block p-3 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg hover:shadow-md transition">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-book text-indigo-600"></i>
+                  <p class="font-semibold text-gray-800 text-sm">{{ group.name }}</p>
+                </div>
+                <p class="text-xs text-gray-600">{{ group.course.name }}</p>
+                <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                  <span><i class="fas fa-calendar"></i> {{ group.start_date }}</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-users-slash text-3xl mb-2 opacity-30"></i>
+            <p class="text-sm">Sizda guruh yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- My Progress -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+          <i class="fas fa-chart-pie text-green-600"></i>
+          Mening progressim
+        </h2>
+        {% if my_progress %}
+          <div class="space-y-4">
+            {% for progress in my_progress %}
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <p class="text-sm font-medium text-gray-700">{{ progress.course.name|truncatewords:3 }}</p>
+                  <span class="text-sm font-bold text-gray-900">{{ progress.progress_percentage|floatformat:0 }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all" style="width: {{ progress.progress_percentage }}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">{{ progress.completed_topics }} / {{ progress.total_topics }} mavzu</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-chart-line text-3xl mb-2 opacity-30"></i>
+            <p class="text-sm">Progress ma'lumotlari yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- My Badges -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-medal text-yellow-500"></i>
+            Mening badgelarim
+          </h2>
+          <a href="{% url 'gamification:overall_ranking' %}" class="text-xs text-blue-600 hover:underline">Ko'proq</a>
+        </div>
+        {% if my_badges %}
+          <div class="grid grid-cols-3 gap-3">
+            {% for student_badge in my_badges %}
+              <div class="text-center group cursor-pointer" title="{{ student_badge.badge.description }}">
+                <div class="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-lg p-3 group-hover:shadow-lg transition">
+                  <i class="fas {{ student_badge.badge.icon }} text-3xl text-yellow-600"></i>
+                </div>
+                <p class="text-xs font-medium text-gray-700 mt-2">{{ student_badge.badge.name|truncatewords:2 }}</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-award text-3xl mb-2 opacity-30"></i>
+            <p class="text-sm">Hali badge yo'q</p>
+            <p class="text-xs mt-1">Ko'proq ball to'plang!</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- My Rankings -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+          <i class="fas fa-ranking-star text-purple-600"></i>
+          Guruh reyting
+        </h2>
+        {% if my_rankings %}
+          <div class="space-y-2">
+            {% for ranking in my_rankings %}
+              <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg">
+                <div>
+                  <p class="text-sm font-semibold text-gray-800">{{ ranking.group.name|truncatewords:3 }}</p>
+                  <p class="text-xs text-gray-600 mt-1">{{ ranking.total_points }} ball</p>
+                </div>
+                <div class="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">
+                  #{{ ranking.rank }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-6 text-gray-500">
+            <i class="fas fa-chart-bar text-3xl mb-2 opacity-30"></i>
+            <p class="text-sm">Reyting ma'lumotlari yo'q</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

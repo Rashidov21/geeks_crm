@@ -1,24 +1,136 @@
 {% extends 'base.html' %}
-{% block title %}Profilni tahrirlash{% endblock %}
+{% load static %}
+{% block title %}Profilni tahrirlash | GEEKS CRM{% endblock %}
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6">
-  <h1 class="text-2xl font-bold mb-4">Profilni tahrirlash</h1>
-  <form method="post" enctype="multipart/form-data" class="space-y-4">
-    {% csrf_token %}
-    {% for field in form %}
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}
-          <p class="text-red-500 text-xs mt-1">{{ field.errors }}</p>
-        {% endif %}
+<div class="max-w-3xl mx-auto">
+  <!-- Header -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div class="flex items-center gap-4">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full p-4">
+        <i class="fas fa-user-edit text-3xl text-white"></i>
       </div>
-    {% endfor %}
-    <div class="flex justify-end space-x-2">
-      <a href="{% url 'accounts:profile' %}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Bekor qilish</a>
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Saqlash</button>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Profilni tahrirlash</h1>
+        <p class="text-gray-600 mt-1">Shaxsiy ma'lumotlaringizni yangilang</p>
+      </div>
     </div>
-  </form>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-white rounded-xl shadow-lg p-8">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-red-500 text-xl mt-0.5"></i>
+            <div>
+              <p class="font-semibold text-red-800">Xato</p>
+              {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Personal Information -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-id-card text-blue-600"></i>
+          Shaxsiy ma'lumotlar
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {% for field in form %}
+            {% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'email' or field.name == 'phone' %}
+              <div class="{% if field.name == 'email' or field.name == 'phone' %}col-span-full{% endif %}">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-{% if field.name == 'first_name' %}user{% elif field.name == 'last_name' %}user{% elif field.name == 'email' %}envelope{% else %}phone{% endif %} text-blue-600 mr-1"></i>
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {% if field.field.widget.input_type == 'textarea' %}
+                  <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                            {% if field.field.required %}required{% endif %}
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            rows="3">{{ field.value|default:'' }}</textarea>
+                {% else %}
+                  <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                         name="{{ field.name }}" 
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         {% if field.field.required %}required{% endif %}
+                         class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                         placeholder="{{ field.label }}">
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}
+                  </p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Avatar -->
+      {% for field in form %}
+        {% if field.name == 'avatar' %}
+          <div class="border-t pt-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <i class="fas fa-image text-blue-600"></i>
+              Profil rasmi
+            </h3>
+            <div class="flex items-center gap-6">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-blue-200">
+              {% else %}
+                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-blue-200">
+                  {{ user.first_name.0|upper|default:user.username.0|upper }}
+                </div>
+              {% endif %}
+              <div class="flex-1">
+                <label for="{{ field.id_for_label }}" class="cursor-pointer inline-flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-6 py-3 rounded-lg border-2 border-blue-200 transition-all font-medium">
+                  <i class="fas fa-upload"></i>
+                  <span>Yangi rasm yuklash</span>
+                  <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" class="hidden" accept="image/*">
+                </label>
+                <p class="text-xs text-gray-500 mt-2">PNG, JPG yoki GIF (max. 5MB)</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-6 border-t">
+        <a href="{% url 'accounts:profile' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+          <i class="fas fa-times"></i>
+          <span>Bekor qilish</span>
+        </a>
+        <button type="submit" 
+                @click="loading=true"
+                :disabled="loading"
+                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+          <i class="fas fa-save" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
+          <span x-text="loading ? 'Saqlanmoqda...' : 'Saqlash'">Saqlash</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Help Section -->
+  <div class="mt-6 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+    <div class="flex items-start gap-3">
+      <i class="fas fa-info-circle text-blue-600 text-xl mt-0.5"></i>
+      <div>
+        <h4 class="font-semibold text-blue-900 mb-2">Yordam kerakmi?</h4>
+        <p class="text-sm text-blue-800">Agar profilingizni yangilashda muammo bo'lsa, administrator bilan bog'laning.</p>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 

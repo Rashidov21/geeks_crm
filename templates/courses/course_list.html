@@ -1,26 +1,147 @@
 {% extends 'base.html' %}
-{% block title %}Kurslar{% endblock %}
+{% load static %}
+{% block title %}Kurslar | GEEKS CRM{% endblock %}
 {% block content %}
-<div class="space-y-4">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <h1 class="text-2xl font-bold">Kurslar</h1>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for course in course_list %}
-    <div class="bg-white shadow rounded-lg p-4 space-y-2">
-      <p class="text-sm text-gray-500">{{ course.branch.name }}</p>
-      <h3 class="text-lg font-semibold">{{ course.name }}</h3>
-      <p class="text-sm text-gray-600 line-clamp-2">{{ course.description|default:"" }}</p>
-      <div class="flex items-center justify-between text-sm text-gray-600">
-        <span>Davomiyligi: {{ course.duration_weeks }} hafta</span>
-        <span class="font-semibold text-blue-600">{{ course.price }} so'm</span>
-      </div>
-      <a href="{% url 'courses:course_detail' course.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Batafsil</a>
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <i class="fas fa-book text-blue-600"></i>
+        Kurslar
+      </h1>
+      <p class="text-gray-600 mt-1">Barcha mavjud kurslar ro'yxati</p>
     </div>
-    {% empty %}
-    <p class="text-gray-500 text-sm">Kurslar mavjud emas.</p>
-    {% endfor %}
+    {% if user.role == 'admin' or user.role == 'manager' %}
+      <button x-data @click="$dispatch('open-modal', 'create-course')" 
+              class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-medium">
+        <i class="fas fa-plus-circle"></i>
+        <span>Yangi kurs</span>
+      </button>
+    {% endif %}
   </div>
+
+  <!-- Filter & Search -->
+  <div class="bg-white rounded-xl shadow-md p-4">
+    <div class="flex flex-col md:flex-row gap-3">
+      <div class="flex-1 relative">
+        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input type="text" placeholder="Kurs nomi bo'yicha qidirish..." 
+               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+      </div>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="">Barcha filiallar</option>
+        <option>Andijon</option>
+        <option>Toshkent</option>
+      </select>
+      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <option value="">Status</option>
+        <option>Aktiv</option>
+        <option>Nofaol</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Courses Grid -->
+  {% if course_list %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for course in courses %}
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border-t-4 {% if course.is_active %}border-green-500{% else %}border-gray-400{% endif %}">
+          <!-- Header with gradient -->
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
+            <div class="relative">
+              <div class="flex items-start justify-between mb-3">
+                <span class="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                  <i class="fas fa-map-marker-alt"></i>
+                  {{ course.branch.name }}
+                </span>
+                {% if course.is_active %}
+                  <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium" title="Aktiv kurs">
+                    <i class="fas fa-check-circle"></i>
+                  </span>
+                {% else %}
+                  <span class="bg-gray-500 text-white px-2 py-1 rounded-full text-xs font-medium" title="Nofaol kurs">
+                    <i class="fas fa-pause-circle"></i>
+                  </span>
+                {% endif %}
+              </div>
+              <h3 class="text-xl font-bold text-white mb-2">{{ course.name }}</h3>
+              <p class="text-blue-100 text-sm line-clamp-2 min-h-[40px]">
+                {{ course.description|default:"Tavsif kiritilmagan" }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="p-6 space-y-4">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-center">
+                <i class="fas fa-clock text-purple-600 mb-1"></i>
+                <p class="text-xs text-gray-600">Davomiyligi</p>
+                <p class="text-lg font-bold text-purple-700">{{ course.duration_weeks }} <span class="text-xs font-normal">hafta</span></p>
+              </div>
+              <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                <i class="fas fa-dollar-sign text-green-600 mb-1"></i>
+                <p class="text-xs text-gray-600">Narxi</p>
+                <p class="text-lg font-bold text-green-700">{{ course.price|floatformat:0 }}</p>
+              </div>
+            </div>
+
+            <!-- Info List -->
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="text-gray-600 flex items-center gap-2">
+                  <i class="fas fa-layer-group text-blue-600"></i>
+                  Modullar
+                </span>
+                <span class="font-semibold text-gray-800">{{ course.modules.count|default:"0" }} ta</span>
+              </div>
+              <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span class="text-gray-600 flex items-center gap-2">
+                  <i class="fas fa-users text-green-600"></i>
+                  Guruhlar
+                </span>
+                <span class="font-semibold text-gray-800">{{ course.groups.count|default:"0" }} ta</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 pt-3 border-t border-gray-200">
+              <a href="{% url 'courses:course_detail' course.pk %}" 
+                 class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-eye"></i>
+                <span>Ko'rish</span>
+              </a>
+              {% if user.role == 'admin' or user.role == 'manager' %}
+                <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition" title="Tahrirlash">
+                  <i class="fas fa-edit"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+      <div class="max-w-md mx-auto">
+        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-book text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Kurslar topilmadi</h3>
+        <p class="text-gray-600 mb-6">Hozircha hech qanday kurs mavjud emas.</p>
+        {% if user.role == 'admin' or user.role == 'manager' %}
+          <button class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+            <i class="fas fa-plus"></i>
+            <span>Birinchi kursni yaratish</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}
 

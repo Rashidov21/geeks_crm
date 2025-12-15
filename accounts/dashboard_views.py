@@ -172,14 +172,14 @@ class MentorDashboardView(LoginRequiredMixin, TemplateView):
         context['todays_lessons'] = Lesson.objects.filter(
             group__mentor=mentor,
             date=today
-        ).select_related('group', 'room').order_by('start_time')
+        ).select_related('group', 'group__room').order_by('start_time')
         
         # This Week's Lessons
         context['this_week_lessons'] = Lesson.objects.filter(
             group__mentor=mentor,
             date__gte=this_week_start.date(),
             date__lt=today + timedelta(days=7)
-        ).select_related('group', 'room').order_by('date', 'start_time')[:10]
+        ).select_related('group', 'group__room').order_by('date', 'start_time')[:10]
         
         # Homework to Grade
         context['homeworks_to_grade'] = Homework.objects.filter(

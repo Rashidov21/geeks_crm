@@ -1,197 +1,176 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Uy vazifalari | GEEKS CRM{% endblock %}
+
+{% block title %}Uy vazifalari{% endblock %}
+{% block page_title %}Uy vazifalari{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-        <i class="fas fa-tasks text-orange-600"></i>
-        Uy vazifalari
-      </h1>
-      <p class="text-gray-600 mt-1">O'quvchilarning uy vazifalari ro'yxati</p>
-    </div>
-    {% if user.role == 'mentor' or user.role == 'admin' or user.role == 'manager' %}
-      <a href="{% url 'homework:homework_create' %}" 
-         class="flex items-center gap-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-medium">
-        <i class="fas fa-plus-circle"></i>
-        <span>Yangi vazifa</span>
-      </a>
-    {% endif %}
-  </div>
-
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p class="text-blue-100 text-sm">Umumiy vazifalar</p>
-          <p class="text-3xl font-bold mt-1">{{ total_homeworks|default:"0" }}</p>
-        </div>
-        <i class="fas fa-clipboard-list text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-green-100 text-sm">Topshirilgan</p>
-          <p class="text-3xl font-bold mt-1">{{ submitted_count|default:"0" }}</p>
-        </div>
-        <i class="fas fa-check-circle text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-yellow-100 text-sm">Kutilmoqda</p>
-          <p class="text-3xl font-bold mt-1">{{ pending_count|default:"0" }}</p>
-        </div>
-        <i class="fas fa-hourglass-half text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-red-100 text-sm">Kechikkan</p>
-          <p class="text-3xl font-bold mt-1">{{ overdue_count|default:"0" }}</p>
-        </div>
-        <i class="fas fa-exclamation-triangle text-3xl opacity-30"></i>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-white rounded-xl shadow-md p-4">
-    <div class="flex flex-col md:flex-row gap-3">
-      <div class="flex-1 relative">
-        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="Qidirish..." 
-               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-      </div>
-      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-        <option value="">Barcha statuslar</option>
-        <option value="submitted">Topshirilgan</option>
-        <option value="pending">Kutilmoqda</option>
-        <option value="overdue">Kechikkan</option>
-      </select>
-      <input type="date" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
-    </div>
-  </div>
-
-  <!-- Homeworks List -->
-  {% if homeworks %}
-    <div class="grid grid-cols-1 gap-4">
-      {% for hw in homeworks %}
-        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-l-4 
-                    {% if hw.is_submitted %}border-green-500
-                    {% elif hw.is_overdue %}border-red-500
-                    {% else %}border-yellow-500{% endif %}">
-          <div class="p-6">
-            <div class="flex items-start justify-between gap-4">
-              <!-- Left: Content -->
-              <div class="flex-1">
-                <div class="flex items-start gap-4">
-                  <!-- Icon -->
-                  <div class="{% if hw.is_submitted %}bg-green-100 text-green-600
-                              {% elif hw.is_overdue %}bg-red-100 text-red-600
-                              {% else %}bg-yellow-100 text-yellow-600{% endif %} 
-                              rounded-lg p-3 mt-1">
-                    <i class="fas {% if hw.is_submitted %}fa-check-circle{% elif hw.is_overdue %}fa-exclamation-triangle{% else %}fa-clock{% endif %} text-2xl"></i>
-                  </div>
-                  
-                  <!-- Info -->
-                  <div class="flex-1">
-                    <div class="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 class="text-lg font-bold text-gray-900">{{ hw.title|default:hw.lesson.topic_covered|truncatewords:10 }}</h3>
-                        <p class="text-sm text-gray-600 mt-1">{{ hw.description|default:""|truncatewords:15 }}</p>
-                      </div>
-                      <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full shadow-sm ml-4
-                        {% if hw.is_submitted %}bg-green-100 text-green-800 border-2 border-green-500
-                        {% elif hw.is_overdue %}bg-red-100 text-red-800 border-2 border-red-500
-                        {% else %}bg-yellow-100 text-yellow-800 border-2 border-yellow-500{% endif %}">
-                        <i class="fas {% if hw.is_submitted %}fa-check{% elif hw.is_overdue %}fa-times{% else %}fa-hourglass-half{% endif %}"></i>
-                        {% if hw.is_submitted %}Topshirildi{% elif hw.is_overdue %}Kechikdi{% else %}Kutilmoqda{% endif %}
-                      </span>
-                    </div>
-
-                    <!-- Meta Info -->
-                    <div class="flex flex-wrap items-center gap-4 mt-3 text-sm">
-                      <div class="flex items-center gap-2 text-gray-600">
-                        <i class="fas fa-user text-blue-600"></i>
-                        <span>{{ hw.student.get_full_name|default:hw.student.username }}</span>
-                      </div>
-                      <div class="flex items-center gap-2 text-gray-600">
-                        <i class="fas fa-book text-purple-600"></i>
-                        <span>{{ hw.lesson.group.name }}</span>
-                      </div>
-                      <div class="flex items-center gap-2 {% if hw.is_overdue %}text-red-600 font-semibold{% else %}text-gray-600{% endif %}">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>Muddat: {{ hw.deadline }}</span>
-                      </div>
-                      {% if hw.is_submitted %}
-                        <div class="flex items-center gap-2 text-green-600">
-                          <i class="fas fa-check-double"></i>
-                          <span>Topshirildi: {{ hw.submitted_at|date:"d M, H:i" }}</span>
-                        </div>
-                      {% endif %}
-                      {% if hw.grade %}
-                        <div class="flex items-center gap-2 text-blue-600 font-semibold">
-                          <i class="fas fa-star"></i>
-                          <span>Ball: {{ hw.grade.grade }}/100</span>
-                        </div>
-                      {% endif %}
-                    </div>
-
-                    {% if hw.submission_file %}
-                      <div class="mt-3 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-flex">
-                        <i class="fas fa-paperclip text-blue-600"></i>
-                        <span>Fayl biriktirilgan</span>
-                      </div>
-                    {% endif %}
-                  </div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tasks text-orange-400"></i>
                 </div>
-              </div>
-
-              <!-- Right: Actions -->
-              <div class="flex flex-col gap-2">
-                <a href="{% url 'homework:homework_detail' hw.pk %}" 
-                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium text-sm flex items-center gap-2 whitespace-nowrap">
-                  <i class="fas fa-eye"></i>
-                  <span>Ko'rish</span>
-                </a>
-                {% if user.role == 'mentor' and hw.is_submitted and not hw.grade %}
-                  <a href="{% url 'homework:homework_grade' hw.pk %}" 
-                     class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition font-medium text-sm flex items-center gap-2 whitespace-nowrap">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Baholash</span>
-                  </a>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+                Uy vazifalari
+            </h1>
+            <p class="text-slate-400 mt-1">Barcha uy vazifalari ro'yxati</p>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-      <div class="max-w-md mx-auto">
-        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-clipboard-list text-4xl text-gray-400"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Uy vazifalari topilmadi</h3>
-        <p class="text-gray-600 mb-6">Hozircha hech qanday uy vazifa mavjud emas.</p>
-        {% if user.role == 'mentor' or user.role == 'admin' or user.role == 'manager' %}
-          <a href="{% url 'homework:homework_create' %}" 
-             class="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition">
+        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+        <a href="{% url 'homework:homework_create' %}" 
+           class="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
             <i class="fas fa-plus"></i>
-            <span>Birinchi vazifani yaratish</span>
-          </a>
+            <span>Yangi vazifa</span>
+        </a>
         {% endif %}
-      </div>
     </div>
-  {% endif %}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Jami vazifalar</p>
+                    <p class="text-2xl font-bold text-white">{{ total_homework|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tasks text-orange-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Topshirilgan</p>
+                    <p class="text-2xl font-bold text-green-400">{{ submitted_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Kutilmoqda</p>
+                    <p class="text-2xl font-bold text-yellow-400">{{ pending_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-hourglass-half text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Muddati o'tgan</p>
+                    <p class="text-2xl font-bold text-red-400">{{ overdue_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-circle text-red-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <form method="get" class="flex flex-col md:flex-row gap-3">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Vazifa nomi bo'yicha qidirish..."
+                       class="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-orange-500">
+            </div>
+            <select name="group" class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500">
+                <option value="">Barcha guruhlar</option>
+            </select>
+            <select name="status" class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500">
+                <option value="">Barcha statuslar</option>
+                <option value="submitted">Topshirilgan</option>
+                <option value="pending">Kutilmoqda</option>
+                <option value="overdue">Muddati o'tgan</option>
+            </select>
+            <button type="submit" class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition">
+                <i class="fas fa-filter mr-2"></i>Filtrlash
+            </button>
+        </form>
+    </div>
+
+    <!-- Homework Grid -->
+    {% if homeworks %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for hw in homeworks %}
+        <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 hover:border-slate-600 transition-all">
+            <div class="p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-white text-lg">{{ hw.title }}</h3>
+                        <p class="text-slate-400 text-sm">{{ hw.lesson.group.name }}</p>
+                    </div>
+                    {% if hw.deadline < now %}
+                    <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">Muddati o'tgan</span>
+                    {% elif hw.grade %}
+                    <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Baholangan</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">Kutilmoqda</span>
+                    {% endif %}
+                </div>
+                
+                <p class="text-slate-300 text-sm mb-4 line-clamp-2">{{ hw.description|default:"Tavsif yo'q"|truncatechars:80 }}</p>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400"><i class="fas fa-calendar mr-2 text-blue-400"></i>Muddat</span>
+                        <span class="text-white">{{ hw.deadline|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400"><i class="fas fa-star mr-2 text-yellow-400"></i>Max ball</span>
+                        <span class="text-white">{{ hw.max_score }}</span>
+                    </div>
+                    {% if hw.grade %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400"><i class="fas fa-check-circle mr-2 text-green-400"></i>Baho</span>
+                        <span class="text-green-400 font-bold">{{ hw.grade.grade }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 pt-4 mt-4 border-t border-slate-700">
+                    <a href="{% url 'homework:homework_detail' hw.pk %}" 
+                       class="flex-1 text-center bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i>Ko'rish
+                    </a>
+                    {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+                    <a href="{% url 'homework:homework_edit' hw.pk %}" 
+                       class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition" title="Tahrirlash">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% if not hw.grade %}
+                    <a href="{% url 'homework:homework_grade' hw.pk %}" 
+                       class="bg-green-500/20 hover:bg-green-500/30 text-green-400 px-4 py-2 rounded-lg transition" title="Baholash">
+                        <i class="fas fa-star"></i>
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-slate-800 rounded-xl p-12 text-center border border-slate-700">
+        <div class="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-tasks text-4xl text-slate-500"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Vazifalar topilmadi</h3>
+        <p class="text-slate-400 mb-6">Hozircha hech qanday vazifa mavjud emas.</p>
+        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+        <a href="{% url 'homework:homework_create' %}" class="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition">
+            <i class="fas fa-plus"></i>Yangi vazifa yaratish
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-

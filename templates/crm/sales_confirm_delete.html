@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Sotuvchini o'chirish{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10">
+    <div class="bg-gray-800 rounded-xl shadow-lg p-6">
+        <!-- Warning Icon -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-times text-red-400 text-3xl"></i>
+            </div>
+            <h1 class="text-xl font-bold text-white">Sotuvchini o'chirish</h1>
+            <p class="text-gray-400 mt-2">Haqiqatan ham bu sotuvchini o'chirmoqchimisiz?</p>
+        </div>
+
+        <!-- User Info -->
+        <div class="bg-gray-700/50 rounded-lg p-4 mb-6">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-tie text-blue-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-white">{{ object.user.get_full_name }}</h3>
+                    <p class="text-gray-400 text-sm">{{ object.user.email }}</p>
+                    <p class="text-gray-500 text-xs mt-1">
+                        <i class="fas fa-phone mr-1"></i>{{ object.user.phone|default:"Telefon yo'q" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Warning -->
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-gray-700/30 rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-white">{{ object.leads_count|default:0 }}</p>
+                <p class="text-gray-400 text-xs">Lidlar</p>
+            </div>
+            <div class="bg-gray-700/30 rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-white">{{ object.followups_count|default:0 }}</p>
+                <p class="text-gray-400 text-xs">Follow-uplar</p>
+            </div>
+        </div>
+
+        <!-- Warning Message -->
+        <div class="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6"
+             x-data="{ expanded: false }">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                <div>
+                    <p class="text-red-300 text-sm font-medium">Diqqat!</p>
+                    <p class="text-red-400/70 text-xs mt-1">
+                        Sotuvchi o'chirilganda uning barcha lidlari va follow-uplari boshqa sotuvchiga o'tkazilishi kerak.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <form method="post" class="flex gap-3">
+            {% csrf_token %}
+            <a href="{% url 'crm:sales_list' %}" 
+               class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-3 px-4 rounded-lg transition-colors text-center">
+                <i class="fas fa-arrow-left mr-2"></i>Bekor qilish
+            </a>
+            <button type="submit" 
+                    class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                    onclick="return confirm('Rostdan ham o\'chirmoqchimisiz?')">
+                <i class="fas fa-trash mr-2"></i>O'chirish
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

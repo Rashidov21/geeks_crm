@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geeks CRM - O'quv markazi boshqaruv tizimi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <img src="{% static 'img/logo_white.png' %}" alt="Logo" class="h-10 w-auto">
+                    <span class="text-xl font-bold">Geeks CRM</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-gray-300 hover:text-white transition-colors">Imkoniyatlar</a>
+                    <a href="#modules" class="text-gray-300 hover:text-white transition-colors">Modullar</a>
+                    <a href="#contact" class="text-gray-300 hover:text-white transition-colors">Aloqa</a>
+                </div>
+                <a href="{% url 'accounts:login' %}" 
+                   class="bg-indigo-500 hover:bg-indigo-600 px-6 py-2 rounded-lg font-medium transition-colors">
+                    Kirish
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6" 
+                x-data="{ show: false }" x-init="setTimeout(() => show = true, 100)"
+                x-show="show" x-transition:enter="transition ease-out duration-700"
+                x-transition:enter-start="opacity-0 transform -translate-y-4"
+                x-transition:enter-end="opacity-100 transform translate-y-0">
+                O'quv markazingiz uchun <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                    zamonaviy CRM tizimi
+                </span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+                Lidlarni boshqarish, sotuvlarni kuzatish, o'quvchilar va o'qituvchilarni nazorat qilish - 
+                barchasi bitta platformada.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'accounts:login' %}" 
+                   class="bg-indigo-500 hover:bg-indigo-600 px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:scale-105">
+                    <i class="fas fa-rocket mr-2"></i>Boshlash
+                </a>
+                <a href="#features" 
+                   class="glass hover:bg-white/10 px-8 py-4 rounded-xl font-semibold text-lg transition-all">
+                    <i class="fas fa-play-circle mr-2"></i>Ko'proq bilish
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Asosiy imkoniyatlar</h2>
+            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+                Bizning CRM tizimimiz o'quv markazlari uchun maxsus ishlab chiqilgan
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group"
+                     x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-users text-blue-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Lidlarni boshqarish</h3>
+                    <p class="text-gray-400">Kanban board, avtomatik taqsimlash, follow-up eslatmalar va to'liq tarix.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                    <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-line text-green-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Sotuvlar statistikasi</h3>
+                    <p class="text-gray-400">Real vaqtda KPI, konversiya, sotuvchilar reytingi va batafsil hisobotlar.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                    <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-graduation-cap text-purple-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">O'quvchilar nazorati</h3>
+                    <p class="text-gray-400">Davomat, uy vazifalari, imtihonlar va gamifikatsiya tizimi.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                    <div class="w-14 h-14 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fab fa-telegram text-orange-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Telegram integratsiya</h3>
+                    <p class="text-gray-400">Avtomatik bildirishnomalar, eslatmalar va ota-onalar uchun hisobotlar.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                    <div class="w-14 h-14 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-file-excel text-cyan-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Import/Export</h3>
+                    <p class="text-gray-400">Google Sheets va Excel bilan integratsiya, oson ma'lumot almashinuvi.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all group">
+                    <div class="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-wallet text-pink-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Moliya nazorati</h3>
+                    <p class="text-gray-400">To'lovlar, qarzdorlik, chegirmalar va moliyaviy hisobotlar.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modules Section -->
+    <section id="modules" class="py-20 px-4 bg-black/20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Tizim modullari</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-user-tie text-3xl text-blue-400 mb-2"></i>
+                    <p class="font-medium">CRM</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-book text-3xl text-green-400 mb-2"></i>
+                    <p class="font-medium">Kurslar</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-users text-3xl text-purple-400 mb-2"></i>
+                    <p class="font-medium">Guruhlar</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-calendar-check text-3xl text-orange-400 mb-2"></i>
+                    <p class="font-medium">Davomat</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-tasks text-3xl text-cyan-400 mb-2"></i>
+                    <p class="font-medium">Uy vazifa</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-file-alt text-3xl text-pink-400 mb-2"></i>
+                    <p class="font-medium">Imtihonlar</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-trophy text-3xl text-yellow-400 mb-2"></i>
+                    <p class="font-medium">Gamifikatsiya</p>
+                </div>
+                <div class="glass rounded-xl p-4 text-center hover:bg-white/10 transition-all">
+                    <i class="fas fa-chart-pie text-3xl text-red-400 mb-2"></i>
+                    <p class="font-medium">Analitika</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 px-4">
+        <div class="max-w-3xl mx-auto text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Bog'lanish</h2>
+            <p class="text-gray-400 mb-8">Savollaringiz bormi? Biz bilan bog'laning!</p>
+            
+            <div class="glass rounded-2xl p-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <a href="tel:+998901234567" class="flex flex-col items-center gap-2 hover:text-indigo-400 transition-colors">
+                        <div class="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-phone text-indigo-400"></i>
+                        </div>
+                        <span>+998 90 123 45 67</span>
+                    </a>
+                    <a href="mailto:info@geekscrm.uz" class="flex flex-col items-center gap-2 hover:text-indigo-400 transition-colors">
+                        <div class="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-envelope text-indigo-400"></i>
+                        </div>
+                        <span>info@geekscrm.uz</span>
+                    </a>
+                    <a href="https://t.me/geekscrm" class="flex flex-col items-center gap-2 hover:text-indigo-400 transition-colors">
+                        <div class="w-12 h-12 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                            <i class="fab fa-telegram text-indigo-400"></i>
+                        </div>
+                        <span>@geekscrm</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-4 border-t border-white/10">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <img src="{% static 'img/logo_white.png' %}" alt="Logo" class="h-8 w-auto">
+                <span class="font-semibold">Geeks CRM</span>
+            </div>
+            <p class="text-gray-400 text-sm">© 2024 Geeks Academy. Barcha huquqlar himoyalangan.</p>
+        </div>
+    </footer>
+</body>
+</html>
+

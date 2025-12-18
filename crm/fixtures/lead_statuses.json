@@ -4,66 +4,59 @@
         "pk": 1,
         "fields": {
             "name": "Yangi",
-            "slug": "new",
+            "code": "new",
             "color": "#3B82F6",
-            "order": 1,
-            "is_active": true
+            "order": 1
         }
     },
     {
         "model": "crm.leadstatus",
         "pk": 2,
         "fields": {
-            "name": "Bog'lanildi",
-            "slug": "contacted",
+            "name": "Aloqa qilindi",
+            "code": "contacted",
             "color": "#8B5CF6",
-            "order": 2,
-            "is_active": true
+            "order": 2
         }
     },
     {
         "model": "crm.leadstatus",
         "pk": 3,
         "fields": {
-            "name": "Sinov darsiga yozildi",
-            "slug": "trial",
+            "name": "Sinovga yozildi",
+            "code": "trial_registered",
             "color": "#F59E0B",
-            "order": 3,
-            "is_active": true
+            "order": 3
         }
     },
     {
         "model": "crm.leadstatus",
         "pk": 4,
         "fields": {
-            "name": "Sotildi",
-            "slug": "sold",
+            "name": "Kursga yozildi",
+            "code": "enrolled",
             "color": "#10B981",
-            "order": 4,
-            "is_active": true
+            "order": 4
         }
     },
     {
         "model": "crm.leadstatus",
         "pk": 5,
         "fields": {
-            "name": "Yo'qotildi",
-            "slug": "lost",
+            "name": "Yo'qotilgan",
+            "code": "lost",
             "color": "#EF4444",
-            "order": 5,
-            "is_active": true
+            "order": 5
         }
     },
     {
         "model": "crm.leadstatus",
         "pk": 6,
         "fields": {
-            "name": "Reaktivatsiya",
-            "slug": "reactivation",
+            "name": "Qayta aloqa",
+            "code": "reactivation",
             "color": "#EC4899",
-            "order": 6,
-            "is_active": true
+            "order": 6
         }
     }
 ]
-

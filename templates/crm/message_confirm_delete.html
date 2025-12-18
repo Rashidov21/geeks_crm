@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Xabarni o'chirish{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10">
+    <div class="bg-gray-800 rounded-xl shadow-lg p-6">
+        <!-- Warning Icon -->
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-envelope-open text-red-400 text-3xl"></i>
+            </div>
+            <h1 class="text-xl font-bold text-white">Xabarni o'chirish</h1>
+            <p class="text-gray-400 mt-2">Haqiqatan ham bu xabarni o'chirmoqchimisiz?</p>
+        </div>
+
+        <!-- Message Info -->
+        <div class="bg-gray-700/50 rounded-lg p-4 mb-6">
+            <h3 class="font-medium text-white mb-2">{{ object.subject }}</h3>
+            <p class="text-gray-400 text-sm line-clamp-3">{{ object.content|truncatechars:150 }}</p>
+            <p class="text-gray-500 text-xs mt-2">
+                <i class="fas fa-clock mr-1"></i>{{ object.created_at|date:"d.m.Y H:i" }}
+            </p>
+        </div>
+
+        <!-- Warning -->
+        <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-yellow-400 mt-0.5"></i>
+                <p class="text-yellow-300 text-sm">Xabar barcha qabul qiluvchilar uchun o'chiriladi.</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <form method="post" class="flex gap-3">
+            {% csrf_token %}
+            <a href="{% url 'crm:message_list' %}" 
+               class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-3 px-4 rounded-lg transition-colors text-center">
+                <i class="fas fa-arrow-left mr-2"></i>Bekor qilish
+            </a>
+            <button type="submit" 
+                    class="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                <i class="fas fa-trash mr-2"></i>O'chirish
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

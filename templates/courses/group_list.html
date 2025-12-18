@@ -1,24 +1,115 @@
 {% extends 'base.html' %}
+
 {% block title %}Guruhlar{% endblock %}
+{% block page_title %}Guruhlar{% endblock %}
+
 {% block content %}
-<div class="space-y-4">
-  <h1 class="text-2xl font-bold">Guruhlar</h1>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    {% for group in group_list %}
-    <div class="bg-white shadow rounded-lg p-4 space-y-2">
-      <p class="text-sm text-gray-500">{{ group.course.name }}</p>
-      <h3 class="text-lg font-semibold">{{ group.name }}</h3>
-      <p class="text-sm text-gray-600">Xona: {{ group.room.name }}</p>
-      <div class="flex items-center justify-between text-sm text-gray-600">
-        <span>Asosiy: {{ group.enrolled_students_count }}</span>
-        <span>Trial: {{ group.trial_students_count }}</span>
-      </div>
-      <a href="{% url 'courses:group_detail' group.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">Batafsil</a>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <div class="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-teal-400"></i>
+                </div>
+                Guruhlar
+            </h1>
+            <p class="text-slate-400 mt-1">Barcha guruhlar ro'yxati</p>
+        </div>
+        {% if user.role == 'admin' or user.role == 'manager' %}
+        <button class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
+            <i class="fas fa-plus"></i>
+            <span>Yangi guruh</span>
+        </button>
+        {% endif %}
     </div>
-    {% empty %}
-    <p class="text-gray-500 text-sm">Guruhlar topilmadi.</p>
-    {% endfor %}
-  </div>
+
+    <!-- Filters -->
+    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <div class="flex flex-col md:flex-row gap-3">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <input type="text" placeholder="Guruh nomi bo'yicha qidirish..." 
+                       class="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-teal-500">
+            </div>
+            <select class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-teal-500">
+                <option value="">Barcha kurslar</option>
+            </select>
+            <select class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-teal-500">
+                <option value="">Status</option>
+                <option>Aktiv</option>
+                <option>Yakunlangan</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Groups Grid -->
+    {% if groups %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for group in groups %}
+        <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 hover:border-slate-600 transition-all">
+            <div class="bg-gradient-to-r from-teal-600 to-cyan-600 p-4">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">{{ group.name }}</h3>
+                        <p class="text-teal-100 text-sm">{{ group.course.name }}</p>
+                    </div>
+                    {% if group.is_active %}
+                    <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">Aktiv</span>
+                    {% else %}
+                    <span class="bg-slate-500 text-white px-2 py-1 rounded-full text-xs">Yakunlangan</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="p-4 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400"><i class="fas fa-chalkboard-teacher mr-2 text-violet-400"></i>Mentor</span>
+                    <span class="text-white">{{ group.mentor.get_full_name|default:"-" }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400"><i class="fas fa-user-graduate mr-2 text-blue-400"></i>O'quvchilar</span>
+                    <span class="text-white">{{ group.students.count }} / {{ group.max_students }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400"><i class="fas fa-door-open mr-2 text-orange-400"></i>Xona</span>
+                    <span class="text-white">{{ group.room.name|default:"-" }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-slate-400"><i class="fas fa-calendar mr-2 text-green-400"></i>Boshlanish</span>
+                    <span class="text-white">{{ group.start_date|date:"d.m.Y" }}</span>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 pt-3 border-t border-slate-700">
+                    <a href="{% url 'courses:group_detail' group.pk %}" 
+                       class="flex-1 text-center bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i>Ko'rish
+                    </a>
+                    {% if user.role == 'admin' or user.role == 'manager' %}
+                    <a href="{% url 'courses:group_edit' group.pk %}" 
+                       class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition" title="Tahrirlash">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-slate-800 rounded-xl p-12 text-center border border-slate-700">
+        <div class="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-users text-4xl text-slate-500"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Guruhlar topilmadi</h3>
+        <p class="text-slate-400 mb-6">Hozircha hech qanday guruh mavjud emas.</p>
+        {% if user.role == 'admin' or user.role == 'manager' %}
+        <a href="{% url 'courses:group_create' %}" class="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg transition">
+            <i class="fas fa-plus"></i>Yangi guruh yaratish
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-

@@ -1,184 +1,198 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Davomat | GEEKS CRM{% endblock %}
+
+{% block title %}Davomat{% endblock %}
+{% block page_title %}Davomat{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
-  <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-        <i class="fas fa-calendar-check text-green-600"></i>
-        Davomat
-      </h1>
-      <p class="text-gray-600 mt-1">O'quvchilarning darsga qatnash tarixi</p>
-    </div>
-    {% if user.role == 'mentor' or user.role == 'admin' or user.role == 'manager' %}
-      <a href="{% url 'attendance:attendance_form' %}" 
-         class="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-medium">
-        <i class="fas fa-plus-circle"></i>
-        <span>Davomat kiritish</span>
-      </a>
-    {% endif %}
-  </div>
-
-  <!-- Stats Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p class="text-green-100 text-sm">Keldi</p>
-          <p class="text-3xl font-bold mt-1">{{ present_count|default:"0" }}</p>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                <div class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-cyan-400"></i>
+                </div>
+                Davomat
+            </h1>
+            <p class="text-slate-400 mt-1">O'quvchilar davomati</p>
         </div>
-        <i class="fas fa-check-circle text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-yellow-100 text-sm">Kech qoldi</p>
-          <p class="text-3xl font-bold mt-1">{{ late_count|default:"0" }}</p>
-        </div>
-        <i class="fas fa-clock text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-red-100 text-sm">Kelmadi</p>
-          <p class="text-3xl font-bold mt-1">{{ absent_count|default:"0" }}</p>
-        </div>
-        <i class="fas fa-times-circle text-3xl opacity-30"></i>
-      </div>
-    </div>
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-blue-100 text-sm">Umumiy foiz</p>
-          <p class="text-3xl font-bold mt-1">{{ attendance_percentage|default:"0"|floatformat:0 }}%</p>
-        </div>
-        <i class="fas fa-chart-pie text-3xl opacity-30"></i>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-white rounded-xl shadow-md p-4">
-    <div class="flex flex-col md:flex-row gap-3">
-      <div class="flex-1 relative">
-        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="O'quvchi ismi bo'yicha qidirish..." 
-               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-      </div>
-      <input type="date" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-        <option value="">Barcha statuslar</option>
-        <option value="present">Keldi</option>
-        <option value="late">Kech qoldi</option>
-        <option value="absent">Kelmadi</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Attendance Table -->
-  {% if attendances %}
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <i class="fas fa-calendar mr-2"></i>Sana
-              </th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <i class="fas fa-user mr-2"></i>O'quvchi
-              </th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <i class="fas fa-book mr-2"></i>Dars
-              </th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <i class="fas fa-users mr-2"></i>Guruh
-              </th>
-              <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                <i class="fas fa-check-circle mr-2"></i>Status
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            {% for a in attendances %}
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center gap-2">
-                    <div class="text-center">
-                      <p class="text-sm font-bold text-gray-900">{{ a.lesson.date|date:"d" }}</p>
-                      <p class="text-xs text-gray-500">{{ a.lesson.date|date:"M" }}</p>
-                    </div>
-                    <div class="text-xs text-gray-600">
-                      <p>{{ a.lesson.start_time }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                      {{ a.student.first_name.0|upper }}{{ a.student.last_name.0|default:""|upper }}
-                    </div>
-                    <div>
-                      <p class="text-sm font-semibold text-gray-900">{{ a.student.get_full_name|default:a.student.username }}</p>
-                      <p class="text-xs text-gray-500">{{ a.student.phone|default:"-" }}</p>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4">
-                  <p class="text-sm text-gray-900">{{ a.lesson.topic_covered|default:"Mavzu belgilanmagan"|truncatewords:8 }}</p>
-                  <p class="text-xs text-gray-500 mt-1"><i class="fas fa-map-marker-alt"></i> {{ a.lesson.room.name }}</p>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-medium">
-                    <i class="fas fa-layer-group"></i>
-                    {{ a.lesson.group.name }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <span class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold rounded-full shadow-sm
-                    {% if a.status == 'present' %}bg-green-100 text-green-800 border-2 border-green-500
-                    {% elif a.status == 'late' %}bg-yellow-100 text-yellow-800 border-2 border-yellow-500
-                    {% else %}bg-red-100 text-red-800 border-2 border-red-500{% endif %}">
-                    <i class="fas {% if a.status == 'present' %}fa-check-circle{% elif a.status == 'late' %}fa-clock{% else %}fa-times-circle{% endif %}"></i>
-                    {{ a.get_status_display }}
-                  </span>
-                  {% if a.notes %}
-                    <div class="mt-1 group relative inline-block">
-                      <i class="fas fa-comment-alt text-gray-400 cursor-help"></i>
-                      <div class="hidden group-hover:block absolute z-10 bg-gray-900 text-white text-xs rounded p-2 w-48 bottom-full mb-2 left-1/2 transform -translate-x-1/2">
-                        {{ a.notes }}
-                      </div>
-                    </div>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% else %}
-    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
-      <div class="max-w-md mx-auto">
-        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-calendar-times text-4xl text-gray-400"></i>
-        </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Davomat ma'lumotlari topilmadi</h3>
-        <p class="text-gray-600 mb-6">Hozircha hech qanday davomat kiritilmagan.</p>
-        {% if user.role == 'mentor' or user.role == 'admin' or user.role == 'manager' %}
-          <a href="{% url 'attendance:attendance_form' %}" 
-             class="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+        <a href="{% url 'attendance:attendance_create' %}" 
+           class="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
             <i class="fas fa-plus"></i>
-            <span>Davomat kiritish</span>
-          </a>
+            <span>Davomat qo'shish</span>
+        </a>
         {% endif %}
-      </div>
     </div>
-  {% endif %}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Jami yozuvlar</p>
+                    <p class="text-2xl font-bold text-white">{{ total_records|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-list text-slate-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Kelganlar</p>
+                    <p class="text-2xl font-bold text-green-400">{{ present_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check text-green-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Kelmaganlar</p>
+                    <p class="text-2xl font-bold text-red-400">{{ absent_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times text-red-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-sm">Kechikkanlar</p>
+                    <p class="text-2xl font-bold text-yellow-400">{{ late_count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-yellow-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+        <form method="get" class="flex flex-col md:flex-row gap-3">
+            <input type="date" name="date" value="{{ request.GET.date }}"
+                   class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500">
+            <select name="group" class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500">
+                <option value="">Barcha guruhlar</option>
+                {% for group in groups %}
+                <option value="{{ group.pk }}" {% if request.GET.group == group.pk|stringformat:"i" %}selected{% endif %}>{{ group.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="status" class="px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-cyan-500">
+                <option value="">Barcha statuslar</option>
+                <option value="present" {% if request.GET.status == 'present' %}selected{% endif %}>Keldi</option>
+                <option value="absent" {% if request.GET.status == 'absent' %}selected{% endif %}>Kelmadi</option>
+                <option value="late" {% if request.GET.status == 'late' %}selected{% endif %}>Kechikdi</option>
+            </select>
+            <button type="submit" class="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition">
+                <i class="fas fa-filter mr-2"></i>Filtrlash
+            </button>
+        </form>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-700/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Sana</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">O'quvchi</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Guruh</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Dars</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Status</th>
+                        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Amallar</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700">
+                    {% for attendance in attendances %}
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="px-6 py-4 text-white">{{ attendance.lesson.date|date:"d.m.Y" }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                    {{ attendance.student.first_name.0|upper }}
+                                </div>
+                                <span class="text-white">{{ attendance.student.get_full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-300">{{ attendance.lesson.group.name }}</td>
+                        <td class="px-6 py-4 text-slate-300">{{ attendance.lesson.topic.name|default:"-" }}</td>
+                        <td class="px-6 py-4">
+                            {% if attendance.status == 'present' %}
+                            <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                                <i class="fas fa-check mr-1"></i>Keldi
+                            </span>
+                            {% elif attendance.status == 'absent' %}
+                            <span class="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium">
+                                <i class="fas fa-times mr-1"></i>Kelmadi
+                            </span>
+                            {% elif attendance.status == 'late' %}
+                            <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs font-medium">
+                                <i class="fas fa-clock mr-1"></i>Kechikdi
+                            </span>
+                            {% elif attendance.status == 'excused' %}
+                            <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                                <i class="fas fa-info-circle mr-1"></i>Sababli
+                            </span>
+                            {% endif %}
+                        </td>
+                        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'attendance:attendance_edit' attendance.pk %}" 
+                                   class="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition" title="Tahrirlash">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if user.role == 'admin' %}
+                                <button class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition" title="O'chirish">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-calendar-check text-3xl text-slate-500"></i>
+                            </div>
+                            <p class="text-slate-400">Davomat yozuvlari topilmadi</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if attendances.has_other_pages %}
+    <div class="flex justify-center gap-2">
+        {% if attendances.has_previous %}
+        <a href="?page={{ attendances.previous_page_number }}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        <span class="px-4 py-2 bg-slate-800 text-white rounded-lg">
+            {{ attendances.number }} / {{ attendances.paginator.num_pages }}
+        </span>
+        {% if attendances.has_next %}
+        <a href="?page={{ attendances.next_page_number }}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-

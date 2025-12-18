@@ -18,8 +18,8 @@ class Course(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Course')
-        verbose_name_plural = _('Courses')
+        verbose_name = 'Kurs'
+        verbose_name_plural = 'Kurslar'
         ordering = ['name']
         indexes = [
             models.Index(fields=['is_active', 'branch']),
@@ -41,8 +41,8 @@ class Module(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Module')
-        verbose_name_plural = _('Modules')
+        verbose_name = 'Modul'
+        verbose_name_plural = 'Modullar'
         ordering = ['course', 'order']
     
     def __str__(self):
@@ -62,8 +62,8 @@ class Topic(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Topic')
-        verbose_name_plural = _('Topics')
+        verbose_name = 'Mavzu'
+        verbose_name_plural = 'Mavzular'
         ordering = ['module', 'order']
     
     def __str__(self):
@@ -92,8 +92,8 @@ class TopicMaterial(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('Topic Material')
-        verbose_name_plural = _('Topic Materials')
+        verbose_name = 'Mavzu materiali'
+        verbose_name_plural = 'Mavzu materiallari'
         ordering = ['topic', 'order']
     
     def __str__(self):
@@ -113,8 +113,8 @@ class Room(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Room')
-        verbose_name_plural = _('Rooms')
+        verbose_name = 'Xona'
+        verbose_name_plural = 'Xonalar'
         ordering = ['branch', 'name']
     
     def __str__(self):
@@ -147,8 +147,8 @@ class Group(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Group')
-        verbose_name_plural = _('Groups')
+        verbose_name = 'Guruh'
+        verbose_name_plural = 'Guruhlar'
         ordering = ['course', 'name']
     
     def __str__(self):
@@ -198,8 +198,8 @@ class GroupTransfer(models.Model):
     notes = models.TextField(blank=True, null=True)
     
     class Meta:
-        verbose_name = _('Group Transfer')
-        verbose_name_plural = _('Group Transfers')
+        verbose_name = "Guruh o'tkazish"
+        verbose_name_plural = "Guruh o'tkazishlar"
         ordering = ['-transferred_at']
         indexes = [
             models.Index(fields=['student', 'transferred_at']),
@@ -252,8 +252,8 @@ class Lesson(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Lesson')
-        verbose_name_plural = _('Lessons')
+        verbose_name = 'Dars'
+        verbose_name_plural = 'Darslar'
         ordering = ['-date', '-start_time']
         indexes = [
             models.Index(fields=['group', 'date']),
@@ -276,8 +276,8 @@ class StudentProgress(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Student Progress')
-        verbose_name_plural = _('Student Progresses')
+        verbose_name = "O'quvchi progressi"
+        verbose_name_plural = "O'quvchi progresslari"
         unique_together = ['student', 'course']
         ordering = ['-progress_percentage']
     

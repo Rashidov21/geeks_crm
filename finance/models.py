@@ -20,8 +20,8 @@ class ContractTemplate(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Contract Template')
-        verbose_name_plural = _('Contract Templates')
+        verbose_name = 'Shartnoma shabloni'
+        verbose_name_plural = 'Shartnoma shablonlari'
         ordering = ['name']
     
     def __str__(self):
@@ -76,8 +76,8 @@ class Contract(models.Model):
                                   limit_choices_to={'role__in': ['admin', 'manager', 'accountant']})
     
     class Meta:
-        verbose_name = _('Contract')
-        verbose_name_plural = _('Contracts')
+        verbose_name = 'Shartnoma'
+        verbose_name_plural = 'Shartnomalar'
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['student', 'status']),
@@ -123,8 +123,8 @@ class PaymentPlan(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Payment Plan')
-        verbose_name_plural = _('Payment Plans')
+        verbose_name = "To'lov rejasi"
+        verbose_name_plural = "To'lov rejalari"
         ordering = ['contract', 'installment_number']
         unique_together = ['contract', 'installment_number']
         indexes = [
@@ -189,8 +189,8 @@ class Payment(models.Model):
                                    limit_choices_to={'role__in': ['admin', 'manager', 'accountant']})
     
     class Meta:
-        verbose_name = _('Payment')
-        verbose_name_plural = _('Payments')
+        verbose_name = "To'lov"
+        verbose_name_plural = "To'lovlar"
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['contract', 'paid_at']),
@@ -233,8 +233,8 @@ class PaymentHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = _('Payment History')
-        verbose_name_plural = _('Payment Histories')
+        verbose_name = "To'lov tarixi"
+        verbose_name_plural = "To'lovlar tarixi"
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['payment', 'created_at']),
@@ -260,8 +260,8 @@ class Debt(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Debt')
-        verbose_name_plural = _('Debts')
+        verbose_name = 'Qarz'
+        verbose_name_plural = 'Qarzlar'
         ordering = ['due_date']
         indexes = [
             models.Index(fields=['contract', 'due_date']),
@@ -312,8 +312,8 @@ class PaymentReminder(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        verbose_name = _('Payment Reminder')
-        verbose_name_plural = _('Payment Reminders')
+        verbose_name = "To'lov eslatmasi"
+        verbose_name_plural = "To'lov eslatmalari"
         ordering = ['reminder_date', 'priority']
         indexes = [
             models.Index(fields=['contract', 'reminder_date']),
@@ -358,8 +358,8 @@ class FinancialReport(models.Model):
                                   limit_choices_to={'role__in': ['admin', 'manager', 'accountant']})
     
     class Meta:
-        verbose_name = _('Financial Report')
-        verbose_name_plural = _('Financial Reports')
+        verbose_name = 'Moliya hisoboti'
+        verbose_name_plural = 'Moliya hisobotlari'
         ordering = ['-period_end', '-period_start']
         indexes = [
             models.Index(fields=['report_type', 'period_start', 'period_end']),

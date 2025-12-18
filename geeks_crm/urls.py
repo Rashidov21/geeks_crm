@@ -24,11 +24,11 @@ urlpatterns = [
     path('telegram/', include('telegram_bot.urls')),
 ]
 
-# Media files
+# Media and Static files
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# Custom error handlers
+handler404 = 'accounts.views.custom_404'
+handler500 = 'accounts.views.custom_500'

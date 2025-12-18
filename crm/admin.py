@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     LeadStatus, Lead, LeadHistory, FollowUp, TrialLesson,
-    SalesProfile, WorkSchedule, Leave, SalesKPI, Message
+    SalesProfile, WorkSchedule, Leave, SalesKPI, DailyKPI,
+    SalesMessage, SalesMessageRead, Offer, Reactivation, Message
 )
 
 
@@ -14,23 +15,26 @@ class LeadStatusAdmin(admin.ModelAdmin):
 
 @admin.register(Lead)
 class LeadAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'phone', 'status', 'sales', 'course', 'branch', 'trial_date', 'created_at']
-    list_filter = ['status', 'source', 'course', 'branch', 'sales', 'created_at']
-    search_fields = ['first_name', 'last_name', 'phone', 'email', 'telegram_username']
+    list_display = ['name', 'phone', 'status', 'assigned_sales', 'interested_course', 'branch', 'trial_date', 'created_at']
+    list_filter = ['status', 'source', 'interested_course', 'branch', 'assigned_sales', 'created_at']
+    search_fields = ['name', 'phone', 'secondary_phone']
     ordering = ['-created_at']
-    readonly_fields = ['created_at', 'updated_at', 'assigned_at']
+    readonly_fields = ['created_at', 'updated_at', 'assigned_at', 'lost_at', 'enrolled_at']
     fieldsets = (
         ('Asosiy ma\'lumotlar', {
-            'fields': ('first_name', 'last_name', 'phone', 'email', 'telegram_username')
+            'fields': ('name', 'phone', 'secondary_phone')
         }),
         ('Lead ma\'lumotlari', {
-            'fields': ('status', 'source', 'course', 'branch', 'notes', 'expected_start_date')
+            'fields': ('status', 'source', 'interested_course', 'branch', 'notes')
         }),
         ('Sotuvchi', {
-            'fields': ('sales', 'assigned_at')
+            'fields': ('assigned_sales', 'assigned_at')
         }),
         ('Sinov darsi', {
             'fields': ('trial_group', 'trial_room', 'trial_date', 'trial_time', 'trial_result')
+        }),
+        ('Yozilish', {
+            'fields': ('enrolled_at', 'enrolled_group', 'lost_at')
         }),
         ('Vaqt', {
             'fields': ('created_at', 'updated_at', 'created_by')
@@ -42,33 +46,33 @@ class LeadAdmin(admin.ModelAdmin):
 class LeadHistoryAdmin(admin.ModelAdmin):
     list_display = ['lead', 'old_status', 'new_status', 'changed_by', 'created_at']
     list_filter = ['old_status', 'new_status', 'created_at']
-    search_fields = ['lead__first_name', 'lead__last_name', 'lead__phone']
+    search_fields = ['lead__name', 'lead__phone']
     ordering = ['-created_at']
     readonly_fields = ['created_at']
 
 
 @admin.register(FollowUp)
 class FollowUpAdmin(admin.ModelAdmin):
-    list_display = ['lead', 'sales', 'title', 'scheduled_at', 'is_completed', 'is_overdue', 'priority']
-    list_filter = ['is_completed', 'is_overdue', 'priority', 'sales', 'scheduled_at']
-    search_fields = ['lead__first_name', 'lead__last_name', 'title', 'description']
-    ordering = ['scheduled_at']
+    list_display = ['lead', 'sales', 'due_date', 'completed', 'is_overdue', 'followup_sequence']
+    list_filter = ['completed', 'is_overdue', 'sales', 'due_date']
+    search_fields = ['lead__name', 'notes']
+    ordering = ['due_date']
     readonly_fields = ['is_overdue', 'created_at', 'updated_at']
 
 
 @admin.register(TrialLesson)
 class TrialLessonAdmin(admin.ModelAdmin):
-    list_display = ['lead', 'group', 'room', 'date', 'start_time', 'result', 'created_at']
+    list_display = ['lead', 'group', 'room', 'date', 'time', 'result', 'created_at']
     list_filter = ['result', 'group__course', 'date', 'created_at']
-    search_fields = ['lead__first_name', 'lead__last_name', 'group__name']
-    ordering = ['-date', '-start_time']
+    search_fields = ['lead__name', 'group__name']
+    ordering = ['-date', '-time']
     readonly_fields = ['created_at', 'updated_at']
 
 
 @admin.register(SalesProfile)
 class SalesProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'branch', 'is_active', 'max_leads_per_day', 'created_at']
-    list_filter = ['branch', 'is_active', 'created_at']
+    list_display = ['user', 'branch', 'is_active_sales', 'is_on_leave', 'is_absent', 'max_leads_per_day', 'created_at']
+    list_filter = ['branch', 'is_active_sales', 'is_on_leave', 'is_absent', 'created_at']
     search_fields = ['user__username', 'user__email']
     ordering = ['-created_at']
 
@@ -87,6 +91,44 @@ class LeaveAdmin(admin.ModelAdmin):
     search_fields = ['sales__username', 'reason']
     ordering = ['-created_at']
     readonly_fields = ['approved_at', 'created_at', 'updated_at']
+
+
+@admin.register(Offer)
+class OfferAdmin(admin.ModelAdmin):
+    list_display = ['title', 'offer_type', 'priority', 'valid_from', 'valid_until', 'is_active', 'created_at']
+    list_filter = ['offer_type', 'priority', 'is_active', 'channel', 'audience']
+    search_fields = ['title', 'description']
+    ordering = ['-created_at']
+
+
+@admin.register(Reactivation)
+class ReactivationAdmin(admin.ModelAdmin):
+    list_display = ['lead', 'reactivation_type', 'days_since_lost', 'result', 'sent_at']
+    list_filter = ['reactivation_type', 'result', 'sent_at']
+    search_fields = ['lead__name', 'lead__phone']
+    ordering = ['-sent_at']
+
+
+@admin.register(SalesMessage)
+class SalesMessageAdmin(admin.ModelAdmin):
+    list_display = ['sender', 'subject', 'priority', 'telegram_sent', 'created_at']
+    list_filter = ['priority', 'telegram_sent', 'created_at']
+    search_fields = ['subject', 'message', 'sender__username']
+    ordering = ['-created_at']
+
+
+@admin.register(SalesMessageRead)
+class SalesMessageReadAdmin(admin.ModelAdmin):
+    list_display = ['message', 'user', 'read_at']
+    list_filter = ['read_at']
+    ordering = ['-read_at']
+
+
+@admin.register(DailyKPI)
+class DailyKPIAdmin(admin.ModelAdmin):
+    list_display = ['sales', 'date', 'daily_contacts', 'daily_followups', 'followup_completion_rate', 'conversion_rate']
+    list_filter = ['date', 'sales']
+    ordering = ['-date']
 
 
 @admin.register(SalesKPI)

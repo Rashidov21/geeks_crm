@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Leadlar | GEEKS CRM{% endblock %}
+{% block title %}Lidlar | GEEKS CRM{% endblock %}
 {% block content %}
 <div class="space-y-6">
   <!-- Header -->
@@ -8,15 +8,20 @@
     <div>
       <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
         <i class="fas fa-users text-purple-600"></i>
-        Leadlar
+        Lidlar
       </h1>
       <p class="text-gray-600 mt-1">Potensial mijozlar bilan ishlash</p>
     </div>
     <div class="flex gap-2">
+      <a href="{% url 'crm:kanban' %}" 
+         class="flex items-center gap-2 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 transition">
+        <i class="fas fa-columns"></i>
+        <span>Kanban</span>
+      </a>
       <a href="{% url 'crm:lead_create' %}" 
          class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-medium">
         <i class="fas fa-plus-circle"></i>
-        <span>Yangi lead</span>
+        <span>Yangi lid</span>
       </a>
     </div>
   </div>
@@ -26,7 +31,7 @@
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-4">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-blue-100 text-sm">Umumiy leadlar</p>
+          <p class="text-blue-100 text-sm">Umumiy lidlar</p>
           <p class="text-3xl font-bold mt-1">{{ total_leads|default:"0" }}</p>
         </div>
         <i class="fas fa-users text-3xl opacity-30"></i>
@@ -63,29 +68,23 @@
 
   <!-- Filters -->
   <div class="bg-white rounded-xl shadow-md p-4">
-    <div class="flex flex-col md:flex-row gap-3">
+    <form method="get" class="flex flex-col md:flex-row gap-3">
       <div class="flex-1 relative">
         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="Ism, telefon bo'yicha qidirish..." 
+        <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Ism, telefon bo'yicha qidirish..." 
                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
       </div>
-      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+      <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
         <option value="">Barcha statuslar</option>
-        <option>Yangi</option>
-        <option>Aloqa qilindi</option>
-        <option>Sinov darsida</option>
-        <option>Ro'yxatdan o'tdi</option>
+        {% for status in statuses %}
+        <option value="{{ status.code }}" {% if request.GET.status == status.code %}selected{% endif %}>{{ status.name }}</option>
+        {% endfor %}
       </select>
-      <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-        <option value="">Barcha filiallar</option>
-        <option>Andijon</option>
-        <option>Toshkent</option>
-      </select>
-      <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
+      <button type="submit" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition flex items-center gap-2">
         <i class="fas fa-filter"></i>
         <span>Filtrlash</span>
       </button>
-    </div>
+    </form>
   </div>
 
   <!-- Leads Grid -->
@@ -96,7 +95,8 @@
                     {% if lead.status.code == 'enrolled' %}border-green-500
                     {% elif lead.status.code == 'new' %}border-blue-500
                     {% elif lead.status.code == 'contacted' %}border-yellow-500
-                    {% elif lead.status.code == 'trial' %}border-orange-500
+                    {% elif lead.status.code == 'trial_registered' or lead.status.code == 'trial_attended' %}border-orange-500
+                    {% elif lead.status.code == 'lost' %}border-red-500
                     {% else %}border-gray-300{% endif %}">
           <!-- Header -->
           <div class="p-5 bg-gradient-to-r {% if lead.status.code == 'enrolled' %}from-green-50 to-emerald-50
@@ -106,21 +106,19 @@
             <div class="flex items-start justify-between mb-3">
               <div class="flex items-center gap-2">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {{ lead.first_name.0|upper }}{{ lead.last_name.0|default:""|upper }}
+                  {{ lead.name.0|upper }}
                 </div>
                 <div>
-                  <h3 class="text-lg font-bold text-gray-800">{{ lead.full_name|default:lead.first_name }}</h3>
+                  <h3 class="text-lg font-bold text-gray-800">{{ lead.name }}</h3>
                   <p class="text-xs text-gray-600"><i class="fas fa-map-marker-alt"></i> {{ lead.branch.name|default:"Filial ko'rsatilmagan" }}</p>
                 </div>
               </div>
-              <span class="px-3 py-1 text-xs font-medium rounded-full 
-                          {% if lead.status.code == 'enrolled' %}bg-green-500 text-white
-                          {% elif lead.status.code == 'new' %}bg-blue-500 text-white
-                          {% elif lead.status.code == 'contacted' %}bg-yellow-500 text-white
-                          {% elif lead.status.code == 'trial' %}bg-orange-500 text-white
-                          {% else %}bg-gray-500 text-white{% endif %}">
+              {% if lead.status %}
+              <span class="px-3 py-1 text-xs font-medium rounded-full" 
+                    style="background-color: {{ lead.status.color }}20; color: {{ lead.status.color }}">
                 {{ lead.status.name }}
               </span>
+              {% endif %}
             </div>
           </div>
 
@@ -132,18 +130,36 @@
                 <i class="fas fa-phone text-blue-600 w-5"></i>
                 <a href="tel:{{ lead.phone }}" class="text-gray-700 hover:text-blue-600 transition">{{ lead.phone }}</a>
               </div>
-              {% if lead.email %}
+              {% if lead.secondary_phone %}
                 <div class="flex items-center gap-2 text-sm">
-                  <i class="fas fa-envelope text-green-600 w-5"></i>
-                  <a href="mailto:{{ lead.email }}" class="text-gray-700 hover:text-green-600 transition">{{ lead.email }}</a>
+                  <i class="fas fa-phone-alt text-green-600 w-5"></i>
+                  <a href="tel:{{ lead.secondary_phone }}" class="text-gray-700 hover:text-green-600 transition">{{ lead.secondary_phone }}</a>
                 </div>
               {% endif %}
-              {% if lead.course %}
+              {% if lead.interested_course %}
                 <div class="flex items-center gap-2 text-sm">
                   <i class="fas fa-book text-purple-600 w-5"></i>
-                  <span class="text-gray-700">{{ lead.course.name }}</span>
+                  <span class="text-gray-700">{{ lead.interested_course.name }}</span>
                 </div>
               {% endif %}
+              {% if lead.assigned_sales %}
+                <div class="flex items-center gap-2 text-sm">
+                  <i class="fas fa-user-tie text-slate-600 w-5"></i>
+                  <span class="text-gray-700">{{ lead.assigned_sales.username }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Source badge -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-1 rounded-full 
+                  {% if lead.source == 'instagram' %}bg-pink-100 text-pink-700
+                  {% elif lead.source == 'telegram' %}bg-blue-100 text-blue-700
+                  {% elif lead.source == 'google_sheets' %}bg-green-100 text-green-700
+                  {% elif lead.source == 'youtube' %}bg-red-100 text-red-700
+                  {% else %}bg-slate-100 text-slate-600{% endif %}">
+                {{ lead.get_source_display }}
+              </span>
             </div>
 
             <!-- Timestamps -->
@@ -152,10 +168,10 @@
                 <span><i class="fas fa-clock"></i> Yaratildi:</span>
                 <span class="font-medium">{{ lead.created_at|date:"d M, H:i" }}</span>
               </div>
-              {% if lead.last_contact_at %}
+              {% if lead.trial_date %}
                 <div class="flex items-center justify-between">
-                  <span><i class="fas fa-phone-alt"></i> Oxirgi aloqa:</span>
-                  <span class="font-medium">{{ lead.last_contact_at|date:"d M, H:i" }}</span>
+                  <span><i class="fas fa-calendar"></i> Sinov:</span>
+                  <span class="font-medium">{{ lead.trial_date|date:"d M" }} {{ lead.trial_time|time:"H:i" }}</span>
                 </div>
               {% endif %}
             </div>
@@ -172,13 +188,11 @@
                  title="Qo'ng'iroq qilish">
                 <i class="fas fa-phone"></i>
               </a>
-              {% if user.role == 'admin' or user.role == 'manager' or user.role == 'sales' %}
-                <a href="{% url 'crm:lead_edit' lead.pk %}" 
-                   class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition" 
-                   title="Tahrirlash">
-                  <i class="fas fa-edit"></i>
-                </a>
-              {% endif %}
+              <a href="{% url 'crm:lead_edit' lead.pk %}" 
+                 class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition" 
+                 title="Tahrirlash">
+                <i class="fas fa-edit"></i>
+              </a>
             </div>
           </div>
         </div>
@@ -190,16 +204,15 @@
         <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
           <i class="fas fa-users text-4xl text-gray-400"></i>
         </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Leadlar topilmadi</h3>
-        <p class="text-gray-600 mb-6">Hozircha hech qanday lead mavjud emas.</p>
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Lidlar topilmadi</h3>
+        <p class="text-gray-600 mb-6">Hozircha hech qanday lid mavjud emas.</p>
         <a href="{% url 'crm:lead_create' %}" 
            class="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
           <i class="fas fa-plus"></i>
-          <span>Birinchi leadni yaratish</span>
+          <span>Birinchi lidni yaratish</span>
         </a>
       </div>
     </div>
   {% endif %}
 </div>
 {% endblock %}
-

@@ -291,22 +291,20 @@ def send_lead_assignment_notification(lead_id):
             return
         
         bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
-        lead = Lead.objects.select_related('sales', 'course', 'branch').get(pk=lead_id)
+        lead = Lead.objects.select_related('assigned_sales', 'interested_course', 'branch').get(pk=lead_id)
         
-        if lead.sales and lead.sales.telegram_id:
+        if lead.assigned_sales and lead.assigned_sales.telegram_id:
             try:
                 message = f"🆕 Yangi lid tayinlandi\n\n"
-                message += f"Ism: {lead.full_name}\n"
+                message += f"Ism: {lead.name}\n"
                 message += f"Telefon: {lead.phone}\n"
-                if lead.email:
-                    message += f"Email: {lead.email}\n"
-                if lead.course:
-                    message += f"Kurs: {lead.course.name}\n"
+                if lead.interested_course:
+                    message += f"Kurs: {lead.interested_course.name}\n"
                 if lead.branch:
                     message += f"Filial: {lead.branch.name}\n"
                 message += f"\n5 daqiqadan keyin follow-up yaratiladi."
                 
-                bot.send_message(chat_id=lead.sales.telegram_id, text=message)
+                bot.send_message(chat_id=lead.assigned_sales.telegram_id, text=message)
             except Exception as e:
                 logger.error(f"Error sending lead assignment notification: {e}")
     
@@ -337,9 +335,9 @@ def send_followup_reminder():
         one_hour_later = now + timedelta(hours=1)
         
         followups = FollowUp.objects.filter(
-            scheduled_at__gte=now,
-            scheduled_at__lte=one_hour_later,
-            is_completed=False
+            due_date__gte=now,
+            due_date__lte=one_hour_later,
+            completed=False
         ).select_related('lead', 'sales')
         
         for followup in followups:
@@ -355,10 +353,10 @@ def send_followup_reminder():
             if work_schedule and followup.sales.telegram_id:
                 try:
                     message = f"⏰ Follow-up eslatmasi\n\n"
-                    message += f"Lid: {followup.lead.full_name}\n"
+                    message += f"Lid: {followup.lead.name}\n"
                     message += f"Telefon: {followup.lead.phone}\n"
-                    message += f"Vaqt: {followup.scheduled_at.strftime('%Y-%m-%d %H:%M')}\n"
-                    message += f"Qolgan vaqt: {(followup.scheduled_at - now).seconds // 60} daqiqa"
+                    message += f"Vaqt: {followup.due_date.strftime('%Y-%m-%d %H:%M')}\n"
+                    message += f"Qolgan vaqt: {(followup.due_date - now).seconds // 60} daqiqa"
                     
                     bot.send_message(chat_id=followup.sales.telegram_id, text=message)
                 except Exception as e:
@@ -386,42 +384,45 @@ def send_trial_reminder(trial_lesson_id):
         
         # Sinov vaqti
         trial_datetime = timezone.make_aware(
-            datetime.combine(trial.date, trial.start_time)
-        )
+            datetime.combine(trial.date, trial.time)
+        ) if trial.time else None
         now = timezone.now()
+        
+        if not trial_datetime:
+            return
         
         # 8-10 soat oldin
         hours_before = (trial_datetime - now).total_seconds() / 3600
         
         if 8 <= hours_before <= 10:
             # Sotuvchiga xabar
-            if trial.lead.sales and trial.lead.sales.telegram_id:
+            if trial.lead.assigned_sales and trial.lead.assigned_sales.telegram_id:
                 try:
                     message = f"📅 Sinov darsi eslatmasi\n\n"
-                    message += f"Lid: {trial.lead.full_name}\n"
+                    message += f"Lid: {trial.lead.name}\n"
                     message += f"Guruh: {trial.group.name}\n"
-                    message += f"Vaqt: {trial.date} {trial.start_time.strftime('%H:%M')}\n"
+                    message += f"Vaqt: {trial.date} {trial.time.strftime('%H:%M')}\n"
                     if trial.room:
                         message += f"Xona: {trial.room.name}\n"
                     message += f"\n8-10 soatdan keyin sinov boshlanadi."
                     
-                    bot.send_message(chat_id=trial.lead.sales.telegram_id, text=message)
+                    bot.send_message(chat_id=trial.lead.assigned_sales.telegram_id, text=message)
                 except Exception as e:
                     logger.error(f"Error sending trial reminder: {e}")
         
         # 2 soat oldin
         elif 1.5 <= hours_before <= 2.5:
             # Sotuvchiga xabar
-            if trial.lead.sales and trial.lead.sales.telegram_id:
+            if trial.lead.assigned_sales and trial.lead.assigned_sales.telegram_id:
                 try:
                     message = f"⏰ Sinov darsi 2 soatdan keyin boshlanadi\n\n"
-                    message += f"Lid: {trial.lead.full_name}\n"
+                    message += f"Lid: {trial.lead.name}\n"
                     message += f"Guruh: {trial.group.name}\n"
-                    message += f"Vaqt: {trial.start_time.strftime('%H:%M')}\n"
+                    message += f"Vaqt: {trial.time.strftime('%H:%M')}\n"
                     if trial.room:
                         message += f"Xona: {trial.room.name}\n"
                     
-                    bot.send_message(chat_id=trial.lead.sales.telegram_id, text=message)
+                    bot.send_message(chat_id=trial.lead.assigned_sales.telegram_id, text=message)
                 except Exception as e:
                     logger.error(f"Error sending trial reminder: {e}")
     

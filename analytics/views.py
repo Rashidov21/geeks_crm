@@ -127,8 +127,8 @@ class StatisticsDashboardView(RoleRequiredMixin, TemplateView):
             updated_at__gte=this_month_start
         ).count()
         context['pending_followups'] = FollowUp.objects.filter(
-            is_completed=False,
-            scheduled_at__lt=now
+            completed=False,
+            due_date__lt=now
         ).count()
         
         # 9. Mentor KPI statistikasi

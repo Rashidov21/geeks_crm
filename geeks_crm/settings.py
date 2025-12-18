@@ -240,7 +240,27 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=0, minute=0),  # Har kuni yarim tun
     },
     'send-followup-reminders': {
-        'task': 'telegram_bot.tasks.send_followup_reminder',
+        'task': 'crm.tasks.send_followup_reminders',
+        'schedule': crontab(minute='*/30'),  # Har 30 daqiqada
+    },
+    'send-trial-reminders': {
+        'task': 'crm.tasks.send_trial_reminders',
+        'schedule': crontab(minute='*/15'),  # Har 15 daqiqada
+    },
+    'check-reactivation': {
+        'task': 'crm.tasks.check_reactivation',
+        'schedule': crontab(hour=9, minute=0),  # Har kuni soat 9:00
+    },
+    'calculate-daily-kpi': {
+        'task': 'crm.tasks.calculate_daily_kpi',
+        'schedule': crontab(hour=23, minute=55),  # Har kuni soat 23:55
+    },
+    'send-daily-statistics': {
+        'task': 'crm.tasks.send_daily_statistics',
+        'schedule': crontab(hour=20, minute=0),  # Har kuni soat 20:00
+    },
+    'import-google-sheets': {
+        'task': 'crm.tasks.import_leads_from_google_sheets',
         'schedule': crontab(minute='*/30'),  # Har 30 daqiqada
     },
     # Finance tasks
@@ -268,6 +288,10 @@ CACHES = {
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
+
+# Google Sheets Configuration
+GOOGLE_SHEETS_CREDENTIALS = config('GOOGLE_SHEETS_CREDENTIALS', default='')
+GOOGLE_SHEETS_ID = config('GOOGLE_SHEETS_ID', default='')
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [

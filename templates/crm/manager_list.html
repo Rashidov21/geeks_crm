@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Menejerlar{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-white">Menejerlar</h1>
+        <a href="{% url 'crm:manager_create' %}" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-colors">
+            <i class="fas fa-plus mr-2"></i>Yangi menejer
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for manager in managers %}
+        <div class="bg-gray-800 rounded-xl p-5 hover:bg-gray-700/50 transition-colors">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-shield text-indigo-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-white">{{ manager.get_full_name }}</h3>
+                    <p class="text-gray-400 text-sm">{{ manager.email }}</p>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">
+                    <i class="fas fa-phone mr-1"></i>{{ manager.phone|default:"-" }}
+                </span>
+                {% if manager.is_active %}
+                <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Faol</span>
+                {% else %}
+                <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">Nofaol</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-gray-800 rounded-xl p-8 text-center">
+            <i class="fas fa-user-shield text-4xl text-gray-600 mb-3"></i>
+            <p class="text-gray-400">Menejerlar yo'q</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

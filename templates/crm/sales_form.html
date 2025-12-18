@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Sotuvchi tahrirlash{% else %}Yangi sotuvchi{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-gray-800 rounded-xl shadow-lg p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-user-tie text-blue-400 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-white">{% if form.instance.pk %}Sotuvchi tahrirlash{% else %}Yangi sotuvchi{% endif %}</h1>
+                <p class="text-gray-400 text-sm">Sales xodimi ma'lumotlari</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Ism</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" required
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Familiya</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" required
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                <input type="email" name="email" value="{{ form.email.value|default:'' }}" required
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Telefon</label>
+                <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}"
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Telegram Chat ID</label>
+                <input type="text" name="telegram_chat_id" value="{{ form.telegram_chat_id.value|default:'' }}"
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="@username yoki chat ID">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Ish boshlanishi</label>
+                    <input type="time" name="work_start_time" value="{{ form.work_start_time.value|default:'09:00' }}"
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Ish tugashi</label>
+                    <input type="time" name="work_end_time" value="{{ form.work_end_time.value|default:'18:00' }}"
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+                <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>Saqlash
+                </button>
+                <a href="{% url 'crm:sales_list' %}" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors">
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

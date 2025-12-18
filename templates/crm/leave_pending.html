@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Kutilayotgan ruxsatlar{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Kutilayotgan ruxsatlar</h1>
+            <p class="text-slate-600">{{ leaves|length }} ta so'rov</p>
+        </div>
+        <a href="{% url 'crm:leave_list' %}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
+            <i class="fas fa-list mr-2"></i>Barcha ruxsatlar
+        </a>
+    </div>
+</div>
+
+<div class="space-y-4">
+    {% for leave in leaves %}
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-slate-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-800">{{ leave.sales.get_full_name|default:leave.sales.username }}</h3>
+                        <p class="text-sm text-slate-500">{{ leave.sales.phone }}</p>
+                    </div>
+                </div>
+                
+                <div class="ml-13 space-y-2">
+                    <p class="text-slate-700">
+                        <i class="fas fa-calendar mr-2 text-slate-400"></i>
+                        {{ leave.start_date|date:"d.m.Y" }} - {{ leave.end_date|date:"d.m.Y" }}
+                        {% if leave.start_time %}
+                        <span class="text-sm text-slate-500">
+                            ({{ leave.start_time|time:"H:i" }} - {{ leave.end_time|time:"H:i" }})
+                        </span>
+                        {% endif %}
+                    </p>
+                    <p class="text-slate-600">
+                        <i class="fas fa-comment mr-2 text-slate-400"></i>
+                        {{ leave.reason }}
+                    </p>
+                    <p class="text-xs text-slate-400">
+                        So'rov yuborilgan: {{ leave.created_at|date:"d.m.Y H:i" }}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <form method="post" action="{% url 'crm:leave_approve' leave.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        <i class="fas fa-check mr-1"></i>Tasdiqlash
+                    </button>
+                </form>
+                <button onclick="showRejectModal({{ leave.pk }})" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <i class="fas fa-times mr-1"></i>Rad etish
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+        <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+        <p class="text-slate-600">Kutilayotgan so'rovlar yo'q</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-96">
+        <h3 class="text-lg font-semibold mb-4">Rad etish sababi</h3>
+        <form method="post" id="rejectForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div class="mb-4">
+                <textarea name="rejection_reason" rows="3" required placeholder="Sabab..."
+                          class="w-full px-3 py-2 border border-slate-300 rounded-lg"></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="hideRejectModal()" 
+                        class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg">
+                    Bekor qilish
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg">
+                    Rad etish
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showRejectModal(leaveId) {
+    document.getElementById('rejectForm').action = '/crm/leaves/' + leaveId + '/approve/';
+    document.getElementById('rejectModal').classList.remove('hidden');
+}
+
+function hideRejectModal() {
+    document.getElementById('rejectModal').classList.add('hidden');
+}
+</script>
+{% endblock %}
+

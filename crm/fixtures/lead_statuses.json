@@ -1,0 +1,69 @@
+[
+    {
+        "model": "crm.leadstatus",
+        "pk": 1,
+        "fields": {
+            "name": "Yangi",
+            "slug": "new",
+            "color": "#3B82F6",
+            "order": 1,
+            "is_active": true
+        }
+    },
+    {
+        "model": "crm.leadstatus",
+        "pk": 2,
+        "fields": {
+            "name": "Bog'lanildi",
+            "slug": "contacted",
+            "color": "#8B5CF6",
+            "order": 2,
+            "is_active": true
+        }
+    },
+    {
+        "model": "crm.leadstatus",
+        "pk": 3,
+        "fields": {
+            "name": "Sinov darsiga yozildi",
+            "slug": "trial",
+            "color": "#F59E0B",
+            "order": 3,
+            "is_active": true
+        }
+    },
+    {
+        "model": "crm.leadstatus",
+        "pk": 4,
+        "fields": {
+            "name": "Sotildi",
+            "slug": "sold",
+            "color": "#10B981",
+            "order": 4,
+            "is_active": true
+        }
+    },
+    {
+        "model": "crm.leadstatus",
+        "pk": 5,
+        "fields": {
+            "name": "Yo'qotildi",
+            "slug": "lost",
+            "color": "#EF4444",
+            "order": 5,
+            "is_active": true
+        }
+    },
+    {
+        "model": "crm.leadstatus",
+        "pk": 6,
+        "fields": {
+            "name": "Reaktivatsiya",
+            "slug": "reactivation",
+            "color": "#EC4899",
+            "order": 6,
+            "is_active": true
+        }
+    }
+]
+

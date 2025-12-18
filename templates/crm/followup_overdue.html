@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Overdue Follow-uplar{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Overdue Follow-uplar</h1>
+            <p class="text-red-600">{{ followups|length }} ta kechikkan follow-up</p>
+        </div>
+        <a href="{% url 'crm:followup_today' %}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
+            <i class="fas fa-arrow-left mr-2"></i>Bugungi
+        </a>
+    </div>
+</div>
+
+{% if followups %}
+<!-- Bulk Actions -->
+<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <form id="bulkForm" method="post">
+        {% csrf_token %}
+        <div class="flex flex-wrap gap-4 items-center">
+            <label class="flex items-center gap-2">
+                <input type="checkbox" id="selectAll" class="w-4 h-4 rounded">
+                <span class="text-sm text-slate-600">Barchasini tanlash</span>
+            </label>
+            
+            <div class="flex gap-2 ml-auto">
+                <button type="submit" formaction="{% url 'crm:followup_bulk_complete' %}" 
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm">
+                    <i class="fas fa-check mr-1"></i>Bajarish
+                </button>
+                <button type="button" onclick="showRescheduleModal()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                    <i class="fas fa-calendar mr-1"></i>Qayta rejalashtirish
+                </button>
+                {% if request.user.is_admin %}
+                <button type="submit" formaction="{% url 'crm:followup_bulk_delete' %}" 
+                        onclick="return confirm('O\'chirishni tasdiqlaysizmi?')"
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                    <i class="fas fa-trash mr-1"></i>O'chirish
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Follow-ups List -->
+<div class="space-y-3">
+    {% for followup in followups %}
+    <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
+        <div class="flex items-start gap-4">
+            <input type="checkbox" name="followup_ids" value="{{ followup.pk }}" form="bulkForm"
+                   class="followup-checkbox w-4 h-4 rounded mt-1">
+            
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <a href="{% url 'crm:lead_detail' followup.lead.pk %}" 
+                       class="font-semibold text-slate-800 hover:text-emerald-600">
+                        {{ followup.lead.name }}
+                    </a>
+                    <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                        {{ followup.due_date|timesince }} oldin
+                    </span>
+                </div>
+                <p class="text-slate-600 text-sm">
+                    <i class="fas fa-phone mr-1"></i>{{ followup.lead.phone }}
+                    <span class="ml-3"><i class="fas fa-user mr-1"></i>{{ followup.sales.username }}</span>
+                </p>
+                {% if followup.notes %}
+                <p class="text-slate-500 text-sm mt-1">{{ followup.notes }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="text-right">
+                <p class="text-sm text-red-600">
+                    {{ followup.due_date|date:"d.m.Y H:i" }}
+                </p>
+                <form method="post" action="{% url 'crm:followup_complete' followup.pk %}" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="crm:followup_overdue">
+                    <button type="submit" class="px-3 py-1 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-sm p-8 text-center">
+    <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+    <p class="text-slate-600">Overdue follow-uplar yo'q</p>
+</div>
+{% endif %}
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-96">
+        <h3 class="text-lg font-semibold mb-4">Qayta rejalashtirish</h3>
+        <form method="post" action="{% url 'crm:followup_bulk_reschedule' %}">
+            {% csrf_token %}
+            <div id="rescheduleIds"></div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Yangi vaqt</label>
+                <input type="datetime-local" name="new_date" required
+                       class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="hideRescheduleModal()" 
+                        class="flex-1 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg">
+                    Bekor qilish
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg">
+                    Saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('selectAll').addEventListener('change', function() {
+    document.querySelectorAll('.followup-checkbox').forEach(cb => cb.checked = this.checked);
+});
+
+function showRescheduleModal() {
+    const checked = document.querySelectorAll('.followup-checkbox:checked');
+    if (checked.length === 0) {
+        alert('Kamida bitta follow-up tanlang');
+        return;
+    }
+    
+    const container = document.getElementById('rescheduleIds');
+    container.innerHTML = '';
+    checked.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'followup_ids';
+        input.value = cb.value;
+        container.appendChild(input);
+    });
+    
+    document.getElementById('rescheduleModal').classList.remove('hidden');
+}
+
+function hideRescheduleModal() {
+    document.getElementById('rescheduleModal').classList.add('hidden');
+}
+</script>
+{% endblock %}
+

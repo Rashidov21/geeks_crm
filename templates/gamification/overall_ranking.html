@@ -1,125 +1,99 @@
 {% extends 'base.html' %}
 
 {% block title %}Umumiy reyting{% endblock %}
-{% block page_title %}Umumiy reyting{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
-                <div class="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-trophy text-amber-400"></i>
-                </div>
-                Umumiy reyting
-            </h1>
-            <p class="text-slate-400 mt-1">O'quvchilar reytingi va yutuqlari</p>
+            <h1 class="text-2xl font-bold text-gray-900">Umumiy reyting</h1>
+            <p class="text-gray-500 mt-1">O'quvchilar reytingi va yutuqlari</p>
         </div>
         <div class="flex gap-2">
-            <a href="{% url 'gamification:group_ranking' %}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
-                <i class="fas fa-users mr-2"></i>Guruh bo'yicha
+            <a href="{% url 'gamification:group_ranking' %}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                Guruh bo'yicha
             </a>
-            <a href="{% url 'gamification:monthly_ranking' %}" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">
-                <i class="fas fa-calendar mr-2"></i>Oylik
+            <a href="{% url 'gamification:monthly_ranking' %}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                Oylik
             </a>
         </div>
     </div>
 
     <!-- Top 3 -->
+    {% if top_students %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         {% for student in top_students|slice:":3" %}
-        <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 text-center {% if forloop.first %}md:order-2 ring-2 ring-amber-500/50{% elif forloop.counter == 2 %}md:order-1{% else %}md:order-3{% endif %}">
-            <div class="relative inline-block mb-4">
-                <div class="w-20 h-20 bg-gradient-to-br {% if forloop.first %}from-amber-400 to-yellow-500{% elif forloop.counter == 2 %}from-slate-300 to-slate-400{% else %}from-orange-400 to-orange-500{% endif %} rounded-full flex items-center justify-center text-white text-2xl font-bold">
+        <div class="bg-white rounded-lg p-6 border shadow-sm text-center {% if forloop.first %}md:order-2 ring-2 ring-yellow-400{% elif forloop.counter == 2 %}md:order-1{% else %}md:order-3{% endif %}">
+            <div class="relative inline-block mb-3">
+                <div class="w-16 h-16 {% if forloop.first %}bg-yellow-500{% elif forloop.counter == 2 %}bg-gray-400{% else %}bg-orange-500{% endif %} rounded-full flex items-center justify-center text-white text-xl font-bold">
                     {{ student.first_name.0|upper }}
                 </div>
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 {% if forloop.first %}bg-amber-500{% elif forloop.counter == 2 %}bg-slate-400{% else %}bg-orange-500{% endif %} rounded-full flex items-center justify-center text-white font-bold text-sm">
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-6 {% if forloop.first %}bg-yellow-500{% elif forloop.counter == 2 %}bg-gray-400{% else %}bg-orange-500{% endif %} rounded-full flex items-center justify-center text-white text-xs font-bold">
                     {{ forloop.counter }}
                 </div>
             </div>
-            <h3 class="font-bold text-white text-lg">{{ student.get_full_name }}</h3>
-            <p class="text-slate-400 text-sm mb-3">{{ student.student_profile.group.name|default:"-" }}</p>
-            <div class="flex items-center justify-center gap-2">
-                <i class="fas fa-star text-amber-400"></i>
-                <span class="text-2xl font-bold text-white">{{ student.total_points|default:0 }}</span>
-                <span class="text-slate-400">ball</span>
+            <h3 class="font-bold text-gray-900">{{ student.get_full_name }}</h3>
+            <p class="text-gray-500 text-sm mb-2">{{ student.student_profile.group.name|default:"-" }}</p>
+            <div class="flex items-center justify-center gap-1">
+                <i class="fas fa-star text-yellow-500"></i>
+                <span class="text-xl font-bold text-gray-900">{{ student.total_points|default:0 }}</span>
+                <span class="text-gray-500">ball</span>
             </div>
-        </div>
-        {% empty %}
-        <div class="col-span-3 bg-slate-800 rounded-xl p-12 text-center border border-slate-700">
-            <i class="fas fa-trophy text-4xl text-slate-500 mb-4"></i>
-            <p class="text-slate-400">Reyting ma'lumotlari yo'q</p>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
 
-    <!-- Full Ranking Table -->
-    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-        <div class="p-4 border-b border-slate-700">
-            <h3 class="font-semibold text-white">To'liq reyting</h3>
+    <!-- Full Ranking -->
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div class="p-4 border-b">
+            <h3 class="font-semibold text-gray-900">To'liq reyting</h3>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-700/50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">#</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">O'quvchi</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Guruh</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Ball</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Nishonlar</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Daraja</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-700">
-                    {% for student in students %}
-                    <tr class="hover:bg-slate-700/30 transition {% if student == request.user %}bg-indigo-500/10{% endif %}">
-                        <td class="px-6 py-4">
-                            {% if forloop.counter <= 3 %}
-                            <span class="w-8 h-8 {% if forloop.counter == 1 %}bg-amber-500/20 text-amber-400{% elif forloop.counter == 2 %}bg-slate-400/20 text-slate-300{% else %}bg-orange-500/20 text-orange-400{% endif %} rounded-full flex items-center justify-center">
-                                <i class="fas fa-{% if forloop.counter == 1 %}crown{% else %}medal{% endif %}"></i>
-                            </span>
-                            {% else %}
-                            <span class="text-slate-400 font-medium">{{ forloop.counter }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                    {{ student.first_name.0|upper }}
-                                </div>
-                                <div>
-                                    <p class="font-medium text-white">{{ student.get_full_name }}</p>
-                                    {% if student == request.user %}
-                                    <span class="text-xs text-indigo-400">Siz</span>
-                                    {% endif %}
-                                </div>
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">O'quvchi</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guruh</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Ball</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nishonlar</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for student in students %}
+                <tr class="hover:bg-gray-50 {% if student == request.user %}bg-indigo-50{% endif %}">
+                    <td class="px-4 py-3">
+                        {% if forloop.counter <= 3 %}
+                        <span class="w-6 h-6 {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600{% elif forloop.counter == 2 %}bg-gray-100 text-gray-600{% else %}bg-orange-100 text-orange-600{% endif %} rounded-full flex items-center justify-center text-xs font-bold">
+                            {{ forloop.counter }}
+                        </span>
+                        {% else %}
+                        {{ forloop.counter }}
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {{ student.first_name.0|upper }}
                             </div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-300">{{ student.student_profile.group.name|default:"-" }}</td>
-                        <td class="px-6 py-4">
-                            <span class="text-amber-400 font-bold">{{ student.total_points|default:0 }}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="text-white">{{ student.badges_count|default:0 }}</span>
-                            <i class="fas fa-medal text-purple-400 ml-1"></i>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-medium">
-                                {{ student.level|default:"Boshlang'ich" }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                            O'quvchilar topilmadi
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                            <span class="font-medium text-gray-900">{{ student.get_full_name }}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ student.student_profile.group.name|default:"-" }}</td>
+                    <td class="px-4 py-3">
+                        <span class="text-yellow-600 font-bold">{{ student.total_points|default:0 }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        {{ student.badges_count|default:0 }} <i class="fas fa-medal text-purple-500"></i>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">O'quvchilar topilmadi</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

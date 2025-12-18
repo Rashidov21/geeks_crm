@@ -68,6 +68,28 @@ class LeadKanbanView(LoginRequiredMixin, TemplateView):
         context['statuses'] = statuses
         context['total_leads'] = leads.count()
         
+        # Stats for Admin/Manager
+        if self.request.user.is_admin or self.request.user.is_manager:
+            from django.utils import timezone
+            today = timezone.now().date()
+            context['stats'] = {
+                'new_leads': leads.filter(status__code='new').count(),
+                'today_followups': FollowUp.objects.filter(
+                    due_date__date=today, completed=False
+                ).count(),
+                'overdue': FollowUp.objects.filter(
+                    due_date__lt=timezone.now(), completed=False
+                ).count(),
+                'trials': TrialLesson.objects.filter(
+                    date__gte=today, result__isnull=True
+                ).count(),
+            }
+        
+        # Filter options
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'])
+        context['courses'] = Course.objects.filter(is_active=True)
+        context['sources'] = Lead.SOURCE_CHOICES
+        
         return context
 
 
@@ -405,14 +427,12 @@ class LeadAssignView(RoleRequiredMixin, View):
         return redirect('crm:lead_detail', pk=pk)
 
 
-class LeadImportExcelView(RoleRequiredMixin, View):
+class LeadImportExcelView(RoleRequiredMixin, TemplateView):
     """
     Excel fayldan import
     """
+    template_name = 'crm/excel_import.html'
     allowed_roles = ['admin', 'manager', 'sales_manager', 'sales']
-    
-    def get(self, request):
-        return redirect('crm:lead_list')
     
     def post(self, request):
         file = request.FILES.get('excel_file')
@@ -459,17 +479,24 @@ class LeadImportExcelView(RoleRequiredMixin, View):
         return redirect('crm:lead_list')
 
 
-class LeadGoogleSheetsImportView(RoleRequiredMixin, View):
+class LeadGoogleSheetsImportView(RoleRequiredMixin, TemplateView):
     """
     Google Sheets dan import
     """
+    template_name = 'crm/google_sheets_import.html'
     allowed_roles = ['admin', 'manager', 'sales_manager', 'sales']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.conf import settings
+        context['sheets_configured'] = bool(getattr(settings, 'GOOGLE_SHEETS_ID', None))
+        return context
     
     def post(self, request):
         from .tasks import import_leads_from_google_sheets
         import_leads_from_google_sheets.delay()
-        messages.success(request, 'Google Sheets import boshlandi.')
-        return redirect('crm:lead_list')
+        messages.success(request, 'Google Sheets import boshlandi. Natijalar tez orada ko\'rinadi.')
+        return redirect('crm:kanban')
 
 
 # ==================== FOLLOW-UP VIEWS ====================

@@ -10,321 +10,207 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        .sidebar-link { @apply flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200; }
-        .sidebar-link:hover { @apply bg-slate-700/50 text-white; }
-        .sidebar-link.active { @apply bg-indigo-600 text-white shadow-lg; }
-        .sidebar-section { @apply text-slate-400 uppercase tracking-wider text-xs font-semibold mt-6 mb-3 px-3; }
     </style>
 </head>
-<body class="bg-slate-900 text-gray-100 min-h-screen flex" x-data="{sidebar: true, userMenu: false}">
+<body class="bg-gray-100 min-h-screen flex flex-col">
     
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-800 min-h-screen fixed left-0 top-0 z-40 flex flex-col shadow-2xl transition-transform duration-300"
-           :class="sidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-20'">
-        
-        <!-- Logo -->
-        <div class="p-4 border-b border-slate-700">
-            <a href="{% url 'dashboard' %}" class="flex items-center space-x-3">
-                <img src="{% static 'img/logo_white.png' %}" alt="Logo" class="h-10 w-10 object-contain">
-                <span class="text-xl font-bold text-white" x-show="sidebar">GEEKS CRM</span>
-            </a>
-        </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 p-4 overflow-y-auto">
-            {% if user.is_authenticated %}
+    <!-- Top Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-full mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <button id="sidebarToggle" class="p-2 rounded-lg hover:bg-gray-100 lg:hidden">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="flex items-center gap-3">
+                        <img src="{% static 'img/logo_dark.png' %}" alt="Logo" class="h-10 w-auto" onerror="this.style.display='none'">
+                        <span class="text-xl font-bold text-gray-800">GEEKS CRM</span>
+                    </a>
+                </div>
                 
-                <!-- Dashboard - Hammaga -->
-                <a href="{% url 'dashboard' %}" class="sidebar-link text-slate-300 {% if request.path == '/' %}active{% endif %}">
+                {% if user.is_authenticated %}
+                <div class="flex items-center gap-4">
+                    <!-- User Menu -->
+                    <div class="relative" x-data="{open: false}">
+                        <button @click="open = !open" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+                            <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {{ user.first_name.0|upper|default:user.username.0|upper }}
+                            </div>
+                            <span class="hidden sm:block text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1">
+                            <div class="px-4 py-2 border-b">
+                                <p class="text-sm font-medium text-gray-900">{{ user.get_full_name }}</p>
+                                <p class="text-xs text-gray-500">{{ user.get_role_display }}</p>
+                            </div>
+                            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-user w-4 mr-2"></i>Profil
+                            </a>
+                            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-50">
+                                <i class="fas fa-sign-out-alt w-4 mr-2"></i>Chiqish
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Kirish
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        {% if user.is_authenticated %}
+        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 pt-16 lg:pt-0">
+            <nav class="p-4 space-y-1 overflow-y-auto h-full">
+                
+                <!-- Dashboard -->
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 {% if request.path == '/' %}bg-indigo-50 text-indigo-700{% endif %}">
                     <i class="fas fa-home w-5 text-center"></i>
-                    <span x-show="sidebar">Dashboard</span>
+                    <span>Dashboard</span>
                 </a>
 
                 {% if user.role == 'admin' or user.role == 'manager' or user.role == 'sales' or user.role == 'sales_manager' %}
-                <!-- ========== CRM Bo'limi ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-headset mr-2"></i>CRM
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">CRM</p>
                 
-                <a href="{% url 'crm:kanban' %}" class="sidebar-link text-slate-300 {% if 'crm/kanban' in request.path %}active{% endif %}">
-                    <i class="fas fa-columns w-5 text-center text-blue-400"></i>
-                    <span x-show="sidebar">Kanban Board</span>
+                <a href="{% url 'crm:kanban' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-columns w-5 text-center text-blue-500"></i>
+                    <span>Kanban Board</span>
                 </a>
-                <a href="{% url 'crm:lead_table' %}" class="sidebar-link text-slate-300 {% if 'crm/leads/table' in request.path %}active{% endif %}">
-                    <i class="fas fa-table w-5 text-center text-cyan-400"></i>
-                    <span x-show="sidebar">Lidlar jadvali</span>
+                <a href="{% url 'crm:lead_table' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-table w-5 text-center text-cyan-500"></i>
+                    <span>Lidlar jadvali</span>
                 </a>
-                <a href="{% url 'crm:followup_today' %}" class="sidebar-link text-slate-300 {% if 'followups/today' in request.path %}active{% endif %}">
-                    <i class="fas fa-clock w-5 text-center text-yellow-400"></i>
-                    <span x-show="sidebar">Bugungi follow-up</span>
+                <a href="{% url 'crm:followup_today' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-clock w-5 text-center text-yellow-500"></i>
+                    <span>Bugungi follow-up</span>
                 </a>
-                <a href="{% url 'crm:followup_overdue' %}" class="sidebar-link text-slate-300 {% if 'followups/overdue' in request.path %}active{% endif %}">
-                    <i class="fas fa-exclamation-triangle w-5 text-center text-red-400"></i>
-                    <span x-show="sidebar">Muddati o'tgan</span>
-                </a>
-                
-                {% if user.role == 'admin' or user.role == 'manager' or user.role == 'sales_manager' %}
-                <a href="{% url 'crm:analytics' %}" class="sidebar-link text-slate-300 {% if 'crm/analytics' in request.path %}active{% endif %}">
-                    <i class="fas fa-chart-pie w-5 text-center text-purple-400"></i>
-                    <span x-show="sidebar">CRM Statistika</span>
-                </a>
-                <a href="{% url 'crm:sales_list' %}" class="sidebar-link text-slate-300 {% if 'users/sales' in request.path %}active{% endif %}">
-                    <i class="fas fa-user-tie w-5 text-center text-indigo-400"></i>
-                    <span x-show="sidebar">Sotuvchilar</span>
-                </a>
-                {% endif %}
                 
                 {% if user.role == 'admin' or user.role == 'manager' %}
-                <a href="{% url 'crm:offer_list' %}" class="sidebar-link text-slate-300 {% if 'crm/offers' in request.path %}active{% endif %}">
-                    <i class="fas fa-gift w-5 text-center text-green-400"></i>
-                    <span x-show="sidebar">Takliflar</span>
+                <a href="{% url 'crm:analytics' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-pie w-5 text-center text-purple-500"></i>
+                    <span>CRM Statistika</span>
                 </a>
-                <a href="{% url 'crm:leave_pending' %}" class="sidebar-link text-slate-300 {% if 'leaves/pending' in request.path %}active{% endif %}">
-                    <i class="fas fa-calendar-times w-5 text-center text-orange-400"></i>
-                    <span x-show="sidebar">Ta'til so'rovlari</span>
+                <a href="{% url 'crm:sales_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-user-tie w-5 text-center text-indigo-500"></i>
+                    <span>Sotuvchilar</span>
                 </a>
                 {% endif %}
                 {% endif %}
 
                 {% if user.role == 'admin' or user.role == 'manager' %}
-                <!-- ========== Boshqaruv ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-cog mr-2"></i>Boshqaruv
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Boshqaruv</p>
                 
-                <a href="{% url 'analytics:dashboard' %}" class="sidebar-link text-slate-300 {% if '/analytics/' in request.path %}active{% endif %}">
-                    <i class="fas fa-chart-line w-5 text-center text-emerald-400"></i>
-                    <span x-show="sidebar">Analitika</span>
+                <a href="{% url 'analytics:dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-line w-5 text-center text-green-500"></i>
+                    <span>Analitika</span>
                 </a>
-                <a href="{% url 'finance:dashboard' %}" class="sidebar-link text-slate-300 {% if '/finance/' in request.path %}active{% endif %}">
-                    <i class="fas fa-dollar-sign w-5 text-center text-green-400"></i>
-                    <span x-show="sidebar">Moliya</span>
+                <a href="{% url 'finance:dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-dollar-sign w-5 text-center text-emerald-500"></i>
+                    <span>Moliya</span>
                 </a>
-                <a href="{% url 'courses:branch_list' %}" class="sidebar-link text-slate-300 {% if 'branches' in request.path %}active{% endif %}">
-                    <i class="fas fa-building w-5 text-center text-slate-400"></i>
-                    <span x-show="sidebar">Filiallar</span>
-                </a>
-                <a href="{% url 'mentors:mentor_ranking' %}" class="sidebar-link text-slate-300 {% if '/mentors/' in request.path %}active{% endif %}">
-                    <i class="fas fa-chalkboard-teacher w-5 text-center text-violet-400"></i>
-                    <span x-show="sidebar">Mentorlar</span>
+                <a href="{% url 'mentors:mentor_ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chalkboard-teacher w-5 text-center text-violet-500"></i>
+                    <span>Mentorlar</span>
                 </a>
                 {% endif %}
 
                 {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
-                <!-- ========== O'quv jarayoni ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-graduation-cap mr-2"></i>O'quv jarayoni
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">O'quv jarayoni</p>
                 
-                <a href="{% url 'courses:course_list' %}" class="sidebar-link text-slate-300 {% if '/courses/' in request.path and 'branch' not in request.path %}active{% endif %}">
-                    <i class="fas fa-book w-5 text-center text-blue-400"></i>
-                    <span x-show="sidebar">Kurslar</span>
+                <a href="{% url 'courses:course_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-book w-5 text-center text-blue-500"></i>
+                    <span>Kurslar</span>
                 </a>
-                <a href="{% url 'courses:group_list' %}" class="sidebar-link text-slate-300 {% if '/groups/' in request.path %}active{% endif %}">
-                    <i class="fas fa-users w-5 text-center text-teal-400"></i>
-                    <span x-show="sidebar">Guruhlar</span>
+                <a href="{% url 'courses:group_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-users w-5 text-center text-teal-500"></i>
+                    <span>Guruhlar</span>
                 </a>
-                <a href="{% url 'attendance:attendance_list' %}" class="sidebar-link text-slate-300 {% if '/attendance/' in request.path %}active{% endif %}">
-                    <i class="fas fa-calendar-check w-5 text-center text-cyan-400"></i>
-                    <span x-show="sidebar">Davomat</span>
+                <a href="{% url 'attendance:attendance_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-calendar-check w-5 text-center text-cyan-500"></i>
+                    <span>Davomat</span>
                 </a>
-                <a href="{% url 'homework:homework_list' %}" class="sidebar-link text-slate-300 {% if '/homework/' in request.path %}active{% endif %}">
-                    <i class="fas fa-tasks w-5 text-center text-orange-400"></i>
-                    <span x-show="sidebar">Uy vazifalari</span>
+                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-tasks w-5 text-center text-orange-500"></i>
+                    <span>Uy vazifalari</span>
                 </a>
-                <a href="{% url 'exams:exam_list' %}" class="sidebar-link text-slate-300 {% if '/exams/' in request.path %}active{% endif %}">
-                    <i class="fas fa-file-alt w-5 text-center text-rose-400"></i>
-                    <span x-show="sidebar">Imtihonlar</span>
+                <a href="{% url 'exams:exam_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-file-alt w-5 text-center text-rose-500"></i>
+                    <span>Imtihonlar</span>
                 </a>
                 {% endif %}
 
                 {% if user.role == 'student' %}
-                <!-- ========== Talaba ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-user-graduate mr-2"></i>Mening o'quvim
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Mening o'quvim</p>
                 
-                <a href="{% url 'courses:course_list' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-book w-5 text-center text-blue-400"></i>
-                    <span x-show="sidebar">Kurslarim</span>
+                <a href="{% url 'courses:course_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-book w-5 text-center text-blue-500"></i>
+                    <span>Kurslarim</span>
                 </a>
-                <a href="{% url 'homework:homework_list' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-tasks w-5 text-center text-orange-400"></i>
-                    <span x-show="sidebar">Vazifalarim</span>
+                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-tasks w-5 text-center text-orange-500"></i>
+                    <span>Vazifalarim</span>
                 </a>
-                <a href="{% url 'exams:exam_list' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-file-alt w-5 text-center text-rose-400"></i>
-                    <span x-show="sidebar">Imtihonlarim</span>
+                <a href="{% url 'exams:exam_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-file-alt w-5 text-center text-rose-500"></i>
+                    <span>Imtihonlarim</span>
                 </a>
-                <a href="{% url 'gamification:overall_ranking' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-trophy w-5 text-center text-amber-400"></i>
-                    <span x-show="sidebar">Reytingim</span>
+                <a href="{% url 'gamification:overall_ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-trophy w-5 text-center text-amber-500"></i>
+                    <span>Reytingim</span>
                 </a>
                 {% endif %}
 
                 {% if user.role == 'parent' %}
-                <!-- ========== Ota-ona ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-child mr-2"></i>Farzandlarim
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Farzandlarim</p>
                 
-                <a href="{% url 'parents:dashboard' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-tachometer-alt w-5 text-center text-cyan-400"></i>
-                    <span x-show="sidebar">Dashboard</span>
+                <a href="{% url 'parents:dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-tachometer-alt w-5 text-center text-cyan-500"></i>
+                    <span>Dashboard</span>
                 </a>
-                <a href="{% url 'parents:monthly_report_list' %}" class="sidebar-link text-slate-300">
-                    <i class="fas fa-file-pdf w-5 text-center text-red-400"></i>
-                    <span x-show="sidebar">Hisobotlar</span>
+                <a href="{% url 'parents:monthly_report_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-file-pdf w-5 text-center text-red-500"></i>
+                    <span>Hisobotlar</span>
                 </a>
                 {% endif %}
 
                 {% if user.role == 'admin' or user.role == 'manager' or user.role == 'student' %}
-                <!-- ========== Gamifikatsiya ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-gamepad mr-2"></i>Gamifikatsiya
-                </p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Gamifikatsiya</p>
                 
-                <a href="{% url 'gamification:overall_ranking' %}" class="sidebar-link text-slate-300 {% if '/gamification/' in request.path %}active{% endif %}">
-                    <i class="fas fa-trophy w-5 text-center text-amber-400"></i>
-                    <span x-show="sidebar">Umumiy reyting</span>
+                <a href="{% url 'gamification:overall_ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-trophy w-5 text-center text-amber-500"></i>
+                    <span>Umumiy reyting</span>
                 </a>
                 {% endif %}
 
-                {% if user.role == 'sales' or user.role == 'sales_manager' %}
-                <!-- ========== Xabarlar ========== -->
-                <p class="sidebar-section" x-show="sidebar">
-                    <i class="fas fa-envelope mr-2"></i>Xabarlar
-                </p>
-                
-                <a href="{% url 'crm:message_inbox' %}" class="sidebar-link text-slate-300 {% if 'messages/inbox' in request.path %}active{% endif %}">
-                    <i class="fas fa-inbox w-5 text-center text-blue-400"></i>
-                    <span x-show="sidebar">Kiruvchi</span>
-                </a>
-                <a href="{% url 'crm:leave_list' %}" class="sidebar-link text-slate-300 {% if 'leaves' in request.path and 'pending' not in request.path %}active{% endif %}">
-                    <i class="fas fa-calendar-alt w-5 text-center text-purple-400"></i>
-                    <span x-show="sidebar">Ta'tillarim</span>
-                </a>
-                {% endif %}
-
-            {% endif %}
-        </nav>
-
-        <!-- User Info -->
-        {% if user.is_authenticated %}
-        <div class="p-4 border-t border-slate-700">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
-                    {{ user.first_name.0|upper|default:user.username.0|upper }}
-                </div>
-                <div x-show="sidebar" class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-white truncate">{{ user.get_full_name|default:user.username }}</p>
-                    <p class="text-xs text-slate-400">{{ user.get_role_display }}</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </aside>
-
-    <!-- Main Content -->
-    <div class="flex-1 ml-64 transition-all duration-300" :class="sidebar ? 'ml-64' : 'ml-0 md:ml-20'">
+            </nav>
+        </aside>
         
-        <!-- Top Navbar -->
-        <nav class="bg-slate-800 shadow-lg sticky top-0 z-30 border-b border-slate-700">
-            <div class="px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <button @click="sidebar = !sidebar" class="p-2 hover:bg-slate-700 rounded-lg transition text-slate-300">
-                        <i class="fas fa-bars text-lg"></i>
-                    </button>
-                    <h1 class="text-lg font-semibold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
-                </div>
-                
-                <div class="flex items-center space-x-3">
-                    {% if user.is_authenticated %}
-                    <!-- Quick Actions for Admin/Manager -->
-                    {% if user.role == 'admin' or user.role == 'manager' %}
-                    <div class="hidden md:flex items-center space-x-2">
-                        <a href="{% url 'crm:lead_create' %}" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition flex items-center space-x-2">
-                            <i class="fas fa-plus"></i>
-                            <span>Yangi lid</span>
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Notifications -->
-                    <div class="relative" x-data="{open: false}">
-                        <button @click="open = !open" class="p-2 hover:bg-slate-700 rounded-lg transition text-slate-300 relative">
-                            <i class="fas fa-bell text-lg"></i>
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
-                        <div x-show="open" @click.away="open = false" x-cloak
-                             class="absolute right-0 mt-2 w-80 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden">
-                            <div class="p-4 border-b border-slate-700">
-                                <h3 class="font-semibold text-white">Bildirishnomalar</h3>
-                            </div>
-                            <div class="max-h-64 overflow-y-auto">
-                                <p class="p-4 text-slate-400 text-sm text-center">Yangi bildirishnomalar yo'q</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- User Menu -->
-                    <div class="relative" x-data="{open: false}">
-                        <button @click="open = !open" class="flex items-center space-x-2 p-2 hover:bg-slate-700 rounded-lg transition">
-                            <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                {{ user.first_name.0|upper|default:user.username.0|upper }}
-                            </div>
-                            <i class="fas fa-chevron-down text-slate-400 text-xs"></i>
-                        </button>
-                        <div x-show="open" @click.away="open = false" x-cloak
-                             class="absolute right-0 mt-2 w-56 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden">
-                            <div class="p-4 border-b border-slate-700">
-                                <p class="font-medium text-white">{{ user.get_full_name|default:user.username }}</p>
-                                <p class="text-sm text-slate-400">{{ user.email }}</p>
-                            </div>
-                            <div class="py-2">
-                                <a href="{% url 'accounts:profile' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-slate-700 text-slate-300 transition">
-                                    <i class="fas fa-user w-5"></i>
-                                    <span>Profil</span>
-                                </a>
-                                <a href="{% url 'accounts:profile_edit' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-slate-700 text-slate-300 transition">
-                                    <i class="fas fa-cog w-5"></i>
-                                    <span>Sozlamalar</span>
-                                </a>
-                            </div>
-                            <div class="border-t border-slate-700 py-2">
-                                <a href="{% url 'accounts:logout' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-slate-700 text-red-400 transition">
-                                    <i class="fas fa-sign-out-alt w-5"></i>
-                                    <span>Chiqish</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <a href="{% url 'accounts:login' %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Kirish
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </nav>
+        <!-- Sidebar Overlay -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden" onclick="toggleSidebar()"></div>
+        {% endif %}
 
-        <!-- Page Content -->
-        <main class="p-6">
-            <!-- Messages / Alerts -->
+        <!-- Main Content -->
+        <main class="flex-1 p-6 {% if user.is_authenticated %}lg:ml-0{% endif %}">
+            <!-- Messages -->
             {% if messages %}
-            <div class="mb-6 space-y-3">
+            <div class="mb-6 space-y-2">
                 {% for message in messages %}
-                <div x-data="{show: true}" x-show="show" x-transition
-                     class="p-4 rounded-xl flex items-center justify-between shadow-lg
-                     {% if message.tags == 'error' %}bg-red-500/20 text-red-300 border border-red-500/30
-                     {% elif message.tags == 'success' %}bg-green-500/20 text-green-300 border border-green-500/30
-                     {% elif message.tags == 'warning' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
-                     {% else %}bg-blue-500/20 text-blue-300 border border-blue-500/30{% endif %}">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} text-xl"></i>
+                <div class="p-4 rounded-lg flex items-center justify-between
+                    {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+                    {% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
+                    {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
+                    {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
                         <span>{{ message }}</span>
                     </div>
-                    <button @click="show = false" class="hover:opacity-70 transition">
+                    <button onclick="this.parentElement.remove()" class="hover:opacity-70">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -334,24 +220,30 @@
 
             {% block content %}{% endblock %}
         </main>
-
-        <!-- Footer -->
-        <footer class="bg-slate-800 border-t border-slate-700 py-4 px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center space-x-3">
-                    <img src="{% static 'img/logo_white.png' %}" alt="Logo" class="h-6 w-auto opacity-70">
-                    <span class="text-slate-400 text-sm">&copy; 2024 GEEKS Academy. Barcha huquqlar himoyalangan.</span>
-                </div>
-                <div class="flex items-center space-x-4 text-slate-400 text-sm">
-                    <a href="https://t.me/geeksacademy" class="hover:text-white transition"><i class="fab fa-telegram mr-1"></i>Telegram</a>
-                    <a href="#" class="hover:text-white transition"><i class="fab fa-instagram mr-1"></i>Instagram</a>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <!-- Mobile Sidebar Overlay -->
-    <div class="fixed inset-0 bg-black/50 z-30 md:hidden" x-show="sidebar" x-cloak @click="sidebar = false"></div>
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-4 px-6 mt-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-2 text-sm text-gray-500">
+            <div class="flex items-center gap-2">
+                <img src="{% static 'img/logo_dark.png' %}" alt="Logo" class="h-6 w-auto opacity-50" onerror="this.style.display='none'">
+                <span>&copy; 2024 GEEKS Academy. Barcha huquqlar himoyalangan.</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hover:text-gray-700"><i class="fab fa-telegram"></i></a>
+                <a href="#" class="hover:text-gray-700"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
 
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+        document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
+    </script>
 </body>
 </html>

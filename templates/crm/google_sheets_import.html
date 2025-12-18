@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Google Sheets Import{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                <i class="fab fa-google text-2xl text-green-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Google Sheets Import</h1>
+                <p class="text-gray-500">Lidlarni Google Sheets dan avtomatik import qilish</p>
+            </div>
+        </div>
+    </div>
+
+    {% if sheets_configured %}
+    <!-- Import Form -->
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+        <h2 class="font-semibold text-gray-900 mb-4">Import boshlash</h2>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex gap-3">
+                <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+                <div class="text-sm text-blue-800">
+                    <p class="font-medium mb-1">Import qoidalari:</p>
+                    <ul class="list-disc list-inside space-y-1 text-blue-700">
+                        <li>Birinchi ustun - Ism (majburiy)</li>
+                        <li>Ikkinchi ustun - Telefon raqam (majburiy)</li>
+                        <li>Uchinchi ustun - Qo'shimcha telefon (ixtiyoriy)</li>
+                        <li>Dublikat telefon raqamlar o'tkazib yuboriladi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition">
+                <i class="fab fa-google mr-2"></i>Import boshlash
+            </button>
+        </form>
+
+        <p class="text-center text-gray-500 text-sm mt-4">
+            Import fonda bajariladi va bir necha daqiqa vaqt olishi mumkin
+        </p>
+    </div>
+
+    <!-- Recent Imports -->
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+        <h2 class="font-semibold text-gray-900 mb-4">Avtomatik sinxronizatsiya</h2>
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+                <p class="font-medium text-gray-900">Har 30 daqiqada</p>
+                <p class="text-sm text-gray-500">Yangi lidlar avtomatik import qilinadi</p>
+            </div>
+            <span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">Faol</span>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Not Configured -->
+    <div class="bg-white rounded-lg shadow-sm p-6 border">
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+            </div>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Sozlanmagan</h2>
+            <p class="text-gray-500 mb-4">Google Sheets integratsiyasi hali sozlanmagan.</p>
+            <p class="text-sm text-gray-400">
+                <code>.env</code> faylida <code>GOOGLE_SHEETS_ID</code> va credentials ni sozlang.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="flex justify-center">
+        <a href="{% url 'crm:kanban' %}" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+            <i class="fas fa-arrow-left mr-2"></i>Orqaga
+        </a>
+    </div>
+</div>
+{% endblock %}
+

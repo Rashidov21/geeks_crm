@@ -1,171 +1,87 @@
 {% extends 'base.html' %}
 
 {% block title %}Mentorlar{% endblock %}
-{% block page_title %}Mentorlar{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
-                <div class="w-10 h-10 bg-violet-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chalkboard-teacher text-violet-400"></i>
-                </div>
-                Mentorlar reytingi
-            </h1>
-            <p class="text-slate-400 mt-1">KPI va ishlash ko'rsatkichlari</p>
+            <h1 class="text-2xl font-bold text-gray-900">Mentorlar reytingi</h1>
+            <p class="text-gray-500 mt-1">KPI va ishlash ko'rsatkichlari</p>
         </div>
         {% if user.role == 'admin' %}
-        <a href="{% url 'mentors:mentor_create' %}" 
-           class="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
+        <button class="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition">
             <i class="fas fa-plus"></i>
             <span>Yangi mentor</span>
-        </a>
+        </button>
         {% endif %}
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Jami mentorlar</p>
-                    <p class="text-2xl font-bold text-white">{{ mentors.count|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chalkboard-teacher text-violet-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">O'rtacha KPI</p>
-                    <p class="text-2xl font-bold text-green-400">{{ avg_kpi|floatformat:1|default:"0" }}%</p>
-                </div>
-                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chart-line text-green-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Aktiv guruhlar</p>
-                    <p class="text-2xl font-bold text-blue-400">{{ active_groups|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-users text-blue-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Jami o'quvchilar</p>
-                    <p class="text-2xl font-bold text-cyan-400">{{ total_students|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-user-graduate text-cyan-400 text-xl"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mentors Table -->
-    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-700/50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">#</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Mentor</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Guruhlar</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">O'quvchilar</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">KPI</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Amallar</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-700">
-                    {% for mentor in mentors %}
-                    <tr class="hover:bg-slate-700/30 transition">
-                        <td class="px-6 py-4">
-                            {% if forloop.counter == 1 %}
-                            <span class="w-8 h-8 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                                <i class="fas fa-crown text-yellow-400"></i>
-                            </span>
-                            {% elif forloop.counter == 2 %}
-                            <span class="w-8 h-8 bg-slate-400/20 rounded-full flex items-center justify-center">
-                                <i class="fas fa-medal text-slate-300"></i>
-                            </span>
-                            {% elif forloop.counter == 3 %}
-                            <span class="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
-                                <i class="fas fa-medal text-orange-400"></i>
-                            </span>
-                            {% else %}
-                            <span class="text-slate-400 font-medium">{{ forloop.counter }}</span>
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Mentor</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guruhlar</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">O'quvchilar</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">KPI</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Amallar</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for mentor in mentors %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        {% if forloop.counter <= 3 %}
+                        <span class="w-6 h-6 {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600{% elif forloop.counter == 2 %}bg-gray-100 text-gray-600{% else %}bg-orange-100 text-orange-600{% endif %} rounded-full flex items-center justify-center text-xs">
+                            {{ forloop.counter }}
+                        </span>
+                        {% else %}
+                        {{ forloop.counter }}
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {{ mentor.user.first_name.0|upper }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ mentor.user.get_full_name }}</p>
+                                <p class="text-xs text-gray-500">{{ mentor.user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600">{{ mentor.groups_count|default:0 }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ mentor.students_count|default:0 }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-20 bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full {% if mentor.kpi_score >= 80 %}bg-green-500{% elif mentor.kpi_score >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ mentor.kpi_score|default:0 }}%"></div>
+                            </div>
+                            <span class="text-sm font-medium">{{ mentor.kpi_score|floatformat:0|default:0 }}%</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-1">
+                            <a href="{% url 'mentors:kpi_detail' mentor.pk %}" class="p-2 hover:bg-gray-100 rounded" title="KPI">
+                                <i class="fas fa-chart-bar text-blue-600"></i>
+                            </a>
+                            {% if user.role == 'admin' %}
+                            <button class="p-2 hover:bg-gray-100 rounded" title="Tahrirlash">
+                                <i class="fas fa-edit text-gray-600"></i>
+                            </button>
                             {% endif %}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                    {{ mentor.user.first_name.0|upper }}
-                                </div>
-                                <div>
-                                    <p class="font-medium text-white">{{ mentor.user.get_full_name }}</p>
-                                    <p class="text-sm text-slate-400">{{ mentor.user.email }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="text-white font-medium">{{ mentor.groups_count|default:0 }}</span>
-                            <span class="text-slate-400">ta</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="text-white font-medium">{{ mentor.students_count|default:0 }}</span>
-                            <span class="text-slate-400">ta</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-24 bg-slate-700 rounded-full h-2">
-                                    <div class="h-2 rounded-full {% if mentor.kpi_score >= 80 %}bg-green-500{% elif mentor.kpi_score >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}" 
-                                         style="width: {{ mentor.kpi_score|default:0 }}%"></div>
-                                </div>
-                                <span class="text-white font-medium">{{ mentor.kpi_score|floatformat:1|default:0 }}%</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <a href="{% url 'mentors:kpi_detail' mentor.pk %}" 
-                                   class="p-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition" title="KPI ko'rish">
-                                    <i class="fas fa-chart-bar"></i>
-                                </a>
-                                {% if user.role == 'admin' %}
-                                <a href="{% url 'mentors:mentor_edit' mentor.pk %}" 
-                                   class="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition" title="Tahrirlash">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition" title="O'chirish">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
-                            <div class="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-chalkboard-teacher text-3xl text-slate-500"></i>
-                            </div>
-                            <p class="text-slate-400">Mentorlar topilmadi</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">Mentorlar topilmadi</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

@@ -1,30 +1,21 @@
 {% extends 'base.html' %}
 
 {% block title %}Moliya{% endblock %}
-{% block page_title %}Moliya boshqaruvi{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-dollar-sign text-green-400"></i>
-                </div>
-                Moliya
-            </h1>
-            <p class="text-slate-400 mt-1">Moliyaviy ko'rsatkichlar va hisobotlar</p>
+            <h1 class="text-2xl font-bold text-gray-900">Moliya</h1>
+            <p class="text-gray-500 mt-1">Moliyaviy ko'rsatkichlar</p>
         </div>
         {% if user.role == 'admin' or user.role == 'manager' %}
         <div class="flex gap-2">
-            <a href="{% url 'finance:payment_create' %}" 
-               class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
+            <a href="{% url 'finance:payment_create' %}" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
                 <i class="fas fa-plus"></i>
-                <span>To'lov qo'shish</span>
+                <span>To'lov</span>
             </a>
-            <a href="{% url 'finance:contract_create' %}" 
-               class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg transition font-medium shadow-lg">
+            <a href="{% url 'finance:contract_create' %}" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
                 <i class="fas fa-file-contract"></i>
                 <span>Shartnoma</span>
             </a>
@@ -34,130 +25,94 @@
 
     <!-- Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Oylik daromad</p>
-                    <p class="text-2xl font-bold text-green-400">{{ monthly_income|floatformat:0|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-arrow-up text-green-400 text-xl"></i>
-                </div>
-            </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Oylik daromad</p>
+            <p class="text-2xl font-bold text-green-600">{{ monthly_income|floatformat:0|default:0 }}</p>
         </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Jami qarzdorlik</p>
-                    <p class="text-2xl font-bold text-red-400">{{ total_debt|floatformat:0|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-circle text-red-400 text-xl"></i>
-                </div>
-            </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Qarzdorlik</p>
+            <p class="text-2xl font-bold text-red-600">{{ total_debt|floatformat:0|default:0 }}</p>
         </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Shartnomalar</p>
-                    <p class="text-2xl font-bold text-blue-400">{{ contracts_count|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-file-contract text-blue-400 text-xl"></i>
-                </div>
-            </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Shartnomalar</p>
+            <p class="text-2xl font-bold text-blue-600">{{ contracts_count|default:0 }}</p>
         </div>
-        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-slate-400 text-sm">Kutilayotgan</p>
-                    <p class="text-2xl font-bold text-yellow-400">{{ pending_payments|default:0 }}</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-hourglass-half text-yellow-400 text-xl"></i>
-                </div>
-            </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Kutilayotgan</p>
+            <p class="text-2xl font-bold text-yellow-600">{{ pending_payments|default:0 }}</p>
         </div>
     </div>
 
     <!-- Quick Links -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{% url 'finance:payment_list' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-green-500/50 transition group">
-            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-credit-card text-green-400 text-xl"></i>
+        <a href="{% url 'finance:payment_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-credit-card text-green-600"></i>
             </div>
-            <h3 class="font-semibold text-white">To'lovlar</h3>
-            <p class="text-slate-400 text-sm">Barcha to'lovlar</p>
+            <h3 class="font-semibold text-gray-900">To'lovlar</h3>
+            <p class="text-gray-500 text-sm">Barcha to'lovlar</p>
         </a>
-        <a href="{% url 'finance:contract_list' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-blue-500/50 transition group">
-            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-file-contract text-blue-400 text-xl"></i>
+        <a href="{% url 'finance:contract_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-file-contract text-blue-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Shartnomalar</h3>
-            <p class="text-slate-400 text-sm">Aktiv shartnomalar</p>
+            <h3 class="font-semibold text-gray-900">Shartnomalar</h3>
+            <p class="text-gray-500 text-sm">Aktiv shartnomalar</p>
         </a>
-        <a href="{% url 'finance:debt_list' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-red-500/50 transition group">
-            <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+        <a href="{% url 'finance:debt_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Qarzdorlar</h3>
-            <p class="text-slate-400 text-sm">Qarzdorlik ro'yxati</p>
+            <h3 class="font-semibold text-gray-900">Qarzdorlar</h3>
+            <p class="text-gray-500 text-sm">Qarzdorlik ro'yxati</p>
         </a>
-        <a href="{% url 'finance:financial_report_list' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-purple-500/50 transition group">
-            <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-chart-pie text-purple-400 text-xl"></i>
+        <a href="{% url 'finance:financial_report_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-chart-pie text-purple-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Hisobotlar</h3>
-            <p class="text-slate-400 text-sm">Moliyaviy hisobotlar</p>
+            <h3 class="font-semibold text-gray-900">Hisobotlar</h3>
+            <p class="text-gray-500 text-sm">Moliyaviy hisobotlar</p>
         </a>
     </div>
 
     <!-- Recent Payments -->
-    <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-        <div class="p-4 border-b border-slate-700 flex items-center justify-between">
-            <h3 class="font-semibold text-white">So'nggi to'lovlar</h3>
-            <a href="{% url 'finance:payment_list' %}" class="text-blue-400 hover:text-blue-300 text-sm">
-                Barchasini ko'rish <i class="fas fa-arrow-right ml-1"></i>
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div class="p-4 border-b flex items-center justify-between">
+            <h3 class="font-semibold text-gray-900">So'nggi to'lovlar</h3>
+            <a href="{% url 'finance:payment_list' %}" class="text-blue-600 hover:text-blue-700 text-sm">
+                Barchasini ko'rish →
             </a>
         </div>
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-slate-700/50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase">Sana</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase">O'quvchi</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase">Summa</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase">Usul</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-300 uppercase">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-700">
-                    {% for payment in recent_payments %}
-                    <tr class="hover:bg-slate-700/30 transition">
-                        <td class="px-6 py-4 text-white">{{ payment.date|date:"d.m.Y" }}</td>
-                        <td class="px-6 py-4 text-slate-300">{{ payment.contract.student.get_full_name }}</td>
-                        <td class="px-6 py-4 text-green-400 font-semibold">{{ payment.amount|floatformat:0 }} so'm</td>
-                        <td class="px-6 py-4 text-slate-300">{{ payment.get_payment_method_display }}</td>
-                        <td class="px-6 py-4">
-                            {% if payment.status == 'confirmed' %}
-                            <span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Tasdiqlangan</span>
-                            {% elif payment.status == 'pending' %}
-                            <span class="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-xs">Kutilmoqda</span>
-                            {% else %}
-                            <span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">Bekor qilingan</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-slate-400">
-                            To'lovlar topilmadi
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Sana</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">O'quvchi</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Summa</th>
+                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for payment in recent_payments %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-900">{{ payment.date|date:"d.m.Y" }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ payment.contract.student.get_full_name }}</td>
+                    <td class="px-4 py-3 text-green-600 font-semibold">{{ payment.amount|floatformat:0 }}</td>
+                    <td class="px-4 py-3">
+                        {% if payment.status == 'confirmed' %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Tasdiqlangan</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Kutilmoqda</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">To'lovlar topilmadi</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

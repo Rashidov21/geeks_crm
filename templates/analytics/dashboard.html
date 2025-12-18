@@ -1,135 +1,57 @@
 {% extends 'base.html' %}
 
 {% block title %}Analitika{% endblock %}
-{% block page_title %}Analitika{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-white flex items-center gap-3">
-                <div class="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chart-line text-emerald-400"></i>
-                </div>
-                Analitika
-            </h1>
-            <p class="text-slate-400 mt-1">Umumiy statistika va ko'rsatkichlar</p>
-        </div>
-        {% if user.role == 'admin' or user.role == 'manager' %}
-        <div class="flex gap-2">
-            <select class="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
-                <option>Bu oy</option>
-                <option>O'tgan oy</option>
-                <option>Bu yil</option>
-            </select>
-            <button class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition">
-                <i class="fas fa-download mr-2"></i>Export
-            </button>
-        </div>
-        {% endif %}
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Analitika</h1>
+        <p class="text-gray-500 mt-1">Umumiy statistika va ko'rsatkichlar</p>
     </div>
 
-    <!-- Main Stats -->
+    <!-- Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-user-graduate text-blue-400 text-xl"></i>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-graduate text-blue-600"></i>
                 </div>
-                <span class="text-green-400 text-sm"><i class="fas fa-arrow-up mr-1"></i>12%</span>
-            </div>
-            <p class="text-3xl font-bold text-white">{{ total_students|default:0 }}</p>
-            <p class="text-slate-400 text-sm">Jami o'quvchilar</p>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chalkboard-teacher text-violet-400 text-xl"></i>
-                </div>
-                <span class="text-green-400 text-sm"><i class="fas fa-arrow-up mr-1"></i>5%</span>
-            </div>
-            <p class="text-3xl font-bold text-white">{{ total_mentors|default:0 }}</p>
-            <p class="text-slate-400 text-sm">Mentorlar</p>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 bg-teal-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-users text-teal-400 text-xl"></i>
-                </div>
-                <span class="text-green-400 text-sm"><i class="fas fa-arrow-up mr-1"></i>8%</span>
-            </div>
-            <p class="text-3xl font-bold text-white">{{ total_groups|default:0 }}</p>
-            <p class="text-slate-400 text-sm">Aktiv guruhlar</p>
-        </div>
-        <div class="bg-slate-800 rounded-xl p-5 border border-slate-700">
-            <div class="flex items-center justify-between mb-3">
-                <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-dollar-sign text-green-400 text-xl"></i>
-                </div>
-                <span class="text-green-400 text-sm"><i class="fas fa-arrow-up mr-1"></i>15%</span>
-            </div>
-            <p class="text-3xl font-bold text-white">{{ monthly_revenue|floatformat:0|default:0 }}</p>
-            <p class="text-slate-400 text-sm">Oylik daromad</p>
-        </div>
-    </div>
-
-    <!-- CRM Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div class="p-4 border-b border-slate-700">
-                <h3 class="font-semibold text-white flex items-center gap-2">
-                    <i class="fas fa-funnel-dollar text-blue-400"></i>
-                    CRM statistikasi
-                </h3>
-            </div>
-            <div class="p-4 space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Yangi lidlar</span>
-                    <span class="text-white font-semibold">{{ new_leads|default:0 }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Sinov darslari</span>
-                    <span class="text-white font-semibold">{{ trial_lessons|default:0 }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Sotuvlar</span>
-                    <span class="text-green-400 font-semibold">{{ sales_count|default:0 }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Konversiya</span>
-                    <span class="text-purple-400 font-semibold">{{ conversion_rate|floatformat:1|default:0 }}%</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Muddati o'tgan follow-up</span>
-                    <span class="text-red-400 font-semibold">{{ overdue_followups|default:0 }}</span>
+                <div>
+                    <p class="text-gray-500 text-sm">O'quvchilar</p>
+                    <p class="text-xl font-bold text-gray-900">{{ total_students|default:0 }}</p>
                 </div>
             </div>
         </div>
-
-        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-            <div class="p-4 border-b border-slate-700">
-                <h3 class="font-semibold text-white flex items-center gap-2">
-                    <i class="fas fa-calendar-check text-cyan-400"></i>
-                    Davomat statistikasi
-                </h3>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chalkboard-teacher text-purple-600"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Mentorlar</p>
+                    <p class="text-xl font-bold text-gray-900">{{ total_mentors|default:0 }}</p>
+                </div>
             </div>
-            <div class="p-4 space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">O'rtacha davomat</span>
-                    <span class="text-green-400 font-semibold">{{ avg_attendance|floatformat:1|default:0 }}%</span>
+        </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-teal-600"></i>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Bugun kelganlar</span>
-                    <span class="text-white font-semibold">{{ today_present|default:0 }}</span>
+                <div>
+                    <p class="text-gray-500 text-sm">Guruhlar</p>
+                    <p class="text-xl font-bold text-gray-900">{{ total_groups|default:0 }}</p>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Bugun kelmaganlar</span>
-                    <span class="text-red-400 font-semibold">{{ today_absent|default:0 }}</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-green-600"></i>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-slate-400">Bugungi darslar</span>
-                    <span class="text-white font-semibold">{{ today_lessons|default:0 }}</span>
+                <div>
+                    <p class="text-gray-500 text-sm">Oylik daromad</p>
+                    <p class="text-xl font-bold text-gray-900">{{ monthly_revenue|floatformat:0|default:0 }}</p>
                 </div>
             </div>
         </div>
@@ -137,33 +59,33 @@
 
     <!-- Quick Links -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{% url 'analytics:course_statistics' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-blue-500/50 transition group">
-            <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-book text-blue-400 text-xl"></i>
+        <a href="{% url 'courses:course_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-book text-blue-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Kurs statistikasi</h3>
-            <p class="text-slate-400 text-sm">Kurslar bo'yicha</p>
+            <h3 class="font-semibold text-gray-900">Kurslar</h3>
+            <p class="text-gray-500 text-sm">Kurslar statistikasi</p>
         </a>
-        <a href="{% url 'analytics:branch_statistics' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-green-500/50 transition group">
-            <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-building text-green-400 text-xl"></i>
+        <a href="{% url 'courses:course_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-building text-green-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Filial statistikasi</h3>
-            <p class="text-slate-400 text-sm">Filiallar bo'yicha</p>
+            <h3 class="font-semibold text-gray-900">Filiallar</h3>
+            <p class="text-gray-500 text-sm">Filiallar bo'yicha</p>
         </a>
-        <a href="{% url 'crm:analytics' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-purple-500/50 transition group">
-            <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-funnel-dollar text-purple-400 text-xl"></i>
+        <a href="{% url 'crm:analytics' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-funnel-dollar text-purple-600"></i>
             </div>
-            <h3 class="font-semibold text-white">CRM analitika</h3>
-            <p class="text-slate-400 text-sm">Sotuvlar statistikasi</p>
+            <h3 class="font-semibold text-gray-900">CRM</h3>
+            <p class="text-gray-500 text-sm">Sotuvlar statistikasi</p>
         </a>
-        <a href="{% url 'finance:financial_report_list' %}" class="bg-slate-800 rounded-xl p-5 border border-slate-700 hover:border-yellow-500/50 transition group">
-            <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition">
-                <i class="fas fa-chart-pie text-yellow-400 text-xl"></i>
+        <a href="{% url 'finance:dashboard' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
+            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-3">
+                <i class="fas fa-chart-pie text-yellow-600"></i>
             </div>
-            <h3 class="font-semibold text-white">Moliya hisoboti</h3>
-            <p class="text-slate-400 text-sm">Moliyaviy tahlil</p>
+            <h3 class="font-semibold text-gray-900">Moliya</h3>
+            <p class="text-gray-500 text-sm">Moliyaviy tahlil</p>
         </a>
     </div>
 </div>

@@ -11,11 +11,11 @@
             <h1 class="text-2xl font-bold text-gray-900">Kurslar</h1>
             <p class="text-gray-500 mt-1">Barcha mavjud kurslar ro'yxati</p>
         </div>
-        {% if user.role == 'admin' or user.role == 'manager' %}
-        <button class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+        {% if request.user.is_admin or request.user.is_manager %}
+        <a href="{% url 'courses:course_create' %}" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
             <i class="fas fa-plus"></i>
             <span>Yangi kurs</span>
-        </button>
+        </a>
         {% endif %}
     </div>
 
@@ -71,10 +71,10 @@
                     <a href="{% url 'courses:course_detail' course.pk %}" class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded transition text-sm">
                         Ko'rish
                     </a>
-                    {% if user.role == 'admin' or user.role == 'manager' %}
-                    <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
+                    {% if request.user.is_admin or request.user.is_manager %}
+                    <a href="{% url 'courses:course_edit' course.pk %}" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
                         <i class="fas fa-edit text-gray-600"></i>
-                    </button>
+                    </a>
                     {% endif %}
                 </div>
             </div>

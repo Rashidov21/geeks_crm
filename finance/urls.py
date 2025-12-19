@@ -20,7 +20,8 @@ urlpatterns = [
     path('debts/', views.DebtListView.as_view(), name='debt_list'),
     
     # Reports
-    path('reports/', views.FinancialReportListView.as_view(), name='financial_report_list'),
+    path('reports/', views.ReportsView.as_view(), name='reports'),
+    path('reports/list/', views.FinancialReportListView.as_view(), name='financial_report_list'),
     path('reports/<int:pk>/', views.FinancialReportDetailView.as_view(), name='financial_report_detail'),
 ]
 

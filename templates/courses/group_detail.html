@@ -1,73 +1,166 @@
 {% extends 'base.html' %}
 {% block title %}Guruh: {{ group.name }}{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
-  <div class="bg-white shadow rounded-lg p-6">
-    <p class="text-sm text-gray-500">Kurs: {{ group.course.name }}</p>
-    <h1 class="text-3xl font-bold">Guruh: {{ group.name }}</h1>
-    <p class="text-sm text-gray-500">Xona: {{ group.room.name }} · Jadval: {{ group.get_schedule_display }}</p>
-  </div>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-white shadow rounded-lg p-4"><p class="text-sm text-gray-500">Jami</p><p class="text-2xl font-bold">{{ group.total_students_count }}</p></div>
-    <div class="bg-white shadow rounded-lg p-4"><p class="text-sm text-gray-500">Asosiy</p><p class="text-2xl font-bold text-blue-600">{{ group.enrolled_students_count }}</p></div>
-    <div class="bg-white shadow rounded-lg p-4"><p class="text-sm text-gray-500">Trial</p><p class="text-2xl font-bold text-amber-600">{{ group.trial_students_count }}</p></div>
-    <div class="bg-white shadow rounded-lg p-4"><p class="text-sm text-gray-500">To'ldirish</p><p class="text-2xl font-bold text-green-600">{{ group.fill_percentage }}%</p></div>
-  </div>
-
-  <div class="bg-white shadow rounded-lg overflow-hidden">
-    <div class="px-4 py-3 border-b flex items-center justify-between">
-      <h2 class="text-lg font-semibold">O'quvchilar</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ism</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telefon</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          {% for student in group.students.all %}
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ student.get_full_name|default:student.username }}</td>
-            <td class="px-4 py-3 text-sm text-gray-600">{{ student.phone|default:"-" }}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Student</span>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Hozircha o'quvchi yo'q</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="space-y-3">
-    <div class="flex justify-between items-center">
-      <h2 class="text-lg font-semibold">Darslar</h2>
-      <a href="#" class="text-blue-600 hover:text-blue-800 text-sm">Barchasi</a>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {% for lesson in lessons %}
-      <div class="bg-white shadow rounded-lg p-4 space-y-2">
-        <div class="flex items-center justify-between text-sm text-gray-500">
-          <span>{{ lesson.date }}</span>
-          <span>{{ lesson.topic.name|default:"Mavzu" }}</span>
+    <!-- Header -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <p class="text-sm text-gray-500">{{ group.course.name }}</p>
+                <h1 class="text-2xl font-bold text-gray-900">{{ group.name }}</h1>
+                <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+                    <span><i class="fas fa-door-open mr-1"></i>{{ group.room.name|default:"Xona belgilanmagan" }}</span>
+                    <span><i class="fas fa-calendar mr-1"></i>{{ group.schedule_days|default:"-" }}</span>
+                    <span><i class="fas fa-clock mr-1"></i>{{ group.schedule_time|time:"H:i"|default:"-" }}</span>
+                </div>
+            </div>
+            {% if can_edit %}
+            <div class="flex gap-2">
+                <a href="{% url 'courses:group_edit' group.pk %}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition">
+                    <i class="fas fa-edit mr-2"></i>Tahrirlash
+                </a>
+                <a href="{% url 'courses:group_delete' group.pk %}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                    <i class="fas fa-trash mr-2"></i>O'chirish
+                </a>
+            </div>
+            {% endif %}
         </div>
-        <p class="text-base font-semibold text-gray-900">{{ lesson.title }}</p>
-        <div class="flex justify-between text-sm text-gray-600">
-          <span>Vaqt: {{ lesson.start_time|default:"" }}</span>
-          <span>Davom: {{ lesson.duration_minutes|default:"-" }} min</span>
-        </div>
-      </div>
-      {% empty %}
-      <p class="text-sm text-gray-500">Darslar mavjud emas</p>
-      {% endfor %}
     </div>
-  </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white shadow rounded-lg p-4">
+            <p class="text-sm text-gray-500">Jami o'quvchilar</p>
+            <p class="text-2xl font-bold text-gray-900">{{ group.students.count }}</p>
+        </div>
+        <div class="bg-white shadow rounded-lg p-4">
+            <p class="text-sm text-gray-500">Mentor</p>
+            <p class="text-lg font-bold text-green-600">{{ group.mentor.get_full_name|default:"-" }}</p>
+        </div>
+        <div class="bg-white shadow rounded-lg p-4">
+            <p class="text-sm text-gray-500">Boshlanish</p>
+            <p class="text-lg font-bold text-gray-900">{{ group.start_date|date:"d.m.Y"|default:"-" }}</p>
+        </div>
+        <div class="bg-white shadow rounded-lg p-4">
+            <p class="text-sm text-gray-500">Status</p>
+            {% if group.is_active %}
+            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">Faol</span>
+            {% else %}
+            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">Nofaol</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- O'quvchilar -->
+    <div class="bg-white shadow rounded-lg overflow-hidden" x-data="{ showAddStudent: false }">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-users text-green-500 mr-2"></i>O'quvchilar
+            </h2>
+            {% if can_edit %}
+            <button @click="showAddStudent = !showAddStudent" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm">
+                <i class="fas fa-plus mr-1"></i>O'quvchi qo'shish
+            </button>
+            {% endif %}
+        </div>
+        
+        <!-- O'quvchi qo'shish formasi -->
+        <div x-show="showAddStudent" x-transition class="p-4 bg-gray-50 border-b">
+            <form method="post" action="{% url 'courses:group_students' group.pk %}" class="flex gap-3 items-end">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">O'quvchi tanlang</label>
+                    <select name="student_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="">Tanlang...</option>
+                        {% for student in available_students %}
+                        <option value="{{ student.id }}">{{ student.get_full_name }} ({{ student.phone|default:"-" }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Qo'shish</button>
+                <button type="button" @click="showAddStudent = false" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Bekor</button>
+            </form>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">O'quvchi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telefon</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        {% if can_edit %}
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Amallar</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in group.students.all %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold">
+                                    {{ student.first_name.0|upper|default:"S" }}
+                                </div>
+                                <span class="font-medium text-gray-900">{{ student.get_full_name|default:student.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ student.phone|default:"-" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ student.email|default:"-" }}</td>
+                        {% if can_edit %}
+                        <td class="px-4 py-3 text-center">
+                            <form method="post" action="{% url 'courses:group_students' group.pk %}" class="inline" onsubmit="return confirm('O\'quvchini guruhdan chiqarishni tasdiqlaysizmi?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove">
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Guruhdan chiqarish">
+                                    <i class="fas fa-user-minus"></i>
+                                </button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if can_edit %}4{% else %}3{% endif %}" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-users text-3xl mb-2"></i>
+                            <p>Hozircha o'quvchi yo'q</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Darslar -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-chalkboard text-blue-500 mr-2"></i>Darslar
+            </h2>
+            <a href="{% url 'attendance:group_attendance' group.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">
+                <i class="fas fa-calendar-check mr-1"></i>Davomat
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for lesson in group.lessons.all|slice:":6" %}
+            <div class="p-4 border rounded-lg hover:shadow transition">
+                <div class="flex items-center justify-between text-sm text-gray-500 mb-2">
+                    <span>{{ lesson.date|date:"d.m.Y" }}</span>
+                    <span>{{ lesson.start_time|time:"H:i" }}</span>
+                </div>
+                <p class="font-medium text-gray-900">{{ lesson.topic.name|default:"Mavzu belgilanmagan" }}</p>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-8 text-gray-500">
+                <i class="fas fa-chalkboard text-3xl mb-2"></i>
+                <p>Darslar mavjud emas</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}
-

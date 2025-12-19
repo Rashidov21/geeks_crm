@@ -131,6 +131,10 @@
                     <i class="fas fa-users w-5 text-center text-teal-500"></i>
                     <span>Guruhlar</span>
                 </a>
+                <a href="{% url 'schedule:timetable' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-calendar-week w-5 text-center text-purple-500"></i>
+                    <span>Dars jadvali</span>
+                </a>
                 <a href="{% url 'attendance:attendance_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-calendar-check w-5 text-center text-cyan-500"></i>
                     <span>Davomat</span>
@@ -182,9 +186,13 @@
                 {% if user.role == 'admin' or user.role == 'manager' or user.role == 'student' %}
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2 px-3">Gamifikatsiya</p>
                 
-                <a href="{% url 'gamification:overall_ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <a href="{% url 'gamification:ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-trophy w-5 text-center text-amber-500"></i>
-                    <span>Umumiy reyting</span>
+                    <span>Reyting</span>
+                </a>
+                <a href="{% url 'gamification:student_badges' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-medal w-5 text-center text-yellow-500"></i>
+                    <span>Badgelar</span>
                 </a>
                 {% endif %}
 

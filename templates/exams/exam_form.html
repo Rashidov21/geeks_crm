@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Imtihon tahrirlash{% else %}Yangi imtihon{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-file-alt text-xl text-blue-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">{% if is_edit %}Imtihon tahrirlash{% else %}Yangi imtihon yaratish{% endif %}</h1>
+                <p class="text-gray-500">Imtihon ma'lumotlari</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Imtihon nomi <span class="text-red-500">*</span></label>
+                <input type="text" name="title" value="{{ form.title.value|default:'' }}" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kurs</label>
+                    <select name="course" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tanlanmagan</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if form.course.value == course.id %}selected{% endif %}>{{ course.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                    <select name="group" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tanlanmagan</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}" {% if form.group.value == group.id %}selected{% endif %}>{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sana <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" value="{{ form.date.value|date:'Y-m-d'|default:'' }}" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Davomiylik (daqiqa)</label>
+                    <input type="number" name="duration_minutes" value="{{ form.duration_minutes.value|default:60 }}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">O'tish balli</label>
+                <input type="number" name="passing_score" value="{{ form.passing_score.value|default:60 }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tavsif</label>
+                <textarea name="description" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">{{ form.description.value|default:'' }}</textarea>
+            </div>
+            
+            {% if is_edit %}
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" {% if form.is_active.value %}checked{% endif %} class="rounded text-blue-600">
+                    <span class="text-sm font-medium text-gray-700">Faol</span>
+                </label>
+            </div>
+            {% endif %}
+            
+            <div class="flex gap-3 pt-4">
+                <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                    <i class="fas fa-save mr-2"></i>Saqlash
+                </button>
+                <a href="{% url 'exams:exam_list' %}" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition">
+                    Bekor qilish
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

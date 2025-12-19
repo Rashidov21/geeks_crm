@@ -4,55 +4,112 @@
 
 {% block content %}
 <div class="space-y-6">
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Guruhlar</h1>
             <p class="text-gray-500 mt-1">Barcha guruhlar ro'yxati</p>
         </div>
-        {% if user.role == 'admin' or user.role == 'manager' %}
-        <button class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition">
+        {% if request.user.is_admin or request.user.is_manager %}
+        <a href="{% url 'courses:group_create' %}" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
             <i class="fas fa-plus"></i>
             <span>Yangi guruh</span>
-        </button>
+        </a>
         {% endif %}
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Jami</p>
+            <p class="text-2xl font-bold text-gray-900">{{ total_groups|default:0 }}</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border shadow-sm">
+            <p class="text-gray-500 text-sm">Faol</p>
+            <p class="text-2xl font-bold text-green-600">{{ active_groups|default:0 }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg border shadow-sm p-4">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kurs</label>
+                <select name="course" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"d" %}selected{% endif %}>{{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Mentor</label>
+                <select name="mentor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for mentor in mentors %}
+                    <option value="{{ mentor.id }}" {% if request.GET.mentor == mentor.id|stringformat:"d" %}selected{% endif %}>{{ mentor.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Faol</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Nofaol</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                    <i class="fas fa-search mr-1"></i>Filtrlash
+                </button>
+                <a href="{% url 'courses:group_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
     </div>
 
     {% if groups %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for group in groups %}
         <div class="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-md transition">
-            <div class="bg-gradient-to-r from-teal-500 to-cyan-500 p-4">
+            <div class="bg-gradient-to-r from-green-500 to-teal-500 p-4">
                 <div class="flex items-start justify-between">
                     <h3 class="font-bold text-white">{{ group.name }}</h3>
                     {% if group.is_active %}
-                    <span class="bg-green-500 text-white px-2 py-1 rounded text-xs">Aktiv</span>
+                    <span class="bg-white/20 text-white px-2 py-1 rounded text-xs">Faol</span>
                     {% else %}
-                    <span class="bg-gray-400 text-white px-2 py-1 rounded text-xs">Yakunlangan</span>
+                    <span class="bg-gray-500/50 text-white px-2 py-1 rounded text-xs">Nofaol</span>
                     {% endif %}
                 </div>
-                <p class="text-teal-100 text-sm">{{ group.course.name }}</p>
+                <p class="text-green-100 text-sm">{{ group.course.name }}</p>
             </div>
             <div class="p-4 space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Mentor</span>
+                    <span class="text-gray-500"><i class="fas fa-chalkboard-teacher mr-1"></i>Mentor</span>
                     <span class="font-medium">{{ group.mentor.get_full_name|default:"-" }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-500">O'quvchilar</span>
-                    <span class="font-medium">{{ group.students.count }} / {{ group.max_students }}</span>
+                    <span class="text-gray-500"><i class="fas fa-users mr-1"></i>O'quvchilar</span>
+                    <span class="font-medium">{{ group.students.count }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Boshlanish</span>
-                    <span class="font-medium">{{ group.start_date|date:"d.m.Y" }}</span>
+                    <span class="text-gray-500"><i class="fas fa-door-open mr-1"></i>Xona</span>
+                    <span class="font-medium">{{ group.room.name|default:"-" }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500"><i class="fas fa-calendar mr-1"></i>Boshlanish</span>
+                    <span class="font-medium">{{ group.start_date|date:"d.m.Y"|default:"-" }}</span>
                 </div>
                 <div class="flex gap-2 pt-3">
-                    <a href="{% url 'courses:group_detail' group.pk %}" class="flex-1 text-center bg-teal-600 hover:bg-teal-700 text-white py-2 rounded transition text-sm">
+                    <a href="{% url 'courses:group_detail' group.pk %}" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded transition text-sm">
                         Ko'rish
                     </a>
-                    {% if user.role == 'admin' or user.role == 'manager' %}
-                    <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
+                    {% if request.user.is_admin or request.user.is_manager %}
+                    <a href="{% url 'courses:group_edit' group.pk %}" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
                         <i class="fas fa-edit text-gray-600"></i>
-                    </button>
+                    </a>
                     {% endif %}
                 </div>
             </div>
@@ -61,9 +118,14 @@
     </div>
     {% else %}
     <div class="bg-white rounded-lg p-12 text-center border">
-        <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
+        <i class="fas fa-users text-5xl text-gray-300 mb-4"></i>
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Guruhlar topilmadi</h3>
         <p class="text-gray-500">Hozircha hech qanday guruh mavjud emas.</p>
+        {% if request.user.is_admin or request.user.is_manager %}
+        <a href="{% url 'courses:group_create' %}" class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+            <i class="fas fa-plus"></i>Yangi guruh qo'shish
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 </div>

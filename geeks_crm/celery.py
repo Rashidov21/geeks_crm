@@ -17,6 +17,20 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
 
+# Celery worker sozlamalari
+app.conf.update(
+    task_always_eager=False,
+    task_eager_propagates=False,
+    task_ignore_result=False,
+    worker_prefetch_multiplier=4,
+    worker_max_tasks_per_child=1000,
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    broker_connection_retry_on_startup=True,
+    broker_connection_retry=True,
+    broker_connection_max_retries=10,
+)
+
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):

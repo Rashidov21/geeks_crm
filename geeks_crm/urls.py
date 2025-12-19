@@ -22,6 +22,7 @@ urlpatterns = [
     path('analytics/', include('analytics.urls')),
     path('finance/', include('finance.urls')),
     path('telegram/', include('telegram_bot.urls')),
+    path('schedule/', include('schedule.urls')),
 ]
 
 # Media and Static files

@@ -23,7 +23,7 @@ from .models import (
     WorkSchedule, Leave, SalesKPI, DailyKPI, SalesMessage, SalesMessageRead,
     Offer, Reactivation
 )
-from accounts.models import User
+from accounts.models import User, Branch
 from accounts.mixins import RoleRequiredMixin, AdminRequiredMixin, TailwindFormMixin
 from courses.models import Course, Group, Room
 
@@ -989,53 +989,151 @@ class SalesUserListView(RoleRequiredMixin, ListView):
     """
     Sotuvchilar ro'yxati
     """
-    model = User
+    model = SalesProfile
     template_name = 'crm/sales_list.html'
-    context_object_name = 'sales_users'
+    context_object_name = 'sales_profiles'
     allowed_roles = ['admin', 'manager', 'sales_manager']
     
     def get_queryset(self):
-        return User.objects.filter(role='sales', is_active=True).order_by('username')
+        queryset = SalesProfile.objects.select_related('user', 'branch').filter(user__is_active=True)
+        
+        # Filterlar
+        branch = self.request.GET.get('branch')
+        if branch:
+            queryset = queryset.filter(branch_id=branch)
+        
+        status = self.request.GET.get('status')
+        if status == 'active':
+            queryset = queryset.filter(is_active_sales=True, is_on_leave=False)
+        elif status == 'on_leave':
+            queryset = queryset.filter(is_on_leave=True)
+        elif status == 'inactive':
+            queryset = queryset.filter(is_active_sales=False)
+        
+        return queryset.order_by('user__first_name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profiles = self.get_queryset()
+        
+        # Statistikalar
+        context['total_count'] = profiles.count()
+        context['active_count'] = profiles.filter(is_active_sales=True, is_on_leave=False).count()
+        context['on_leave_count'] = profiles.filter(is_on_leave=True).count()
+        
+        # Har bir sotuvchi uchun lid va sotuvlar soni
+        for profile in context['sales_profiles']:
+            profile.leads_count = Lead.objects.filter(assigned_sales=profile.user).count()
+            profile.sales_count = Lead.objects.filter(
+                assigned_sales=profile.user, 
+                status__code='enrolled'
+            ).count()
+        
+        # Filter uchun filiallar
+        context['branches'] = Branch.objects.all()
+        
+        return context
 
 
-class SalesUserCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
+class SalesUserCreateView(RoleRequiredMixin, TemplateView):
     """
     Yangi sotuvchi yaratish
     """
-    model = User
     template_name = 'crm/sales_form.html'
-    fields = ['username', 'first_name', 'last_name', 'email', 'phone']
     allowed_roles = ['admin', 'manager', 'sales_manager']
-    success_url = reverse_lazy('crm:sales_list')
     
-    def form_valid(self, form):
-        form.instance.role = 'sales'
-        form.instance.set_password('changeme123')  # Default password
-        response = super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['branches'] = Branch.objects.all()
+        context['is_edit'] = False
+        return context
+    
+    def post(self, request):
+        # User yaratish
+        username = request.POST.get('username')
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Bu username allaqachon mavjud.')
+            return redirect('crm:sales_create')
+        
+        user = User.objects.create(
+            username=username,
+            first_name=request.POST.get('first_name', ''),
+            last_name=request.POST.get('last_name', ''),
+            email=request.POST.get('email', ''),
+            phone=request.POST.get('phone', ''),
+            telegram_id=request.POST.get('telegram_chat_id') or None,
+            role='sales',
+        )
+        password = request.POST.get('password', 'changeme123')
+        user.set_password(password)
+        user.save()
         
         # SalesProfile yaratish
-        SalesProfile.objects.create(user=form.instance)
+        branch_id = request.POST.get('branch')
+        SalesProfile.objects.create(
+            user=user,
+            branch_id=branch_id if branch_id else None,
+            work_start_time=request.POST.get('work_start_time', '09:00'),
+            work_end_time=request.POST.get('work_end_time', '18:00'),
+            work_monday='work_monday' in request.POST,
+            work_tuesday='work_tuesday' in request.POST,
+            work_wednesday='work_wednesday' in request.POST,
+            work_thursday='work_thursday' in request.POST,
+            work_friday='work_friday' in request.POST,
+            work_saturday='work_saturday' in request.POST,
+            work_sunday='work_sunday' in request.POST,
+        )
         
-        messages.success(self.request, 'Sotuvchi muvaffaqiyatli yaratildi. Default parol: changeme123')
-        return response
+        messages.success(request, f'Sotuvchi muvaffaqiyatli yaratildi. Parol: {password}')
+        return redirect('crm:sales_list')
 
 
-class SalesUserUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
+class SalesUserUpdateView(RoleRequiredMixin, TemplateView):
     """
     Sotuvchini tahrirlash
     """
-    model = User
     template_name = 'crm/sales_form.html'
-    fields = ['username', 'first_name', 'last_name', 'email', 'phone', 'is_active']
     allowed_roles = ['admin', 'manager', 'sales_manager']
-    success_url = reverse_lazy('crm:sales_list')
     
-    def get_queryset(self):
-        return User.objects.filter(role='sales')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = get_object_or_404(SalesProfile, pk=self.kwargs['pk'])
+        context['profile'] = profile
+        context['user_obj'] = profile.user
+        context['branches'] = Branch.objects.all()
+        context['is_edit'] = True
+        return context
     
-    def form_valid(self, form):
-        messages.success(self.request, 'Sotuvchi muvaffaqiyatli yangilandi.')
-        return super().form_valid(form)
+    def post(self, request, pk):
+        profile = get_object_or_404(SalesProfile, pk=pk)
+        user = profile.user
+        
+        # User yangilash
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.phone = request.POST.get('phone', '')
+        user.telegram_id = request.POST.get('telegram_chat_id') or None
+        user.is_active = 'is_active' in request.POST
+        user.save()
+        
+        # SalesProfile yangilash
+        branch_id = request.POST.get('branch')
+        profile.branch_id = branch_id if branch_id else None
+        profile.work_start_time = request.POST.get('work_start_time', '09:00')
+        profile.work_end_time = request.POST.get('work_end_time', '18:00')
+        profile.work_monday = 'work_monday' in request.POST
+        profile.work_tuesday = 'work_tuesday' in request.POST
+        profile.work_wednesday = 'work_wednesday' in request.POST
+        profile.work_thursday = 'work_thursday' in request.POST
+        profile.work_friday = 'work_friday' in request.POST
+        profile.work_saturday = 'work_saturday' in request.POST
+        profile.work_sunday = 'work_sunday' in request.POST
+        profile.is_active_sales = 'is_active_sales' in request.POST
+        profile.save()
+        
+        messages.success(request, 'Sotuvchi muvaffaqiyatli yangilandi.')
+        return redirect('crm:sales_list')
 
 
 class SalesUserDeleteView(AdminRequiredMixin, DeleteView):

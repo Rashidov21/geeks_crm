@@ -1,8 +1,12 @@
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.shortcuts import redirect
-from .models import Course, Module, Topic, Group, GroupTransfer, Lesson, StudentProgress
+from django.shortcuts import redirect, get_object_or_404
+from django.http import JsonResponse
+from django.urls import reverse_lazy
+import json
+from .models import Course, Module, Topic, TopicMaterial, Group, GroupTransfer, Lesson, StudentProgress, Room
+from accounts.models import User, Branch
 from accounts.mixins import RoleRequiredMixin, TailwindFormMixin
 
 
@@ -12,7 +16,29 @@ class CourseListView(LoginRequiredMixin, ListView):
     context_object_name = 'courses'
     
     def get_queryset(self):
-        return Course.objects.filter(is_active=True).select_related('branch')
+        queryset = Course.objects.select_related('branch')
+        
+        # Filterlar
+        branch = self.request.GET.get('branch')
+        if branch:
+            queryset = queryset.filter(branch_id=branch)
+        
+        status = self.request.GET.get('status')
+        if status == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        else:
+            queryset = queryset.filter(is_active=True)
+        
+        return queryset.order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['branches'] = Branch.objects.all()
+        context['total_courses'] = Course.objects.count()
+        context['active_courses'] = Course.objects.filter(is_active=True).count()
+        return context
 
 
 class CourseDetailView(LoginRequiredMixin, DetailView):
@@ -22,6 +48,177 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         return Course.objects.prefetch_related('modules__topics', 'modules__topics__materials')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['groups'] = Group.objects.filter(course=self.object, is_active=True)
+        context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
+        return context
+
+
+class CourseCreateView(RoleRequiredMixin, CreateView):
+    model = Course
+    template_name = 'courses/course_form.html'
+    fields = ['name', 'description', 'branch', 'duration_weeks', 'price']
+    allowed_roles = ['admin', 'manager']
+    
+    def get_success_url(self):
+        return reverse_lazy('courses:course_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Kurs muvaffaqiyatli yaratildi.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['branches'] = Branch.objects.all()
+        return context
+
+
+class CourseUpdateView(RoleRequiredMixin, UpdateView):
+    model = Course
+    template_name = 'courses/course_form.html'
+    fields = ['name', 'description', 'branch', 'duration_weeks', 'price', 'is_active']
+    allowed_roles = ['admin', 'manager']
+    
+    def get_success_url(self):
+        return reverse_lazy('courses:course_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Kurs muvaffaqiyatli yangilandi.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['branches'] = Branch.objects.all()
+        context['is_edit'] = True
+        return context
+
+
+class CourseDeleteView(RoleRequiredMixin, DeleteView):
+    model = Course
+    template_name = 'courses/course_confirm_delete.html'
+    success_url = reverse_lazy('courses:course_list')
+    allowed_roles = ['admin', 'manager']
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Kurs o\'chirildi.')
+        return super().delete(request, *args, **kwargs)
+
+
+# ==================== MODULE VIEWS ====================
+
+class ModuleCreateView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, course_id):
+        course = get_object_or_404(Course, pk=course_id)
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        order = Module.objects.filter(course=course).count() + 1
+        
+        module = Module.objects.create(
+            course=course,
+            name=name,
+            description=description,
+            order=order
+        )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'module_id': module.id, 'name': module.name})
+        
+        messages.success(request, 'Modul qo\'shildi.')
+        return redirect('courses:course_detail', pk=course_id)
+
+
+class ModuleUpdateView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, pk):
+        module = get_object_or_404(Module, pk=pk)
+        module.name = request.POST.get('name', module.name)
+        module.description = request.POST.get('description', module.description)
+        module.save()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        
+        messages.success(request, 'Modul yangilandi.')
+        return redirect('courses:course_detail', pk=module.course.pk)
+
+
+class ModuleDeleteView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, pk):
+        module = get_object_or_404(Module, pk=pk)
+        course_id = module.course.pk
+        module.delete()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        
+        messages.success(request, 'Modul o\'chirildi.')
+        return redirect('courses:course_detail', pk=course_id)
+
+
+# ==================== TOPIC VIEWS ====================
+
+class TopicCreateView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, module_id):
+        module = get_object_or_404(Module, pk=module_id)
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        duration = request.POST.get('duration_minutes', 90)
+        order = Topic.objects.filter(module=module).count() + 1
+        
+        topic = Topic.objects.create(
+            module=module,
+            name=name,
+            description=description,
+            duration_minutes=duration,
+            order=order
+        )
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'topic_id': topic.id, 'name': topic.name})
+        
+        messages.success(request, 'Mavzu qo\'shildi.')
+        return redirect('courses:course_detail', pk=module.course.pk)
+
+
+class TopicUpdateView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, pk):
+        topic = get_object_or_404(Topic, pk=pk)
+        topic.name = request.POST.get('name', topic.name)
+        topic.description = request.POST.get('description', topic.description)
+        topic.duration_minutes = request.POST.get('duration_minutes', topic.duration_minutes)
+        topic.save()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        
+        messages.success(request, 'Mavzu yangilandi.')
+        return redirect('courses:course_detail', pk=topic.module.course.pk)
+
+
+class TopicDeleteView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, pk):
+        topic = get_object_or_404(Topic, pk=pk)
+        course_id = topic.module.course.pk
+        topic.delete()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        
+        messages.success(request, 'Mavzu o\'chirildi.')
+        return redirect('courses:course_detail', pk=course_id)
 
 
 class ModuleDetailView(LoginRequiredMixin, DetailView):
@@ -48,7 +245,34 @@ class GroupListView(LoginRequiredMixin, ListView):
     context_object_name = 'groups'
     
     def get_queryset(self):
-        return Group.objects.filter(is_active=True).select_related('course', 'mentor', 'room')
+        queryset = Group.objects.select_related('course', 'mentor', 'room')
+        
+        # Filterlar
+        course = self.request.GET.get('course')
+        if course:
+            queryset = queryset.filter(course_id=course)
+        
+        mentor = self.request.GET.get('mentor')
+        if mentor:
+            queryset = queryset.filter(mentor_id=mentor)
+        
+        status = self.request.GET.get('status')
+        if status == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        else:
+            queryset = queryset.filter(is_active=True)
+        
+        return queryset.order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['courses'] = Course.objects.filter(is_active=True)
+        context['mentors'] = User.objects.filter(role='mentor', is_active=True)
+        context['total_groups'] = Group.objects.count()
+        context['active_groups'] = Group.objects.filter(is_active=True).count()
+        return context
 
 
 class GroupDetailView(LoginRequiredMixin, DetailView):
@@ -58,6 +282,91 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         return Group.objects.prefetch_related('students', 'lessons').select_related('course', 'mentor', 'room')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
+        context['available_students'] = User.objects.filter(role='student', is_active=True).exclude(
+            pk__in=self.object.students.values_list('pk', flat=True)
+        )
+        return context
+
+
+class GroupCreateView(RoleRequiredMixin, CreateView):
+    model = Group
+    template_name = 'courses/group_form.html'
+    fields = ['name', 'course', 'mentor', 'room', 'start_date', 'end_date', 'schedule_days', 'schedule_time']
+    allowed_roles = ['admin', 'manager']
+    
+    def get_success_url(self):
+        return reverse_lazy('courses:group_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Guruh muvaffaqiyatli yaratildi.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['courses'] = Course.objects.filter(is_active=True)
+        context['mentors'] = User.objects.filter(role='mentor', is_active=True)
+        context['rooms'] = Room.objects.filter(is_active=True)
+        return context
+
+
+class GroupUpdateView(RoleRequiredMixin, UpdateView):
+    model = Group
+    template_name = 'courses/group_form.html'
+    fields = ['name', 'course', 'mentor', 'room', 'start_date', 'end_date', 'schedule_days', 'schedule_time', 'is_active']
+    allowed_roles = ['admin', 'manager']
+    
+    def get_success_url(self):
+        return reverse_lazy('courses:group_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Guruh muvaffaqiyatli yangilandi.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['courses'] = Course.objects.filter(is_active=True)
+        context['mentors'] = User.objects.filter(role='mentor', is_active=True)
+        context['rooms'] = Room.objects.filter(is_active=True)
+        context['is_edit'] = True
+        return context
+
+
+class GroupDeleteView(RoleRequiredMixin, DeleteView):
+    model = Group
+    template_name = 'courses/group_confirm_delete.html'
+    success_url = reverse_lazy('courses:group_list')
+    allowed_roles = ['admin', 'manager']
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Guruh o\'chirildi.')
+        return super().delete(request, *args, **kwargs)
+
+
+class GroupStudentsView(RoleRequiredMixin, View):
+    allowed_roles = ['admin', 'manager']
+    
+    def post(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        action = request.POST.get('action')
+        student_id = request.POST.get('student_id')
+        
+        if action == 'add' and student_id:
+            student = get_object_or_404(User, pk=student_id, role='student')
+            group.students.add(student)
+            messages.success(request, f'{student.get_full_name()} guruhga qo\'shildi.')
+        elif action == 'remove' and student_id:
+            student = get_object_or_404(User, pk=student_id, role='student')
+            group.students.remove(student)
+            messages.success(request, f'{student.get_full_name()} guruhdan chiqarildi.')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        
+        return redirect('courses:group_detail', pk=pk)
 
 
 class LessonListView(LoginRequiredMixin, ListView):

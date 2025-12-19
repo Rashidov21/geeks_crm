@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Xonalar jadvali{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Xonalar jadvali</h1>
+            <p class="text-gray-500 mt-1">{{ selected_date|date:"d.m.Y, l" }}</p>
+        </div>
+        <div class="flex gap-2 items-center">
+            <input type="date" id="dateSelect" value="{{ selected_date|date:'Y-m-d' }}" 
+                class="px-4 py-2 border border-gray-300 rounded-lg"
+                onchange="window.location.href='{% url 'schedule:rooms' %}?date=' + this.value">
+        </div>
+    </div>
+
+    <!-- View tabs -->
+    <div class="flex gap-2 border-b pb-2">
+        <a href="{% url 'schedule:timetable' %}" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <i class="fas fa-calendar-week mr-2"></i>Haftalik
+        </a>
+        <a href="{% url 'schedule:calendar' %}" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <i class="fas fa-calendar-alt mr-2"></i>Oylik
+        </a>
+        <a href="{% url 'schedule:rooms' %}" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-medium">
+            <i class="fas fa-door-open mr-2"></i>Xonalar
+        </a>
+    </div>
+
+    <!-- Room Schedule Grid -->
+    <div class="bg-white rounded-lg border shadow-sm overflow-x-auto">
+        <table class="w-full min-w-[800px]">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-r w-32">Vaqt</th>
+                    {% for room in rooms %}
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-r last:border-r-0">
+                        <i class="fas fa-door-open text-indigo-500 mr-1"></i>{{ room.name }}
+                        <p class="text-xs font-normal text-gray-500">{{ room.capacity }} o'rin</p>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for time_slot in time_slots %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-600 border-r bg-gray-50">
+                        {{ time_slot }}
+                    </td>
+                    {% for room_id, data in room_schedule.items %}
+                    <td class="px-2 py-2 border-r last:border-r-0">
+                        {% if time_slot in data.lessons %}
+                        {% with lesson=data.lessons|default_if_none:"" %}
+                        <div class="p-2 bg-red-100 border border-red-200 rounded-lg text-xs">
+                            <p class="font-semibold text-red-800">{{ data.lessons|default_if_none:"Band" }}</p>
+                        </div>
+                        {% endwith %}
+                        {% else %}
+                        <div class="p-2 text-center text-gray-400 text-xs">
+                            Bo'sh
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex gap-4 text-sm">
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-red-100 border border-red-200 rounded"></div>
+            <span class="text-gray-600">Band</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-white border border-gray-200 rounded"></div>
+            <span class="text-gray-600">Bo'sh</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

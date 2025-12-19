@@ -12,10 +12,13 @@ urlpatterns = [
     path('badges/', views.StudentBadgesView.as_view(), name='student_badges'),
     
     # Rankings
+    path('ranking/', views.StudentRankingView.as_view(), name='ranking'),
+    path('ranking/students/', views.StudentRankingView.as_view(), name='student_ranking'),
+    path('ranking/groups/', views.GroupsRankingView.as_view(), name='groups_ranking'),
+    path('ranking/mentors/', views.MentorRankingView.as_view(), name='mentor_ranking'),
     path('ranking/group/<int:group_id>/', views.GroupRankingView.as_view(), name='group_ranking'),
     path('ranking/branch/<int:branch_id>/', views.BranchRankingView.as_view(), name='branch_ranking'),
     path('ranking/overall/', views.OverallRankingView.as_view(), name='overall_ranking'),
     path('ranking/monthly/<str:ranking_type>/', views.MonthlyRankingView.as_view(), name='monthly_ranking'),
     path('ranking/monthly/<str:ranking_type>/<int:year>/<int:month>/', views.MonthlyRankingView.as_view(), name='monthly_ranking_detail'),
 ]
-

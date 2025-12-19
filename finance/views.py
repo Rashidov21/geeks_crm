@@ -20,6 +20,7 @@ class ContractListView(RoleRequiredMixin, ListView):
     allowed_roles = ['admin', 'manager', 'accountant']
     
     def get_queryset(self):
+        from courses.models import Course, Group
         queryset = Contract.objects.select_related('student', 'course', 'group')
         
         # Filtrlash
@@ -27,11 +28,33 @@ class ContractListView(RoleRequiredMixin, ListView):
         if status:
             queryset = queryset.filter(status=status)
         
-        student_id = self.request.GET.get('student')
-        if student_id:
-            queryset = queryset.filter(student_id=student_id)
+        course_id = self.request.GET.get('course')
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+        
+        group_id = self.request.GET.get('group')
+        if group_id:
+            queryset = queryset.filter(group_id=group_id)
+        
+        # Sana oralig'i
+        date_from = self.request.GET.get('date_from')
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        
+        date_to = self.request.GET.get('date_to')
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
         
         return queryset.order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        from courses.models import Course, Group
+        context = super().get_context_data(**kwargs)
+        context['courses'] = Course.objects.filter(is_active=True)
+        context['groups'] = Group.objects.filter(is_active=True)
+        context['total_contracts'] = self.get_queryset().count()
+        context['total_amount'] = self.get_queryset().aggregate(total=Sum('total_amount'))['total'] or 0
+        return context
 
 
 class ContractDetailView(RoleRequiredMixin, DetailView):
@@ -109,11 +132,35 @@ class PaymentListView(RoleRequiredMixin, ListView):
         if status:
             queryset = queryset.filter(status=status)
         
-        contract_id = self.request.GET.get('contract')
-        if contract_id:
-            queryset = queryset.filter(contract_id=contract_id)
+        payment_method = self.request.GET.get('payment_method')
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+        
+        # Sana oralig'i
+        date_from = self.request.GET.get('date_from')
+        if date_from:
+            queryset = queryset.filter(paid_at__date__gte=date_from)
+        
+        date_to = self.request.GET.get('date_to')
+        if date_to:
+            queryset = queryset.filter(paid_at__date__lte=date_to)
+        
+        # Summa oralig'i
+        amount_min = self.request.GET.get('amount_min')
+        if amount_min:
+            queryset = queryset.filter(amount__gte=amount_min)
+        
+        amount_max = self.request.GET.get('amount_max')
+        if amount_max:
+            queryset = queryset.filter(amount__lte=amount_max)
         
         return queryset.order_by('-paid_at', '-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_amount'] = self.get_queryset().aggregate(total=Sum('amount'))['total'] or 0
+        context['total_count'] = self.get_queryset().count()
+        return context
 
 
 class PaymentCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
@@ -160,7 +207,24 @@ class DebtListView(RoleRequiredMixin, ListView):
             today = timezone.now().date()
             queryset = queryset.filter(due_date__lt=today, is_paid=False)
         
+        # Qarz miqdori
+        amount_min = self.request.GET.get('amount_min')
+        if amount_min:
+            queryset = queryset.filter(amount__gte=amount_min)
+        
+        amount_max = self.request.GET.get('amount_max')
+        if amount_max:
+            queryset = queryset.filter(amount__lte=amount_max)
+        
         return queryset.order_by('due_date')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        context['total_debt'] = self.get_queryset().aggregate(total=Sum('amount'))['total'] or 0
+        context['overdue_count'] = self.get_queryset().filter(due_date__lt=today, is_paid=False).count()
+        context['overdue_amount'] = self.get_queryset().filter(due_date__lt=today, is_paid=False).aggregate(total=Sum('amount'))['total'] or 0
+        return context
 
 
 class FinancialReportListView(AdminRequiredMixin, ListView):
@@ -259,5 +323,81 @@ class DashboardView(RoleRequiredMixin, TemplateView):
             is_sent=False,
             reminder_date__lte=now.date()
         ).count()
+        
+        # Oylik statistika (chart uchun)
+        from datetime import timedelta
+        monthly_data = []
+        for i in range(6):
+            month_start = (now - timedelta(days=30*i)).replace(day=1)
+            if i < 5:
+                month_end = (now - timedelta(days=30*(i-1))).replace(day=1) - timedelta(days=1)
+            else:
+                month_end = now
+            
+            payments_sum = Payment.objects.filter(
+                paid_at__gte=month_start,
+                paid_at__lte=month_end,
+                status='completed'
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            monthly_data.append({
+                'month': month_start.strftime('%b'),
+                'amount': payments_sum
+            })
+        
+        context['monthly_data'] = list(reversed(monthly_data))
+        
+        return context
+
+
+class ReportsView(RoleRequiredMixin, TemplateView):
+    """
+    Moliya hisobotlari
+    """
+    template_name = 'finance/reports.html'
+    allowed_roles = ['admin', 'manager', 'accountant']
+    
+    def get_context_data(self, **kwargs):
+        from datetime import timedelta
+        from courses.models import Course
+        
+        context = super().get_context_data(**kwargs)
+        now = timezone.now()
+        
+        # Kurslar bo'yicha daromad
+        courses_data = []
+        for course in Course.objects.filter(is_active=True):
+            revenue = Contract.objects.filter(course=course).aggregate(total=Sum('total_amount'))['total'] or 0
+            paid = Contract.objects.filter(course=course).aggregate(total=Sum('paid_amount'))['total'] or 0
+            courses_data.append({
+                'name': course.name,
+                'revenue': revenue,
+                'paid': paid,
+                'contracts': Contract.objects.filter(course=course).count()
+            })
+        context['courses_data'] = courses_data
+        
+        # Oylik trend
+        monthly_trend = []
+        for i in range(12):
+            month_start = (now - timedelta(days=30*i)).replace(day=1)
+            payments_sum = Payment.objects.filter(
+                paid_at__year=month_start.year,
+                paid_at__month=month_start.month,
+                status='completed'
+            ).aggregate(total=Sum('amount'))['total'] or 0
+            
+            contracts_sum = Contract.objects.filter(
+                created_at__year=month_start.year,
+                created_at__month=month_start.month
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            monthly_trend.append({
+                'month': month_start.strftime('%Y-%m'),
+                'payments': payments_sum,
+                'contracts': contracts_sum
+            })
+        
+        context['monthly_trend'] = list(reversed(monthly_trend))
         
         return context

@@ -3,89 +3,24 @@
 {% block title %}Uy vazifalari{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Uy vazifalari</h1>
-            <p class="text-gray-500 mt-1">Barcha uy vazifalari ro'yxati</p>
-        </div>
-        {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
-        <a href="{% url 'homework:homework_create' %}" class="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition">
-            <i class="fas fa-plus"></i>
-            <span>Yangi vazifa</span>
-        </a>
-        {% endif %}
-    </div>
-
-    <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Jami</p>
-            <p class="text-2xl font-bold text-gray-900">{{ total_homework|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Topshirilgan</p>
-            <p class="text-2xl font-bold text-green-600">{{ submitted_count|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Kutilmoqda</p>
-            <p class="text-2xl font-bold text-yellow-600">{{ pending_count|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Muddati o'tgan</p>
-            <p class="text-2xl font-bold text-red-600">{{ overdue_count|default:0 }}</p>
-        </div>
-    </div>
-
-    {% if homeworks %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for hw in homeworks %}
-        <div class="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-md transition">
-            <div class="p-4">
-                <div class="flex items-start justify-between mb-2">
-                    <h3 class="font-bold text-gray-900">{{ hw.title }}</h3>
-                    {% if hw.grade %}
-                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Baholangan</span>
-                    {% else %}
-                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Kutilmoqda</span>
-                    {% endif %}
-                </div>
-                <p class="text-gray-500 text-sm mb-3">{{ hw.lesson.group.name }}</p>
-                <div class="space-y-1 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Muddat</span>
-                        <span class="text-gray-900">{{ hw.deadline|date:"d.m.Y" }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-500">Max ball</span>
-                        <span class="text-gray-900">{{ hw.max_score }}</span>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-4">
-                    <a href="{% url 'homework:homework_detail' hw.pk %}" class="flex-1 text-center bg-orange-600 hover:bg-orange-700 text-white py-2 rounded transition text-sm">
-                        Ko'rish
-                    </a>
-                    {% if user.role == 'admin' or user.role == 'manager' or user.role == 'mentor' %}
-                    <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
-                        <i class="fas fa-edit text-gray-600"></i>
-                    </button>
-                    {% if not hw.grade %}
-                    <a href="{% url 'homework:homework_grade' hw.pk %}" class="px-3 py-2 bg-green-100 hover:bg-green-200 rounded transition">
-                        <i class="fas fa-star text-green-600"></i>
-                    </a>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-white rounded-lg p-12 text-center border">
-        <i class="fas fa-tasks text-4xl text-gray-300 mb-4"></i>
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Vazifalar topilmadi</h3>
-        <p class="text-gray-500">Hozircha hech qanday vazifa mavjud emas.</p>
-    </div>
-    {% endif %}
-</div>
+{% include 'components/crud_list.html' with 
+    title="Uy vazifalari"
+    subtitle="Barcha uy vazifalari ro'yxati"
+    icon="fas fa-tasks"
+    color="orange"
+    items=homeworks
+    fields="title,group,deadline,status"
+    create_url="homework:homework_create"
+    create_text="Yangi vazifa"
+    detail_url="homework:homework_detail"
+    edit_url="homework:homework_edit"
+    delete_url="homework:homework_delete"
+    view_mode="grid"
+    show_search=True
+    show_filters=True
+    can_create=user.role|yesno:"admin,manager,mentor"
+    can_edit=user.role|yesno:"admin,manager,mentor"
+    can_delete=user.role|yesno:"admin,manager,mentor"
+    stats=stats
+%}
 {% endblock %}

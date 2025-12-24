@@ -75,3 +75,67 @@ class TailwindFormMixin:
                 widget.attrs["class"] += " rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         return form
 
+
+class CrudListViewMixin:
+    """
+    Mixin for CRUD List Views with pagination, search, and filters
+    """
+    paginate_by = 20
+    search_fields = []
+    filter_fields = []
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Search
+        search_query = self.request.GET.get('search', '')
+        if search_query and self.search_fields:
+            from django.db.models import Q
+            q = Q()
+            for field in self.search_fields:
+                q |= Q(**{f"{field}__icontains": search_query})
+            queryset = queryset.filter(q)
+        
+        # Ordering
+        if self.ordering:
+            queryset = queryset.order_by(*self.ordering)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('search', '')
+        return context
+
+
+class CrudFormViewMixin(TailwindFormMixin):
+    """
+    Enhanced form mixin with better styling and validation
+    """
+    form_color = 'indigo'
+    success_message = "Ma'lumot muvaffaqiyatli saqlandi!"
+    
+    def form_valid(self, form):
+        messages.success(self.request, self.success_message)
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, "Iltimos, xatolarni tuzating va qayta urinib ko'ring.")
+        return super().form_invalid(form)
+
+
+class CrudDetailViewMixin:
+    """
+    Mixin for CRUD Detail Views with related objects
+    """
+    related_objects = []
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['related_objects'] = self.get_related_objects()
+        return context
+    
+    def get_related_objects(self):
+        """Override this method to return related objects"""
+        return []

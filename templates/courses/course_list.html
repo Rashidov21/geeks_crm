@@ -4,89 +4,24 @@
 {% block title %}Kurslar{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Kurslar</h1>
-            <p class="text-gray-500 mt-1">Barcha mavjud kurslar ro'yxati</p>
-        </div>
-        {% if request.user.is_admin or request.user.is_manager %}
-        <a href="{% url 'courses:course_create' %}" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
-            <i class="fas fa-plus"></i>
-            <span>Yangi kurs</span>
-        </a>
-        {% endif %}
-    </div>
-
-    <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Jami kurslar</p>
-            <p class="text-2xl font-bold text-gray-900">{{ courses.count|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Aktiv</p>
-            <p class="text-2xl font-bold text-green-600">{{ active_courses|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">Guruhlar</p>
-            <p class="text-2xl font-bold text-purple-600">{{ total_groups|default:0 }}</p>
-        </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <p class="text-gray-500 text-sm">O'quvchilar</p>
-            <p class="text-2xl font-bold text-blue-600">{{ total_students|default:0 }}</p>
-        </div>
-    </div>
-
-    <!-- Courses Grid -->
-    {% if courses %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for course in courses %}
-        <div class="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-md transition">
-            <div class="bg-gradient-to-r from-indigo-500 to-blue-500 p-4">
-                <div class="flex items-start justify-between">
-                    <span class="bg-white/20 text-white px-2 py-1 rounded text-xs">{{ course.branch.name }}</span>
-                    {% if course.is_active %}
-                    <span class="bg-green-500 text-white px-2 py-1 rounded text-xs">Aktiv</span>
-                    {% else %}
-                    <span class="bg-gray-400 text-white px-2 py-1 rounded text-xs">Nofaol</span>
-                    {% endif %}
-                </div>
-                <h3 class="text-lg font-bold text-white mt-2">{{ course.name }}</h3>
-                <p class="text-blue-100 text-sm mt-1">{{ course.description|default:"Tavsif yo'q"|truncatechars:50 }}</p>
-            </div>
-            <div class="p-4 space-y-3">
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="bg-gray-50 rounded p-2 text-center">
-                        <p class="text-gray-500">Davomiyligi</p>
-                        <p class="font-semibold">{{ course.duration_weeks }} hafta</p>
-                    </div>
-                    <div class="bg-gray-50 rounded p-2 text-center">
-                        <p class="text-gray-500">Narxi</p>
-                        <p class="font-semibold text-green-600">{{ course.price|floatformat:0 }}</p>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <a href="{% url 'courses:course_detail' course.pk %}" class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded transition text-sm">
-                        Ko'rish
-                    </a>
-                    {% if request.user.is_admin or request.user.is_manager %}
-                    <a href="{% url 'courses:course_edit' course.pk %}" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition">
-                        <i class="fas fa-edit text-gray-600"></i>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-white rounded-lg p-12 text-center border">
-        <i class="fas fa-book text-4xl text-gray-300 mb-4"></i>
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Kurslar topilmadi</h3>
-        <p class="text-gray-500">Hozircha hech qanday kurs mavjud emas.</p>
-    </div>
-    {% endif %}
-</div>
+{% include 'components/crud_list.html' with 
+    title="Kurslar"
+    subtitle="Barcha mavjud kurslar ro'yxati"
+    icon="fas fa-book"
+    color="indigo"
+    items=courses
+    fields="name,branch,duration_weeks,price,is_active"
+    create_url="courses:course_create"
+    create_text="Yangi kurs"
+    detail_url="courses:course_detail"
+    edit_url="courses:course_edit"
+    delete_url="courses:course_delete"
+    view_mode="grid"
+    show_search=True
+    show_filters=True
+    can_create=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
+    can_edit=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
+    can_delete=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
+    stats=stats
+%}
 {% endblock %}

@@ -1,0 +1,169 @@
+{% comment %}
+Universal CRUD Detail View Component
+Usage: {% include 'components/crud_detail.html' with object=lead fields="name,phone,status" edit_url="crm:lead_edit" %}
+{% endcomment %}
+{% load crud_tags %}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-{{ color|default:'indigo' }}-500 to-{{ color|default:'indigo' }}-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                    {{ object.name.0|upper|default:"?" }}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ object.name|default:object }}</h1>
+                    {% if object.get_subtitle %}
+                    <p class="text-gray-600 mt-1">{{ object.get_subtitle }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2">
+                {% if edit_url and can_edit %}
+                <a href="{% url edit_url object.pk %}" 
+                   class="px-4 py-2 bg-{{ color|default:'indigo' }}-600 hover:bg-{{ color|default:'indigo' }}-700 text-white rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Tahrirlash</span>
+                </a>
+                {% endif %}
+                {% if delete_url and can_delete %}
+                <button @click="$dispatch('open-delete-modal', {id: {{ object.pk }}, name: '{{ object.name|default:object }}'})" 
+                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-trash"></i>
+                    <span>O'chirish</span>
+                </button>
+                {% endif %}
+                {% if back_url %}
+                <a href="{% url back_url %}" 
+                   class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Orqaga</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Info -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Information -->
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-{{ color|default:'indigo' }}-600"></i>
+                    Asosiy ma'lumotlar
+                </h2>
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for field in fields|split:"," %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ field|title }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if field == 'status' and object.status %}
+                            <span class="px-2 py-1 text-xs rounded-full" style="background-color: {{ object.status.color }}20; color: {{ object.status.color }}">
+                                {{ object.status.name }}
+                            </span>
+                            {% else %}
+                            {{ object|getattr:field|default:"-" }}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% endfor %}
+                </dl>
+            </div>
+
+            <!-- Additional Sections -->
+            {% if extra_sections %}
+            {% for section in extra_sections %}
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="{{ section.icon }} text-{{ color|default:'indigo' }}-600"></i>
+                    {{ section.title }}
+                </h2>
+                {{ section.content }}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Status Card -->
+            {% if object.status %}
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Status</h3>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" 
+                      style="background-color: {{ object.status.color }}20; color: {{ object.status.color }}">
+                    <span class="w-2 h-2 rounded-full mr-2" style="background-color: {{ object.status.color }}"></span>
+                    {{ object.status.name }}
+                </span>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-4">Tezkor amallar</h3>
+                <div class="space-y-2">
+                    {% if quick_actions %}
+                    {% for action in quick_actions %}
+                    <a href="{% url action.url object.pk %}" 
+                       class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                        <i class="{{ action.icon }} mr-2"></i>{{ action.label }}
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-sm font-medium text-gray-500 mb-4">Ma'lumot</h3>
+                <dl class="space-y-2 text-sm">
+                    {% if object.created_at %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Yaratildi:</dt>
+                        <dd class="text-gray-900">{{ object.created_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if object.updated_at %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Yangilandi:</dt>
+                        <dd class="text-gray-900">{{ object.updated_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if object.created_by %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">Yaratgan:</dt>
+                        <dd class="text-gray-900">{{ object.created_by.get_full_name|default:object.created_by.username }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Objects -->
+    {% if related_objects %}
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Bog'liq ma'lumotlar</h2>
+        <div class="space-y-4">
+            {% for related in related_objects %}
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 mb-2">{{ related.title }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for item in related.items %}
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <a href="{% url related.detail_url item.pk %}" class="text-sm text-{{ color|default:'indigo' }}-600 hover:text-{{ color|default:'indigo' }}-800">
+                            {{ item }}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+

@@ -3,91 +3,91 @@
 {% block title %}CRM Kanban Board{% endblock %}
 
 {% block content %}
-<div class="space-y-4" x-data="{ showFilters: false, showImportModal: false, viewMode: 'kanban' }">
+<div class="flex flex-col h-full" style="height: calc(100vh - 64px - 2rem);" x-data="{ showFilters: false, showImportModal: false, viewMode: 'kanban' }">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div style="max-width: 1600px;" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-shrink-0 mb-4">
         <div>
-            <h1 class="text-xl font-bold text-gray-900">Lidlar boshqaruvi</h1>
-            <p class="text-gray-500 text-sm">Jami: {{ total_leads }} ta lid</p>
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900">Lidlar boshqaruvi</h1>
+            <p class="text-gray-500 text-xs sm:text-sm">Jami: {{ total_leads }} ta lid</p>
         </div>
         <div class="flex flex-wrap gap-2">
             <!-- View Toggle -->
             <div class="inline-flex rounded-lg border border-gray-200 bg-white p-1">
-                <button @click="viewMode = 'kanban'" :class="viewMode === 'kanban' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'" class="px-3 py-1.5 text-sm rounded-md transition">
-                    <i class="fas fa-columns mr-1"></i>Kanban
+                <button @click="viewMode = 'kanban'" :class="viewMode === 'kanban' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'" class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md transition">
+                    <i class="fas fa-columns sm:mr-1"></i><span class="hidden sm:inline">Kanban</span>
                 </button>
-                <button @click="viewMode = 'list'" :class="viewMode === 'list' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'" class="px-3 py-1.5 text-sm rounded-md transition">
-                    <i class="fas fa-list mr-1"></i>Ro'yxat
+                <button @click="viewMode = 'list'" :class="viewMode === 'list' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'" class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md transition">
+                    <i class="fas fa-list sm:mr-1"></i><span class="hidden sm:inline">Ro'yxat</span>
                 </button>
-                <a href="{% url 'crm:lead_table' %}" class="px-3 py-1.5 text-sm rounded-md text-gray-600 hover:bg-gray-100 transition">
-                    <i class="fas fa-table mr-1"></i>Jadval
+                <a href="{% url 'crm:lead_table' %}" class="px-2 sm:px-3 py-1.5 text-xs sm:text-sm rounded-md text-gray-600 hover:bg-gray-100 transition">
+                    <i class="fas fa-table sm:mr-1"></i><span class="hidden sm:inline">Jadval</span>
                 </a>
             </div>
-            <button @click="showFilters = !showFilters" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm">
-                <i class="fas fa-filter"></i>
+            <button @click="showFilters = !showFilters" class="px-2 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-xs sm:text-sm">
+                <i class="fas fa-filter"></i><span class="hidden sm:inline ml-1">Filter</span>
             </button>
             {% if request.user.is_admin or request.user.is_manager %}
-            <button @click="showImportModal = true" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition text-sm">
-                <i class="fas fa-file-import"></i>
+            <button @click="showImportModal = true" class="px-2 sm:px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition text-xs sm:text-sm">
+                <i class="fas fa-file-import"></i><span class="hidden sm:inline ml-1">Import</span>
             </button>
-            <a href="{% url 'crm:lead_export' %}" class="px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition text-sm">
-                <i class="fas fa-file-export"></i>
+            <a href="{% url 'crm:lead_export' %}" class="px-2 sm:px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition text-xs sm:text-sm">
+                <i class="fas fa-file-export"></i><span class="hidden sm:inline ml-1">Export</span>
             </a>
             {% endif %}
-            <a href="{% url 'crm:lead_create' %}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-sm">
-                <i class="fas fa-plus mr-1"></i>Yangi
+            <a href="{% url 'crm:lead_create' %}" class="px-2 sm:px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-xs sm:text-sm">
+                <i class="fas fa-plus sm:mr-1"></i><span class="hidden sm:inline">Yangi</span>
             </a>
         </div>
     </div>
 
     <!-- Quick Stats for Admin/Manager -->
     {% if request.user.is_admin or request.user.is_manager %}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg p-4 shadow-sm border">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 flex-shrink-0 mb-4">
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500">Yangi lidlar</p>
-                    <p class="text-xl font-bold text-gray-900">{{ stats.new_leads|default:0 }}</p>
+                    <p class="text-lg sm:text-xl font-bold text-gray-900">{{ stats.new_leads|default:0 }}</p>
                 </div>
-                <i class="fas fa-user-plus text-2xl text-blue-400"></i>
+                <i class="fas fa-user-plus text-xl sm:text-2xl text-blue-400"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 shadow-sm border">
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500">Bugungi follow-up</p>
-                    <p class="text-xl font-bold text-gray-900">{{ stats.today_followups|default:0 }}</p>
+                    <p class="text-lg sm:text-xl font-bold text-gray-900">{{ stats.today_followups|default:0 }}</p>
                 </div>
-                <i class="fas fa-phone text-2xl text-green-400"></i>
+                <i class="fas fa-phone text-xl sm:text-2xl text-green-400"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 shadow-sm border">
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500">Kechikkan</p>
-                    <p class="text-xl font-bold text-red-600">{{ stats.overdue|default:0 }}</p>
+                    <p class="text-lg sm:text-xl font-bold text-red-600">{{ stats.overdue|default:0 }}</p>
                 </div>
-                <i class="fas fa-exclamation-triangle text-2xl text-red-400"></i>
+                <i class="fas fa-exclamation-triangle text-xl sm:text-2xl text-red-400"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 shadow-sm border">
+        <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500">Sinov darslari</p>
-                    <p class="text-xl font-bold text-gray-900">{{ stats.trials|default:0 }}</p>
+                    <p class="text-lg sm:text-xl font-bold text-gray-900">{{ stats.trials|default:0 }}</p>
                 </div>
-                <i class="fas fa-chalkboard-teacher text-2xl text-purple-400"></i>
+                <i class="fas fa-chalkboard-teacher text-xl sm:text-2xl text-purple-400"></i>
             </div>
         </div>
     </div>
     {% endif %}
 
     <!-- Filters Panel -->
-    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-3 sm:p-4 border flex-shrink-0 mb-4">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sotuvchi</label>
-                <select name="sales" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Sotuvchi</label>
+                <select name="sales" class="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm">
                     <option value="">Barchasi</option>
                     {% for user in sales_users %}
                     <option value="{{ user.id }}" {% if request.GET.sales == user.id|stringformat:"d" %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
@@ -95,8 +95,8 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Kurs</label>
-                <select name="course" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Kurs</label>
+                <select name="course" class="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm">
                     <option value="">Barchasi</option>
                     {% for course in courses %}
                     <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"d" %}selected{% endif %}>{{ course.name }}</option>
@@ -104,19 +104,19 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Manba</label>
-                <select name="source" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Manba</label>
+                <select name="source" class="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm">
                     <option value="">Barchasi</option>
                     {% for code, name in sources %}
                     <option value="{{ code }}" {% if request.GET.source == code %}selected{% endif %}>{{ name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
-                    <i class="fas fa-search mr-1"></i>Qidirish
+            <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
+                <button type="submit" class="flex-1 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs sm:text-sm">
+                    <i class="fas fa-search sm:mr-1"></i><span class="hidden sm:inline">Qidirish</span>
                 </button>
-                <a href="{% url 'crm:kanban' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                <a href="{% url 'crm:kanban' %}" class="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-xs sm:text-sm">
                     <i class="fas fa-times"></i>
                 </a>
             </div>
@@ -127,25 +127,25 @@
     <div x-show="showImportModal" x-transition class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
         <div class="flex items-center justify-center min-h-screen px-4">
             <div class="fixed inset-0 bg-black opacity-50" @click="showImportModal = false"></div>
-            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 class="text-lg font-semibold mb-4">Lidlarni import qilish</h3>
-                <div class="space-y-4">
-                    <a href="{% url 'crm:lead_import' %}" class="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50">
-                        <i class="fas fa-file-excel text-2xl text-green-600"></i>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6">
+                <h3 class="text-base sm:text-lg font-semibold mb-4">Lidlarni import qilish</h3>
+                <div class="space-y-3 sm:space-y-4">
+                    <a href="{% url 'crm:lead_import' %}" class="flex items-center gap-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-file-excel text-xl sm:text-2xl text-green-600"></i>
                         <div>
-                            <p class="font-medium">Excel fayldan</p>
-                            <p class="text-sm text-gray-500">XLSX yoki CSV formatda</p>
+                            <p class="font-medium text-sm sm:text-base">Excel fayldan</p>
+                            <p class="text-xs sm:text-sm text-gray-500">XLSX yoki CSV formatda</p>
                         </div>
                     </a>
-                    <a href="{% url 'crm:lead_google_import' %}" class="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50">
-                        <i class="fab fa-google text-2xl text-blue-600"></i>
+                    <a href="{% url 'crm:lead_google_import' %}" class="flex items-center gap-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50">
+                        <i class="fab fa-google text-xl sm:text-2xl text-blue-600"></i>
                         <div>
-                            <p class="font-medium">Google Sheets</p>
-                            <p class="text-sm text-gray-500">Avtomatik sinxronizatsiya</p>
+                            <p class="font-medium text-sm sm:text-base">Google Sheets</p>
+                            <p class="text-xs sm:text-sm text-gray-500">Avtomatik sinxronizatsiya</p>
                         </div>
                     </a>
                 </div>
-                <button @click="showImportModal = false" class="mt-4 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                <button @click="showImportModal = false" class="mt-4 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
                     Yopish
                 </button>
             </div>
@@ -153,66 +153,68 @@
     </div>
 
     <!-- Kanban Board View -->
-    <div x-show="viewMode === 'kanban'" class="w-full overflow-x-auto pb-2">
-        <div class="flex gap-3" style="min-width: min-content;">
-            {% for item in kanban_data %}
-            <div class="w-52 flex-shrink-0 bg-gray-50 rounded-lg border flex flex-col" style="max-height: calc(100vh - 320px);">
-                <!-- Status Header -->
-                <div class="p-2 border-b bg-white rounded-t-lg flex-shrink-0">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{ item.status.color }}"></span>
-                            <h3 class="font-medium text-gray-800 text-sm truncate">{{ item.status.name }}</h3>
+    <div x-show="viewMode === 'kanban'" class="w-full flex-1 min-h-0 overflow-hidden">
+        <div class="h-full overflow-x-auto pb-2" style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+            <div class="inline-flex gap-2 sm:gap-3 h-full items-stretch px-2 sm:px-4" style="min-width: max-content;">
+                {% for item in kanban_data %}
+                <div class="w-44 sm:w-56 md:w-64 lg:w-72 flex-shrink-0 bg-gray-50 rounded-lg border flex flex-col kanban-column">
+                    <!-- Status Header -->
+                    <div class="p-2 sm:p-3 border-b bg-white rounded-t-lg flex-shrink-0">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                                <span class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0" style="background-color: {{ item.status.color }}"></span>
+                                <h3 class="font-medium text-gray-800 text-xs sm:text-sm truncate">{{ item.status.name }}</h3>
+                            </div>
+                            <span class="px-1.5 sm:px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full flex-shrink-0 ml-1 sm:ml-2">{{ item.count }}</span>
                         </div>
-                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full flex-shrink-0 ml-1">{{ item.count }}</span>
                     </div>
-                </div>
                     
-                <!-- Cards -->
-                <div class="p-2 space-y-2 overflow-y-auto flex-1">
+                    <!-- Cards -->
+                    <div class="p-1.5 sm:p-2 space-y-1.5 sm:space-y-2 overflow-y-auto flex-1" style="scrollbar-width: thin;">
                         {% for lead in item.leads %}
-                    <a href="{% url 'crm:lead_detail' lead.pk %}" 
-                       class="block bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition border text-sm">
-                        <h4 class="font-medium text-gray-900 truncate text-sm mb-1">{{ lead.name }}</h4>
-                        <p class="text-xs text-gray-500 truncate">
-                            <i class="fas fa-phone mr-1"></i>{{ lead.phone }}
-                        </p>
-                        <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
-                            <span class="truncate">{{ lead.assigned_sales.username|default:"-" }}</span>
-                            <span>{{ lead.created_at|timesince|truncatechars:5 }}</span>
+                        <a href="{% url 'crm:lead_detail' lead.pk %}" 
+                           class="block bg-white rounded-lg p-2 sm:p-3 shadow-sm hover:shadow-md transition border text-xs sm:text-sm">
+                            <h4 class="font-medium text-gray-900 truncate text-xs sm:text-sm mb-1">{{ lead.name }}</h4>
+                            <p class="text-xs text-gray-500 truncate mb-1">
+                                <i class="fas fa-phone mr-1 text-gray-400"></i>{{ lead.phone }}
+                            </p>
+                            <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
+                                <span class="truncate flex-1 min-w-0">{{ lead.assigned_sales.username|default:"-" }}</span>
+                                <span class="flex-shrink-0 ml-1 sm:ml-2">{{ lead.created_at|timesince|truncatechars:5 }}</span>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-4 sm:py-6">
+                            <i class="fas fa-inbox text-xl sm:text-2xl text-gray-300"></i>
+                            <p class="text-gray-400 text-xs mt-1">Bo'sh</p>
                         </div>
-                    </a>
-                    {% empty %}
-                    <div class="text-center py-6">
-                        <i class="fas fa-inbox text-2xl text-gray-300"></i>
-                        <p class="text-gray-400 text-xs mt-1">Bo'sh</p>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
-            </div>
-            {% empty %}
-            <div class="flex-1 flex items-center justify-center py-12">
-                <div class="text-center">
-                    <i class="fas fa-columns text-4xl text-gray-300 mb-3"></i>
-                    <h3 class="font-semibold text-gray-900 mb-1">Statuslar topilmadi</h3>
-                    <p class="text-gray-500 text-sm">Lead statuslarini yarating</p>
+                {% empty %}
+                <div class="w-full flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <i class="fas fa-columns text-3xl sm:text-4xl text-gray-300 mb-3"></i>
+                        <h3 class="font-semibold text-gray-900 mb-1 text-sm sm:text-base">Statuslar topilmadi</h3>
+                        <p class="text-gray-500 text-xs sm:text-sm">Lead statuslarini yarating</p>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
 
     <!-- List View -->
-    <div x-show="viewMode === 'list'" class="bg-white rounded-lg border shadow-sm overflow-hidden">
+    <div x-show="viewMode === 'list'" class="bg-white rounded-lg border shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
         <!-- Table Header -->
-        <div class="hidden md:grid md:grid-cols-12 gap-2 px-4 py-2 bg-gray-50 border-b text-xs font-medium text-gray-500 uppercase">
+        <div class="hidden md:grid md:grid-cols-12 gap-2 px-4 py-2 bg-gray-50 border-b text-xs font-medium text-gray-500 uppercase flex-shrink-0">
             <div class="col-span-4">Lid</div>
             <div class="col-span-2">Status</div>
             <div class="col-span-2">Telefon</div>
             <div class="col-span-2">Sotuvchi</div>
             <div class="col-span-2 text-right">Sana</div>
         </div>
-        <div class="divide-y divide-gray-100 max-h-[calc(100vh-320px)] overflow-y-auto">
+        <div class="divide-y divide-gray-100 flex-1 overflow-y-auto">
             {% for item in kanban_data %}
             {% for lead in item.leads %}
             <a href="{% url 'crm:lead_detail' lead.pk %}" class="flex md:grid md:grid-cols-12 items-center gap-2 md:gap-2 p-3 md:px-4 hover:bg-gray-50 transition">
@@ -257,10 +259,67 @@
 </div>
 
 <style>
-/* Custom scrollbar */
-.scrollbar-thin::-webkit-scrollbar { height: 6px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Kanban column - full height */
+.kanban-column {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+}
+
+/* Custom scrollbar for all browsers */
+.overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+    -webkit-overflow-scrolling: touch;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Vertical scrollbar for kanban columns */
+.overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Touch-friendly scrolling on mobile */
+@media (max-width: 640px) {
+    .overflow-x-auto {
+        scroll-behavior: smooth;
+    }
+}
 </style>
 {% endblock %}

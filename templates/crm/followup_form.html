@@ -1,4 +1,19 @@
 {% extends 'base.html' %}
+
+{% block title %}{% if object %}Follow-up tahrirlash{% else %}Yangi follow-up{% endif %}{% endblock %}
+
+{% block content %}
+{% include 'components/modern_form.html' with 
+    form=form
+    title=object|yesno:"Follow-up tahrirlash,Yangi follow-up qo'shish"
+    subtitle="Follow-up ma'lumotlarini kiriting"
+    icon="fas fa-tasks"
+    color="blue"
+    back_url="crm:followup_list"
+    back_text="Orqaga"
+    submit_text="Saqlash"
+%}
+{% endblock %}
 {% block title %}Follow-up form{% endblock %}
 {% block content %}
 <div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6">

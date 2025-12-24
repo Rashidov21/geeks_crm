@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lid: {{ lead.name }}{% endblock %}
+
+{% block content %}
+{% include 'components/crud_detail.html' with 
+    object=lead
+    fields="name,phone,secondary_phone,interested_course,source,branch,status,assigned_sales,created_at"
+    edit_url="crm:lead_edit"
+    delete_url="crm:lead_delete"
+    back_url="crm:lead_list"
+    color="purple"
+    can_edit=True
+    can_delete=True
+    quick_actions=quick_actions
+    related_objects=related_objects
+%}
+
+<!-- Additional Lead-specific sections -->
+<div class="bg-white rounded-lg shadow-sm border p-6 mt-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-phone text-purple-600"></i>
+        Aloqa
+    </h2>
+    <div class="flex gap-2">
+        <a href="tel:{{ lead.phone }}" 
+           class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-phone"></i>
+            <span>Qo'ng'iroq qilish</span>
+        </a>
+        {% if lead.secondary_phone %}
+        <a href="tel:{{ lead.secondary_phone }}" 
+           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-phone-alt"></i>
+            <span>Ikkinchi telefon</span>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if lead.notes %}
+<div class="bg-white rounded-lg shadow-sm border p-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <i class="fas fa-sticky-note text-purple-600"></i>
+        Qo'shimcha ma'lumotlar
+    </h2>
+    <p class="text-gray-700">{{ lead.notes }}</p>
+</div>
+{% endif %}
+{% endblock %}
+

@@ -66,7 +66,7 @@
     <div class="flex flex-1">
         <!-- Sidebar -->
         {% if user.is_authenticated %}
-        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed lg:static inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 pt-16 lg:pt-0">
+        <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 pt-16 lg:pt-0">
             <nav class="p-4 space-y-1 overflow-y-auto h-full">
                 
                 <!-- Dashboard -->
@@ -204,7 +204,7 @@
         {% endif %}
 
         <!-- Main Content -->
-        <main class="flex-1 p-6 {% if user.is_authenticated %}lg:ml-0{% endif %}">
+        <main class="flex-1 p-4 sm:p-6 {% if user.is_authenticated %}lg:ml-64{% endif %}" style="min-height: 0;">
             <!-- Messages -->
             {% if messages %}
             <div class="mb-6 space-y-2">
@@ -243,6 +243,9 @@
             </div>
         </div>
     </footer>
+
+    <!-- Delete Modal (Global) -->
+    {% include 'components/delete_modal.html' %}
 
     <script>
         function toggleSidebar() {

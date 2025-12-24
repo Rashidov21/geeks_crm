@@ -1,0 +1,94 @@
+{% comment %}
+Universal Delete Confirmation Modal
+Usage: Include in base template and use Alpine.js events
+{% endcomment %}
+
+<div x-data="{ 
+    show: false, 
+    itemId: null, 
+    itemName: '', 
+    isBulk: false,
+    itemIds: [],
+    deleteUrl: '{{ delete_url|default:"" }}',
+    redirectUrl: '{{ redirect_url|default:"" }}'
+}" 
+     @open-delete-modal.window="
+        show = true;
+        itemId = $event.detail.id;
+        itemName = $event.detail.name || 'Bu element';
+        isBulk = Array.isArray($event.detail.ids);
+        itemIds = $event.detail.ids || [];
+     "
+     x-show="show"
+     x-cloak
+     class="fixed inset-0 z-50 overflow-y-auto"
+     style="display: none;">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="show = false"></div>
+        
+        <!-- Modal -->
+        <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all">
+            <!-- Header -->
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">O'chirishni tasdiqlash</h3>
+                    <p class="text-sm text-gray-500">Bu amalni qaytarib bo'lmaydi</p>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="mb-6">
+                <p class="text-gray-700">
+                    <span x-show="!isBulk">
+                        <strong x-text="itemName"></strong> ni o'chirishni xohlaysizmi?
+                    </span>
+                    <span x-show="isBulk">
+                        <strong x-text="itemIds.length"></strong> ta elementni o'chirishni xohlaysizmi?
+                    </span>
+                </p>
+                {% if cascade_warning %}
+                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ cascade_warning }}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 justify-end">
+                <button @click="show = false" 
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                    Bekor qilish
+                </button>
+                <form method="post" 
+                      :action="deleteUrl ? deleteUrl.replace('0', itemId) : ''"
+                      @submit.prevent="
+                          fetch($event.target.action, {
+                              method: 'POST',
+                              headers: {
+                                  'X-CSRFToken': '{{ csrf_token }}',
+                                  'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify({ids: isBulk ? itemIds : [itemId]})
+                          }).then(() => {
+                              show = false;
+                              window.location.href = '{{ redirect_url|default:request.path }}';
+                          });
+                      ">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                        <i class="fas fa-trash mr-2"></i>O'chirish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

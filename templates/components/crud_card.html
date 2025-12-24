@@ -1,0 +1,85 @@
+{% comment %}
+CRUD Card Component for Grid View
+Usage: {% include 'components/crud_card.html' with item=item fields="name,phone,status" %}
+{% endcomment %}
+{% load crud_tags %}
+
+<div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
+    <!-- Card Header -->
+    <div class="p-4 bg-gradient-to-r from-{{ color|default:'indigo' }}-50 to-{{ color|default:'indigo' }}-100 border-b">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                {% if item.get_avatar_url %}
+                <img src="{{ item.get_avatar_url }}" alt="{{ item.name }}" class="w-10 h-10 rounded-full">
+                {% else %}
+                <div class="w-10 h-10 rounded-full bg-{{ color|default:'indigo' }}-600 flex items-center justify-center text-white font-bold">
+                    {{ item.name.0|upper|default:"?" }}
+                </div>
+                {% endif %}
+                <div>
+                    <h3 class="font-semibold text-gray-900">
+                        {% if detail_url %}
+                        <a href="{% url detail_url item.pk %}" class="hover:text-{{ color|default:'indigo' }}-600">
+                            {{ item.name|default:item }}
+                        </a>
+                        {% else %}
+                        {{ item.name|default:item }}
+                        {% endif %}
+                    </h3>
+                    {% if item.get_subtitle %}
+                    <p class="text-xs text-gray-600">{{ item.get_subtitle }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% if item.status %}
+            <span class="px-2 py-1 text-xs rounded-full" style="background-color: {{ item.status.color }}20; color: {{ item.status.color }}">
+                {{ item.status.name }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="p-4 space-y-2">
+        {% for field in fields|split:"," %}
+        {% if field != 'name' and field != 'status' %}
+        <div class="flex items-center gap-2 text-sm">
+            <i class="fas fa-{{ field|get_field_icon }} w-4 text-gray-400"></i>
+            <span class="text-gray-600">{{ field|title }}:</span>
+            <span class="text-gray-900 font-medium">{{ item|getattr:field|default:"-" }}</span>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Card Footer -->
+    <div class="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
+        <span class="text-xs text-gray-500">
+            <i class="fas fa-clock"></i> {{ item.created_at|date:"d.m.Y"|default:"" }}
+        </span>
+        <div class="flex gap-2">
+            {% if detail_url %}
+            <a href="{% url detail_url item.pk %}" 
+               class="text-{{ color|default:'indigo' }}-600 hover:text-{{ color|default:'indigo' }}-800" 
+               title="Ko'rish">
+                <i class="fas fa-eye"></i>
+            </a>
+            {% endif %}
+            {% if edit_url and can_edit %}
+            <a href="{% url edit_url item.pk %}" 
+               class="text-blue-600 hover:text-blue-800" 
+               title="Tahrirlash">
+                <i class="fas fa-edit"></i>
+            </a>
+            {% endif %}
+            {% if delete_url and can_delete %}
+            <button @click="$dispatch('open-delete-modal', {id: {{ item.pk }}, name: '{{ item.name|default:item }}'})" 
+                    class="text-red-600 hover:text-red-800" 
+                    title="O'chirish">
+                <i class="fas fa-trash"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+

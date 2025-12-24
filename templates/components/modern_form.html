@@ -2,11 +2,32 @@
 <!-- Modern Universal Form Template -->
 <!-- Usage: {% include 'components/modern_form.html' with form=form title='Form Title' icon='fas fa-icon' color='blue' %} -->
 
+{% comment %}
+Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
+{% endcomment %}
+{% if color == 'blue' %}
+  {% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
+{% elif color == 'purple' %}
+  {% with gradient_from='from-purple-500' gradient_to='to-purple-600' ring_color='ring-purple-500' text_color='text-purple-600' bg_color='bg-purple-50' hover_from='from-purple-600' hover_to='to-purple-700' hover_from_hover='from-purple-700' hover_to_hover='to-purple-800' %}
+{% elif color == 'green' %}
+  {% with gradient_from='from-green-500' gradient_to='to-green-600' ring_color='ring-green-500' text_color='text-green-600' bg_color='bg-green-50' hover_from='from-green-600' hover_to='to-green-700' hover_from_hover='from-green-700' hover_to_hover='to-green-800' %}
+{% elif color == 'red' %}
+  {% with gradient_from='from-red-500' gradient_to='to-red-600' ring_color='ring-red-500' text_color='text-red-600' bg_color='bg-red-50' hover_from='from-red-600' hover_to='to-red-700' hover_from_hover='from-red-700' hover_to_hover='to-red-800' %}
+{% elif color == 'indigo' %}
+  {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' ring_color='ring-indigo-500' text_color='text-indigo-600' bg_color='bg-indigo-50' hover_from='from-indigo-600' hover_to='to-indigo-700' hover_from_hover='from-indigo-700' hover_to_hover='to-indigo-800' %}
+{% elif color == 'yellow' %}
+  {% with gradient_from='from-yellow-500' gradient_to='to-yellow-600' ring_color='ring-yellow-500' text_color='text-yellow-600' bg_color='bg-yellow-50' hover_from='from-yellow-600' hover_to='to-yellow-700' hover_from_hover='from-yellow-700' hover_to_hover='to-yellow-800' %}
+{% elif color == 'pink' %}
+  {% with gradient_from='from-pink-500' gradient_to='to-pink-600' ring_color='ring-pink-500' text_color='text-pink-600' bg_color='bg-pink-50' hover_from='from-pink-600' hover_to='to-pink-700' hover_from_hover='from-pink-700' hover_to_hover='to-pink-800' %}
+{% else %}
+  {% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
+{% endif %}
+
 <div class="max-w-4xl mx-auto">
   <!-- Header -->
   <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
     <div class="flex items-center gap-4">
-      <div class="bg-gradient-to-br from-{{ color|default:'blue' }}-500 to-{{ color|default:'blue' }}-600 rounded-full p-4">
+      <div class="bg-gradient-to-br {{ gradient_from }} {{ gradient_to }} rounded-full p-4">
         <i class="{{ icon|default:'fas fa-edit' }} text-3xl text-white"></i>
       </div>
       <div class="flex-1">
@@ -46,7 +67,7 @@
             {% if field.field.widget.input_type == 'textarea' %}
               <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
                         {% if field.field.required %}required{% endif %}
-                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-{{ color|default:'blue' }}-500 focus:border-transparent transition-all resize-none"
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all resize-none"
                         rows="4" placeholder="{{ field.help_text|default:field.label }}">{{ field.value|default:'' }}</textarea>
             
             {% elif field.field.widget.input_type == 'select' %}
@@ -70,7 +91,7 @@
               <div class="flex items-center gap-3">
                 <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}"
                        {% if field.value %}checked{% endif %}
-                       class="w-5 h-5 text-{{ color|default:'blue' }}-600 border-gray-300 rounded focus:ring-2 focus:ring-{{ color|default:'blue' }}-500">
+                       class="w-5 h-5 {{ text_color }} border-gray-300 rounded focus:ring-2 {{ ring_color }}">
                 <label for="{{ field.id_for_label }}" class="text-sm text-gray-700">
                   {{ field.help_text|default:field.label }}
                 </label>
@@ -79,7 +100,7 @@
             {% elif field.field.widget.input_type == 'file' %}
               <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}"
                      {% if field.field.required %}required{% endif %}
-                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-{{ color|default:'blue' }}-500 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-{{ color|default:'blue' }}-50 file:text-{{ color|default:'blue' }}-700 hover:file:bg-{{ color|default:'blue' }}-100">
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold {{ bg_color }} {{ text_color }} hover:{{ bg_color|slice:":-2" }}-100">
             
             {% else %}
               <input type="{{ field.field.widget.input_type|default:'text' }}" 

@@ -53,8 +53,15 @@ class ContractListView(RoleRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['courses'] = Course.objects.filter(is_active=True)
         context['groups'] = Group.objects.filter(is_active=True)
-        context['total_contracts'] = self.get_queryset().count()
-        context['total_amount'] = self.get_queryset().aggregate(total=Sum('total_amount'))['total'] or 0
+        total_contracts = self.get_queryset().count()
+        total_amount = self.get_queryset().aggregate(total=Sum('total_amount'))['total'] or 0
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami shartnomalar', 'value': total_contracts, 'icon': 'fas fa-file-contract', 'color': 'text-emerald-600'},
+            {'label': 'Jami summa', 'value': f"{total_amount:,.0f}", 'icon': 'fas fa-dollar-sign', 'color': 'text-green-600'},
+        ]
+        
         # Permissions
         user = self.request.user
         context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
@@ -165,11 +172,23 @@ class PaymentListView(RoleRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_amount'] = self.get_queryset().aggregate(total=Sum('amount'))['total'] or 0
-        context['total_count'] = self.get_queryset().count()
+        payments = self.get_queryset()
+        total_count = payments.count()
+        total_amount = payments.aggregate(total=Sum('amount'))['total'] or 0
+        completed_count = payments.filter(status='completed').count()
+        pending_count = payments.filter(status='pending').count()
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami to\'lovlar', 'value': total_count, 'icon': 'fas fa-dollar-sign', 'color': 'text-emerald-600'},
+            {'label': 'Jami summa', 'value': f"{total_amount:,.0f}", 'icon': 'fas fa-money-bill-wave', 'color': 'text-green-600'},
+            {'label': 'Bajarilgan', 'value': completed_count, 'icon': 'fas fa-check-circle', 'color': 'text-blue-600'},
+            {'label': 'Kutilmoqda', 'value': pending_count, 'icon': 'fas fa-clock', 'color': 'text-yellow-600'},
+        ]
+        
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_accountant') and user.is_accountant)
         context['can_edit'] = context['can_create']
         context['can_delete'] = False  # Payments usually shouldn't be deleted
         return context

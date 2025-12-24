@@ -51,11 +51,19 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         elif self.request.user.is_mentor:
             homeworks = homeworks.filter(lesson__group__mentor=self.request.user)
         
-        context['total_homeworks'] = homeworks.count()
-        context['submitted_count'] = homeworks.filter(is_submitted=True).count()
-        context['pending_count'] = homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
-        context['overdue_count'] = homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
-        context['graded_count'] = homeworks.filter(grade__isnull=False).count()
+        total_homeworks = homeworks.count()
+        submitted_count = homeworks.filter(is_submitted=True).count()
+        pending_count = homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
+        overdue_count = homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
+        graded_count = homeworks.filter(grade__isnull=False).count()
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami vazifalar', 'value': total_homeworks, 'icon': 'fas fa-tasks', 'color': 'text-orange-600'},
+            {'label': 'Topshirilgan', 'value': submitted_count, 'icon': 'fas fa-check', 'color': 'text-green-600'},
+            {'label': 'Kutilmoqda', 'value': pending_count, 'icon': 'fas fa-clock', 'color': 'text-yellow-600'},
+            {'label': 'Kechikkan', 'value': overdue_count, 'icon': 'fas fa-exclamation-triangle', 'color': 'text-red-600'},
+        ]
         
         # Guruhlar (mentor/admin uchun)
         if self.request.user.is_mentor:

@@ -28,14 +28,24 @@ class AttendanceListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         # Stats for cards
         attendances = self.get_queryset()
-        context['present_count'] = attendances.filter(status='present').count()
-        context['late_count'] = attendances.filter(status='late').count()
-        context['absent_count'] = attendances.filter(status='absent').count()
+        present_count = attendances.filter(status='present').count()
+        late_count = attendances.filter(status='late').count()
+        absent_count = attendances.filter(status='absent').count()
         total = attendances.count()
         if total > 0:
-            context['attendance_percentage'] = ((context['present_count'] + context['late_count']) / total) * 100
+            attendance_percentage = ((present_count + late_count) / total) * 100
         else:
-            context['attendance_percentage'] = 0
+            attendance_percentage = 0
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami davomat', 'value': total, 'icon': 'fas fa-calendar-check', 'color': 'text-cyan-600'},
+            {'label': 'Kelgan', 'value': present_count, 'icon': 'fas fa-check-circle', 'color': 'text-green-600'},
+            {'label': 'Kechikkan', 'value': late_count, 'icon': 'fas fa-clock', 'color': 'text-yellow-600'},
+            {'label': 'Kelmagan', 'value': absent_count, 'icon': 'fas fa-times-circle', 'color': 'text-red-600'},
+        ]
+        
+        context['attendance_percentage'] = attendance_percentage
         
         # Mentor uchun guruhlar ro'yxati
         if self.request.user.is_mentor:

@@ -91,7 +91,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-500">{{ stat.label }}</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value|intcomma }}</p>
                 </div>
                 <i class="{{ stat.icon }} text-2xl {{ stat.color }}"></i>
             </div>

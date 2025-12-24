@@ -37,8 +37,14 @@ class ExamListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_exams'] = self.get_queryset().count()
-        context['upcoming_exams'] = self.get_queryset().filter(date__gte=timezone.now().date()).count()
+        total_exams = self.get_queryset().count()
+        upcoming_exams = self.get_queryset().filter(date__gte=timezone.now().date()).count()
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami imtihonlar', 'value': total_exams, 'icon': 'fas fa-file-alt', 'color': 'text-rose-600'},
+            {'label': 'Kutilayotgan', 'value': upcoming_exams, 'icon': 'fas fa-calendar', 'color': 'text-blue-600'},
+        ]
         
         if self.request.user.is_mentor:
             context['groups'] = Group.objects.filter(mentor=self.request.user, is_active=True)

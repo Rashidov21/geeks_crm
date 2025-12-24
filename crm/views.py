@@ -275,15 +275,24 @@ class LeadListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['statuses'] = LeadStatus.objects.filter(is_active=True).order_by('order')
-        context['total_leads'] = Lead.objects.count()
-        context['enrolled_leads'] = Lead.objects.filter(status__code='enrolled').count()
-        context['pending_leads'] = Lead.objects.filter(
+        total_leads = Lead.objects.count()
+        enrolled_leads = Lead.objects.filter(status__code='enrolled').count()
+        pending_leads = Lead.objects.filter(
             status__code__in=['new', 'contacted', 'interested']
         ).count()
-        context['overdue_followups'] = FollowUp.objects.filter(
+        overdue_followups = FollowUp.objects.filter(
             completed=False,
             due_date__lt=timezone.now()
         ).count()
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami lidlar', 'value': total_leads, 'icon': 'fas fa-users', 'color': 'text-purple-600'},
+            {'label': 'Kursga yozilgan', 'value': enrolled_leads, 'icon': 'fas fa-check-circle', 'color': 'text-green-600'},
+            {'label': 'Kutilayotgan', 'value': pending_leads, 'icon': 'fas fa-clock', 'color': 'text-yellow-600'},
+            {'label': 'Kechikkan follow-up', 'value': overdue_followups, 'icon': 'fas fa-exclamation-triangle', 'color': 'text-red-600'},
+        ]
+        
         # Permissions
         user = self.request.user
         context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)

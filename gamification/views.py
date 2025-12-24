@@ -255,7 +255,7 @@ class MentorRankingView(AdminRequiredMixin, TemplateView):
                 'mentor': mentor,
                 'groups_count': groups.count(),
                 'students_count': total_students,
-                'kpi_score': kpi.overall_score if kpi else 0
+                'kpi_score': kpi.total_kpi_score if kpi else 0  # Use total_kpi_score instead of overall_score
             })
         
         # KPI bo'yicha saralash

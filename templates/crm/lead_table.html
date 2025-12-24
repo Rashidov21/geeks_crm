@@ -152,7 +152,11 @@
                             {{ lead.interested_course.name|default:"-" }}
                         </td>
                         <td class="px-4 py-3 text-gray-700 text-sm">
-                            {{ lead.assigned_sales.get_full_name|default:lead.assigned_sales.username|default:"-" }}
+                            {% if lead.assigned_sales %}
+                                {{ lead.assigned_sales.get_full_name|default:lead.assigned_sales.username }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
                         <td class="px-4 py-3 text-gray-500 text-sm">
                             {{ lead.created_at|date:"d.m.Y" }}

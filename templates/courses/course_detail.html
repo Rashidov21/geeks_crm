@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Kurs: {{ course.name }} | GEEKS CRM{% endblock %}
 
@@ -20,7 +21,7 @@
                     </div>
                     <div class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <i class="fas fa-money-bill"></i>
-                        <span class="font-semibold">{{ course.price|floatformat:0 }} so'm</span>
+                        <span class="font-semibold">{{ course.price|intcomma }} so'm</span>
                     </div>
                     <div class="px-4 py-2 rounded-lg {% if course.is_active %}bg-green-500 bg-opacity-30{% else %}bg-gray-500 bg-opacity-30{% endif %} backdrop-blur-sm">
                         <span class="font-semibold">{% if course.is_active %}Faol{% else %}Nofaol{% endif %}</span>

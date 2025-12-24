@@ -13,7 +13,17 @@ class ProfileView(DetailView):
     context_object_name = 'user_profile'
     
     def get_object(self):
-        return self.request.user
+        pk = self.kwargs.get('pk')
+        if pk:
+            # Boshqa user profilini ko'rish (faqat admin/manager uchun)
+            if self.request.user.is_superuser or (hasattr(self.request.user, 'is_admin') and self.request.user.is_admin) or (hasattr(self.request.user, 'is_manager') and self.request.user.is_manager):
+                return User.objects.get(pk=pk)
+            else:
+                # Oddiy userlar faqat o'z profilini ko'ra oladi
+                return self.request.user
+        else:
+            # O'z profilini ko'rish
+            return self.request.user
 
 
 class ProfileEditView(UpdateView):

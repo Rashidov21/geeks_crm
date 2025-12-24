@@ -76,7 +76,10 @@
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
                                     {{ data.mentor.first_name.0|upper|default:"M" }}
                                 </div>
-                                <span class="font-semibold text-gray-900 text-lg">{{ data.mentor.get_full_name|default:data.mentor.username }}</span>
+                                <a href="{% url 'accounts:profile_detail' data.mentor.pk %}" 
+                                   class="font-semibold text-gray-900 text-lg hover:text-green-600 transition">
+                                    {{ data.mentor.get_full_name|default:data.mentor.username }}
+                                </a>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">

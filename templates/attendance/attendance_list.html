@@ -8,16 +8,19 @@
     subtitle="Barcha davomat yozuvlari"
     icon="fas fa-calendar-check"
     color="cyan"
-    items=attendance_records
+    items=attendances
     fields="student,lesson,date,status"
     create_url="attendance:attendance_create"
     create_text="Yangi davomat"
     detail_url=""
-    edit_url="attendance:attendance_edit"
+    edit_url=""
     delete_url=""
     view_mode="table"
     show_search=True
     show_filters=True
+    can_create=can_create
+    can_edit=can_edit
+    can_delete=can_delete
     stats=stats
 %}
 {% endblock %}

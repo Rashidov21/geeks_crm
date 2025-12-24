@@ -43,7 +43,31 @@ class StudentBadgesView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')
-        return StudentBadge.objects.filter(student=student).select_related('badge', 'group')
+        queryset = StudentBadge.objects.filter(student=student).select_related('badge', 'group').order_by('-earned_at')
+        
+        # Filter by group
+        group_id = self.request.GET.get('group')
+        if group_id:
+            queryset = queryset.filter(group_id=group_id)
+        
+        # Filter by badge type
+        badge_type = self.request.GET.get('badge_type')
+        if badge_type:
+            queryset = queryset.filter(badge__badge_type=badge_type)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from courses.models import Group
+        from .models import Badge
+        
+        student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')
+        context['groups'] = Group.objects.filter(students=student, is_active=True)
+        context['badge_types'] = Badge.BADGE_TYPE_CHOICES
+        context['total_badges'] = self.get_queryset().count()
+        context['student'] = student if isinstance(student, User) else User.objects.get(pk=student)
+        return context
 
 
 class GroupRankingView(LoginRequiredMixin, ListView):

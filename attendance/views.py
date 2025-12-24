@@ -14,6 +14,7 @@ class AttendanceListView(LoginRequiredMixin, ListView):
     model = Attendance
     template_name = 'attendance/attendance_list.html'
     context_object_name = 'attendances'
+    paginate_by = 50
     
     def get_queryset(self):
         queryset = Attendance.objects.select_related('student', 'lesson', 'lesson__group')

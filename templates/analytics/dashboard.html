@@ -214,11 +214,11 @@
                 </div>
                 <div class="p-3 bg-green-50 rounded-lg">
                     <p class="text-xs text-gray-600 mb-1">To'langan</p>
-                    <p class="text-lg font-bold text-green-600">{{ finance_total_paid|floatformat:0|default:0 }}</p>
+                    <p class="text-lg font-bold text-green-600">{{ finance_total_paid|intcomma|default:0 }}</p>
                 </div>
                 <div class="p-3 bg-red-50 rounded-lg">
                     <p class="text-xs text-gray-600 mb-1">Qarzlar</p>
-                    <p class="text-lg font-bold text-red-600">{{ finance_total_debts|floatformat:0|default:0 }}</p>
+                    <p class="text-lg font-bold text-red-600">{{ finance_total_debts|intcomma|default:0 }}</p>
                 </div>
             </div>
         </div>

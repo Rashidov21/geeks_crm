@@ -2,7 +2,6 @@
 Universal CRUD List View Component
 Usage: {% include 'components/crud_list.html' with title="Lidlar" items=leads fields="name,phone,status" create_url="crm:lead_create" %}
 {% endcomment %}
-{% load crud_tags %}
 
 {% comment %}
 Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
@@ -21,6 +20,12 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
   {% with text_color='text-yellow-600' bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' ring_color='ring-yellow-500' bg_light='bg-yellow-50' border_color='border-yellow-200' text_dark='text-yellow-900' %}
 {% elif color == 'pink' %}
   {% with text_color='text-pink-600' bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' ring_color='ring-pink-500' bg_light='bg-pink-50' border_color='border-pink-200' text_dark='text-pink-900' %}
+{% elif color == 'cyan' %}
+  {% with text_color='text-cyan-600' bg_color='bg-cyan-600' hover_bg='hover:bg-cyan-700' ring_color='ring-cyan-500' bg_light='bg-cyan-50' border_color='border-cyan-200' text_dark='text-cyan-900' %}
+{% elif color == 'orange' %}
+  {% with text_color='text-orange-600' bg_color='bg-orange-600' hover_bg='hover:bg-orange-700' ring_color='ring-orange-500' bg_light='bg-orange-50' border_color='border-orange-200' text_dark='text-orange-900' %}
+{% elif color == 'emerald' %}
+  {% with text_color='text-emerald-600' bg_color='bg-emerald-600' hover_bg='hover:bg-emerald-700' ring_color='ring-emerald-500' bg_light='bg-emerald-50' border_color='border-emerald-200' text_dark='text-emerald-900' %}
 {% else %}
   {% with text_color='text-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' ring_color='ring-indigo-500' bg_light='bg-indigo-50' border_color='border-indigo-200' text_dark='text-indigo-900' %}
 {% endif %}
@@ -230,7 +235,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         {% endif %}
 
         <!-- Pagination -->
-        {% if is_paginated %}
+        {% if page_obj.has_other_pages %}
         {% include 'components/pagination.html' with color=color %}
         {% endif %}
     {% else %}

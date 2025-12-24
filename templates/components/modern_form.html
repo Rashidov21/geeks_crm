@@ -1,6 +1,7 @@
-{% load static %}
-<!-- Modern Universal Form Template -->
-<!-- Usage: {% include 'components/modern_form.html' with form=form title='Form Title' icon='fas fa-icon' color='blue' %} -->
+{% comment %}
+Modern Universal Form Template
+Usage: {% include 'components/modern_form.html' with form=form title='Form Title' icon='fas fa-icon' color='blue' %}
+{% endcomment %} -->
 
 {% comment %}
 Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
@@ -129,11 +130,27 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 
       <!-- Action Buttons -->
       <div class="flex items-center justify-between pt-6 border-t">
-        <a href="{{ back_url|default:'javascript:history.back()' }}" 
-           class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
-          <i class="fas fa-arrow-left"></i>
-          <span>{{ back_text|default:'Orqaga' }}</span>
-        </a>
+        {% if back_url %}
+          {% if back_url_kwargs %}
+            <a href="{% url back_url back_url_kwargs %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+              <i class="fas fa-arrow-left"></i>
+              <span>{{ back_text|default:'Orqaga' }}</span>
+            </a>
+          {% else %}
+            <a href="{% url back_url %}" 
+               class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+              <i class="fas fa-arrow-left"></i>
+              <span>{{ back_text|default:'Orqaga' }}</span>
+            </a>
+          {% endif %}
+        {% else %}
+          <a href="javascript:history.back()" 
+             class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+            <i class="fas fa-arrow-left"></i>
+            <span>{{ back_text|default:'Orqaga' }}</span>
+          </a>
+        {% endif %}
         <button type="submit" 
                 @click="loading=true"
                 :disabled="loading"

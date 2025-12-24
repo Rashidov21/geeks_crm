@@ -315,9 +315,17 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         lead = self.object
         
-        context['followups'] = FollowUp.objects.filter(lead=lead).order_by('due_date')
-        context['history'] = lead.history.all().order_by('-created_at')
-        context['trial_lessons'] = TrialLesson.objects.filter(lead=lead).order_by('-date')
+        # Follow-ups (oxirgi 10 tasi)
+        context['followups'] = FollowUp.objects.filter(lead=lead).order_by('-due_date')[:10]
+        context['followups_count'] = FollowUp.objects.filter(lead=lead).count()
+        
+        # History (oxirgi 20 tasi)
+        context['history'] = lead.history.all().order_by('-created_at')[:20]
+        context['history_count'] = lead.history.count()
+        
+        # Trial lessons (oxirgi 10 tasi)
+        context['trial_lessons'] = TrialLesson.objects.filter(lead=lead).order_by('-date')[:10]
+        context['trial_lessons_count'] = TrialLesson.objects.filter(lead=lead).count()
         
         # Faol takliflar
         today = timezone.now().date()
@@ -331,6 +339,11 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
         
         context['statuses'] = LeadStatus.objects.filter(is_active=True)
         context['groups'] = Group.objects.filter(is_active=True)
+        
+        # Permissions
+        user = self.request.user
+        context['can_edit'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
+        context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
         
         return context
 
@@ -687,6 +700,7 @@ class FollowUpListView(LoginRequiredMixin, ListView):
     model = FollowUp
     template_name = 'crm/followup_list.html'
     context_object_name = 'followups'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = FollowUp.objects.select_related('lead', 'sales')
@@ -725,6 +739,28 @@ class FollowUpCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     fields = ['lead', 'due_date', 'notes']
     allowed_roles = ['admin', 'manager', 'sales_manager', 'sales']
     success_url = reverse_lazy('crm:followup_today')
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        lead_id = self.request.GET.get('lead')
+        if lead_id:
+            try:
+                initial['lead'] = Lead.objects.get(pk=lead_id)
+            except Lead.DoesNotExist:
+                pass
+        return initial
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        lead_id = self.request.GET.get('lead')
+        if lead_id:
+            try:
+                context['lead'] = Lead.objects.get(pk=lead_id)
+                context['back_url'] = 'crm:lead_detail'
+                context['back_url_kwargs'] = lead_id
+            except Lead.DoesNotExist:
+                pass
+        return context
     
     def form_valid(self, form):
         form.instance.sales = self.request.user

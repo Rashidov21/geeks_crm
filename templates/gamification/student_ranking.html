@@ -100,7 +100,10 @@
                                 <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
                                     {{ data.student.first_name.0|upper|default:"S" }}
                                 </div>
-                                <span class="font-semibold text-gray-900 text-lg">{{ data.student.get_full_name|default:data.student.username }}</span>
+                                <a href="{% url 'accounts:profile_detail' data.student.pk %}" 
+                                   class="font-semibold text-gray-900 text-lg hover:text-indigo-600 transition">
+                                    {{ data.student.get_full_name|default:data.student.username }}
+                                </a>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">

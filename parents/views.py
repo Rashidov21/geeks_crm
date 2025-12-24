@@ -1,6 +1,7 @@
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
+from django.db.models import Sum
 from accounts.mixins import RoleRequiredMixin
 from .models import MonthlyParentReport, ParentDashboard
 from accounts.models import User
@@ -79,26 +80,58 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         student = self.object
         
-        # Darslar tarixi
-        groups = Group.objects.filter(students=student)
-        lessons = Lesson.objects.filter(group__in=groups).select_related('group', 'topic', 'mentor').order_by('-date', '-start_time')[:20]
+        # Guruhlar
+        groups = Group.objects.filter(students=student, is_active=True).select_related('course', 'mentor')
+        context['groups'] = groups
+        context['group'] = groups.first() if groups.exists() else None
+        
+        # Darslar tarixi (oxirgi 10 tasi)
+        lessons = Lesson.objects.filter(group__in=groups).select_related('group', 'topic', 'group__mentor').order_by('-date', '-start_time')[:10]
         context['lessons'] = lessons
+        context['lessons_count'] = Lesson.objects.filter(group__in=groups).count()
         
-        # Uy vazifalari
-        homeworks = Homework.objects.filter(student=student).select_related('lesson', 'grade__mentor').order_by('-deadline')[:20]
+        # Uy vazifalari (oxirgi 10 tasi)
+        homeworks = Homework.objects.filter(student=student).select_related('lesson', 'grade__mentor').order_by('-deadline')[:10]
         context['homeworks'] = homeworks
+        context['homeworks_count'] = Homework.objects.filter(student=student).count()
+        context['homeworks_submitted'] = Homework.objects.filter(student=student, is_submitted=True).count()
+        context['homeworks_pending'] = Homework.objects.filter(student=student, is_submitted=False, deadline__gte=timezone.now()).count()
+        context['homeworks_overdue'] = Homework.objects.filter(student=student, is_submitted=False, deadline__lt=timezone.now()).count()
         
-        # Testlar va imtihonlar
-        exam_results = ExamResult.objects.filter(student=student).select_related('exam').order_by('-submitted_at')[:20]
+        # Testlar va imtihonlar (oxirgi 10 tasi)
+        exam_results = ExamResult.objects.filter(student=student).select_related('exam').order_by('-submitted_at')[:10]
         context['exam_results'] = exam_results
+        context['exam_results_count'] = ExamResult.objects.filter(student=student).count()
         
-        # Davomat
-        attendances = Attendance.objects.filter(student=student).select_related('lesson', 'lesson__group').order_by('-lesson__date')[:30]
-        context['attendances'] = attendances
+        # Davomat statistikasi
+        attendances = Attendance.objects.filter(student=student).select_related('lesson', 'lesson__group')
+        context['attendances_count'] = attendances.count()
+        context['present_count'] = attendances.filter(status='present').count()
+        context['late_count'] = attendances.filter(status='late').count()
+        context['absent_count'] = attendances.filter(status='absent').count()
         
-        # Mentor sharhlari (oylik hisobotlar)
-        monthly_reports = MonthlyReport.objects.filter(student=student).select_related('mentor', 'group').order_by('-year', '-month')[:12]
+        # Davomat foizi
+        total_attendance = context['attendances_count']
+        if total_attendance > 0:
+            context['attendance_percentage'] = ((context['present_count'] + context['late_count']) / total_attendance) * 100
+        else:
+            context['attendance_percentage'] = 0
+        
+        # Progress foizi (kurs bo'yicha)
+        from courses.models import StudentProgress
+        progress = StudentProgress.objects.filter(student=student).first()
+        context['progress_percentage'] = progress.progress_percentage if progress else 0
+        
+        # Mentor sharhlari (oylik hisobotlar) - oxirgi 6 tasi
+        monthly_reports = MonthlyReport.objects.filter(student=student).select_related('mentor', 'group').order_by('-year', '-month')[:6]
         context['monthly_reports'] = monthly_reports
+        context['monthly_reports_count'] = MonthlyReport.objects.filter(student=student).count()
+        
+        # Ball va badge'lar
+        from gamification.models import StudentPoints, StudentBadge
+        total_points = StudentPoints.objects.filter(student=student).aggregate(total=Sum('total_points'))['total'] or 0
+        context['total_points'] = total_points
+        context['badges_count'] = StudentBadge.objects.filter(student=student).count()
         
         return context
 

@@ -14,6 +14,7 @@ class CourseListView(LoginRequiredMixin, ListView):
     model = Course
     template_name = 'courses/course_list.html'
     context_object_name = 'courses'
+    paginate_by = 20
     
     def get_queryset(self):
         queryset = Course.objects.select_related('branch')
@@ -38,6 +39,13 @@ class CourseListView(LoginRequiredMixin, ListView):
         context['branches'] = Branch.objects.all()
         context['total_courses'] = Course.objects.count()
         context['active_courses'] = Course.objects.filter(is_active=True).count()
+        
+        # Stats for cards
+        context['stats'] = [
+            {'label': 'Jami kurslar', 'value': context['total_courses'], 'icon': 'fas fa-book', 'color': 'text-indigo-600'},
+            {'label': 'Faol kurslar', 'value': context['active_courses'], 'icon': 'fas fa-check-circle', 'color': 'text-green-600'},
+        ]
+        
         # Permissions
         user = self.request.user
         context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
@@ -248,6 +256,7 @@ class GroupListView(LoginRequiredMixin, ListView):
     model = Group
     template_name = 'courses/group_list.html'
     context_object_name = 'groups'
+    paginate_by = 20
     
     def get_queryset(self):
         queryset = Group.objects.select_related('course', 'mentor', 'room')
@@ -300,7 +309,7 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
 class GroupCreateView(RoleRequiredMixin, CreateView):
     model = Group
     template_name = 'courses/group_form.html'
-    fields = ['name', 'course', 'mentor', 'room', 'start_date', 'end_date', 'schedule_days', 'schedule_time']
+    fields = ['name', 'course', 'mentor', 'room', 'schedule_type', 'start_time', 'end_time', 'capacity']
     allowed_roles = ['admin', 'manager']
     
     def get_success_url(self):
@@ -321,7 +330,7 @@ class GroupCreateView(RoleRequiredMixin, CreateView):
 class GroupUpdateView(RoleRequiredMixin, UpdateView):
     model = Group
     template_name = 'courses/group_form.html'
-    fields = ['name', 'course', 'mentor', 'room', 'start_date', 'end_date', 'schedule_days', 'schedule_time', 'is_active']
+    fields = ['name', 'course', 'mentor', 'room', 'schedule_type', 'start_time', 'end_time', 'capacity', 'is_active']
     allowed_roles = ['admin', 'manager']
     
     def get_success_url(self):
@@ -378,6 +387,7 @@ class LessonListView(LoginRequiredMixin, ListView):
     model = Lesson
     template_name = 'courses/lesson_list.html'
     context_object_name = 'lessons'
+    paginate_by = 30
     
     def get_queryset(self):
         queryset = Lesson.objects.select_related('group', 'topic', 'mentor')
@@ -394,7 +404,7 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'lesson'
     
     def get_queryset(self):
-        return Lesson.objects.select_related('group', 'topic', 'mentor')
+        return Lesson.objects.select_related('group', 'group__mentor', 'topic')
 
 
 class StudentProgressView(LoginRequiredMixin, DetailView):

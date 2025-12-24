@@ -18,6 +18,7 @@ class ContractListView(RoleRequiredMixin, ListView):
     template_name = 'finance/contract_list.html'
     context_object_name = 'contracts'
     allowed_roles = ['admin', 'manager', 'accountant']
+    paginate_by = 30
     
     def get_queryset(self):
         from courses.models import Course, Group
@@ -121,6 +122,7 @@ class ContractCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
 
 
 class PaymentListView(RoleRequiredMixin, ListView):
+    paginate_by = 30
     """
     To'lovlar ro'yxati
     """

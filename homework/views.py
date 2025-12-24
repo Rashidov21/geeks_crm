@@ -14,6 +14,7 @@ class HomeworkListView(LoginRequiredMixin, ListView):
     model = Homework
     template_name = 'homework/homework_list.html'
     context_object_name = 'homeworks'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'grade')

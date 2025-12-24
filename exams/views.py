@@ -14,6 +14,7 @@ class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exams/exam_list.html'
     context_object_name = 'exams'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = Exam.objects.select_related('course', 'group')

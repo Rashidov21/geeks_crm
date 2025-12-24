@@ -284,6 +284,11 @@ class LeadListView(LoginRequiredMixin, ListView):
             completed=False,
             due_date__lt=timezone.now()
         ).count()
+        # Permissions
+        user = self.request.user
+        context['can_create'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
+        context['can_edit'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
+        context['can_delete'] = user.is_admin or user.is_manager
         return context
 
 
@@ -398,6 +403,26 @@ class LeadUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
         
         messages.success(self.request, 'Lid muvaffaqiyatli yangilandi.')
         return super().form_valid(form)
+
+
+class LeadDeleteView(RoleRequiredMixin, DeleteView):
+    """
+    Leadni o'chirish
+    """
+    model = Lead
+    template_name = 'crm/lead_confirm_delete.html'
+    success_url = reverse_lazy('crm:lead_list')
+    allowed_roles = ['admin', 'manager']
+    
+    def get_queryset(self):
+        queryset = Lead.objects.all()
+        if self.request.user.is_sales:
+            queryset = queryset.filter(assigned_sales=self.request.user)
+        return queryset
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Lid o\'chirildi.')
+        return super().delete(request, *args, **kwargs)
 
 
 class LeadAssignView(RoleRequiredMixin, View):
@@ -680,6 +705,15 @@ class FollowUpListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(due_date__gt=timezone.now(), completed=False)
         
         return queryset.order_by('due_date')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Permissions
+        user = self.request.user
+        context['can_create'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
+        context['can_edit'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
+        context['can_delete'] = user.is_admin or user.is_manager
+        return context
 
 
 class FollowUpCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):

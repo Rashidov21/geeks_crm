@@ -2,22 +2,23 @@
 Universal Delete Confirmation Modal
 Usage: Include in base template and use Alpine.js events
 {% endcomment %}
+{% load crud_tags %}
 
 <div x-data="{ 
     show: false, 
     itemId: null, 
     itemName: '', 
-    isBulk: false,
-    itemIds: [],
-    deleteUrl: '{{ delete_url|default:"" }}',
-    redirectUrl: '{{ redirect_url|default:"" }}'
+    deleteUrl: '',
+    redirectUrl: '{{ request.path }}'
 }" 
      @open-delete-modal.window="
         show = true;
         itemId = $event.detail.id;
         itemName = $event.detail.name || 'Bu element';
-        isBulk = Array.isArray($event.detail.ids);
-        itemIds = $event.detail.ids || [];
+        deleteUrl = $event.detail.deleteUrl || '';
+        if ($event.detail.redirectUrl) {
+            redirectUrl = $event.detail.redirectUrl;
+        }
      "
      x-show="show"
      x-cloak
@@ -43,12 +44,7 @@ Usage: Include in base template and use Alpine.js events
             <!-- Content -->
             <div class="mb-6">
                 <p class="text-gray-700">
-                    <span x-show="!isBulk">
-                        <strong x-text="itemName"></strong> ni o'chirishni xohlaysizmi?
-                    </span>
-                    <span x-show="isBulk">
-                        <strong x-text="itemIds.length"></strong> ta elementni o'chirishni xohlaysizmi?
-                    </span>
+                    <strong x-text="itemName"></strong> ni o'chirishni xohlaysizmi?
                 </p>
                 {% if cascade_warning %}
                 <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -67,18 +63,26 @@ Usage: Include in base template and use Alpine.js events
                     Bekor qilish
                 </button>
                 <form method="post" 
-                      :action="deleteUrl ? deleteUrl.replace('0', itemId) : ''"
+                      :action="deleteUrl"
                       @submit.prevent="
-                          fetch($event.target.action, {
+                          const form = $event.target;
+                          const formData = new FormData(form);
+                          fetch(form.action, {
                               method: 'POST',
+                              body: formData,
                               headers: {
-                                  'X-CSRFToken': '{{ csrf_token }}',
-                                  'Content-Type': 'application/json'
-                              },
-                              body: JSON.stringify({ids: isBulk ? itemIds : [itemId]})
-                          }).then(() => {
-                              show = false;
-                              window.location.href = '{{ redirect_url|default:request.path }}';
+                                  'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                              }
+                          }).then(response => {
+                              if (response.ok || response.redirected) {
+                                  show = false;
+                                  window.location.href = redirectUrl;
+                              } else {
+                                  alert('Xatolik yuz berdi. Qayta urinib ko\'ring.');
+                              }
+                          }).catch(error => {
+                              console.error('Error:', error);
+                              alert('Xatolik yuz berdi. Qayta urinib ko\'ring.');
                           });
                       ">
                     {% csrf_token %}

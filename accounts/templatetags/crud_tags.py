@@ -13,8 +13,9 @@ def split(value, arg):
 def getattr(obj, attr):
     """Get attribute from object"""
     try:
+        # Use object.__getattribute__ to avoid recursion with built-in getattr
         if hasattr(obj, attr):
-            return getattr(obj, attr)
+            return object.__getattribute__(obj, attr)
         elif hasattr(obj, '__getitem__'):
             return obj[attr]
         return '-'

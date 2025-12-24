@@ -62,6 +62,12 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         elif self.request.user.is_admin or self.request.user.is_manager:
             context['groups'] = Group.objects.filter(is_active=True)
         
+        # Permissions
+        user = self.request.user
+        context['can_create'] = user.is_admin or user.is_manager or user.is_mentor
+        context['can_edit'] = user.is_admin or user.is_manager or user.is_mentor
+        context['can_delete'] = user.is_admin or user.is_manager
+        
         return context
 
 

@@ -19,9 +19,6 @@
     view_mode="grid"
     show_search=True
     show_filters=True
-    can_create=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
-    can_edit=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
-    can_delete=request.user.is_admin|yesno:"True,False"|add:request.user.is_manager|yesno:"True,False"
     stats=stats
 %}
 {% endblock %}

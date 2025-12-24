@@ -38,6 +38,10 @@ class CourseListView(LoginRequiredMixin, ListView):
         context['branches'] = Branch.objects.all()
         context['total_courses'] = Course.objects.count()
         context['active_courses'] = Course.objects.filter(is_active=True).count()
+        # Permissions
+        context['can_create'] = self.request.user.is_admin or self.request.user.is_manager
+        context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
+        context['can_delete'] = self.request.user.is_admin or self.request.user.is_manager
         return context
 
 

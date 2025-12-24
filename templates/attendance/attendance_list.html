@@ -18,9 +18,6 @@
     view_mode="table"
     show_search=True
     show_filters=True
-    can_create=user.role|yesno:"admin,manager,mentor"
-    can_edit=user.role|yesno:"admin,manager,mentor"
-    can_delete=False
     stats=stats
 %}
 {% endblock %}

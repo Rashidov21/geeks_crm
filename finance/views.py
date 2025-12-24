@@ -54,6 +54,11 @@ class ContractListView(RoleRequiredMixin, ListView):
         context['groups'] = Group.objects.filter(is_active=True)
         context['total_contracts'] = self.get_queryset().count()
         context['total_amount'] = self.get_queryset().aggregate(total=Sum('total_amount'))['total'] or 0
+        # Permissions
+        user = self.request.user
+        context['can_create'] = user.is_admin or user.is_manager or user.is_accountant
+        context['can_edit'] = user.is_admin or user.is_manager or user.is_accountant
+        context['can_delete'] = user.is_admin or user.is_manager
         return context
 
 
@@ -160,6 +165,11 @@ class PaymentListView(RoleRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['total_amount'] = self.get_queryset().aggregate(total=Sum('amount'))['total'] or 0
         context['total_count'] = self.get_queryset().count()
+        # Permissions
+        user = self.request.user
+        context['can_create'] = user.is_admin or user.is_manager or user.is_accountant
+        context['can_edit'] = user.is_admin or user.is_manager or user.is_accountant
+        context['can_delete'] = user.is_admin or user.is_manager
         return context
 
 

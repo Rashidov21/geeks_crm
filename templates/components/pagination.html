@@ -3,6 +3,27 @@ Universal Pagination Component
 Usage: {% include 'components/pagination.html' %}
 {% endcomment %}
 
+{% comment %}
+Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
+{% endcomment %}
+{% if color == 'blue' %}
+  {% with bg_color='bg-blue-600' outline_color='outline-blue-600' %}
+{% elif color == 'purple' %}
+  {% with bg_color='bg-purple-600' outline_color='outline-purple-600' %}
+{% elif color == 'green' %}
+  {% with bg_color='bg-green-600' outline_color='outline-green-600' %}
+{% elif color == 'red' %}
+  {% with bg_color='bg-red-600' outline_color='outline-red-600' %}
+{% elif color == 'indigo' %}
+  {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
+{% elif color == 'yellow' %}
+  {% with bg_color='bg-yellow-600' outline_color='outline-yellow-600' %}
+{% elif color == 'pink' %}
+  {% with bg_color='bg-pink-600' outline_color='outline-pink-600' %}
+{% else %}
+  {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
+{% endif %}
+
 {% if page_obj.has_other_pages %}
 <nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
     <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
@@ -32,7 +53,7 @@ Usage: {% include 'components/pagination.html' %}
                 {% for num in page_obj.paginator.page_range %}
                     {% if page_obj.number == num %}
                     <span aria-current="page" 
-                          class="relative z-10 inline-flex items-center bg-{{ color|default:'indigo' }}-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-{{ color|default:'indigo' }}-600">
+                          class="relative z-10 inline-flex items-center {{ bg_color }} px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:{{ outline_color }}">
                         {{ num }}
                     </span>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
@@ -85,3 +106,4 @@ Usage: {% include 'components/pagination.html' %}
 </nav>
 {% endif %}
 
+{% endwith %}

@@ -1,230 +1,338 @@
 {% extends 'base.html' %}
-{% block title %}Lid: {{ lead.name }}{% endblock %}
+{% load static %}
+{% load crud_tags %}
+
+{% block title %}Lid: {{ lead.name }} | GEEKS CRM{% endblock %}
+
 {% block content %}
-<div class="space-y-6">
-  <!-- Header -->
-  <div class="bg-white shadow-lg rounded-xl p-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-          {{ lead.name.0|upper }}
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header Card -->
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            <div class="flex items-center gap-6 flex-1">
+                <!-- Avatar -->
+                <div class="relative">
+                    <div class="w-20 h-20 rounded-full bg-white bg-opacity-20 border-4 border-white shadow-lg flex items-center justify-center text-4xl font-bold">
+                        {{ lead.name.0|upper }}
+                    </div>
+                    {% if lead.status %}
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg" style="background-color: {{ lead.status.color }}"></div>
+                    {% endif %}
+                </div>
+                
+                <!-- Lead Info -->
+                <div class="flex-1 text-center sm:text-left">
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-2">
+                        <h1 class="text-3xl font-bold">{{ lead.name }}</h1>
+                        {% if lead.status %}
+                        <span class="px-3 py-1.5 text-sm font-semibold rounded-full bg-white bg-opacity-20 backdrop-blur-sm" 
+                              style="color: {{ lead.status.color }}; background-color: rgba(255,255,255,0.3);">
+                            {{ lead.status.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-purple-100">
+                        <a href="tel:{{ lead.phone }}" class="flex items-center gap-2 hover:text-white transition">
+                            <i class="fas fa-phone"></i>
+                            <span class="font-medium">{{ lead.phone }}</span>
+                        </a>
+                        {% if lead.secondary_phone %}
+                        <a href="tel:{{ lead.secondary_phone }}" class="flex items-center gap-2 hover:text-white transition">
+                            <i class="fas fa-phone-alt"></i>
+                            <span>{{ lead.secondary_phone }}</span>
+                        </a>
+                        {% endif %}
+                        {% if lead.interested_course %}
+                        <span class="flex items-center gap-2">
+                            <i class="fas fa-book"></i>
+                            <span>{{ lead.interested_course.name }}</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <a href="tel:{{ lead.phone }}" 
+                   class="bg-white text-purple-600 px-5 py-2.5 rounded-lg hover:bg-purple-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-phone"></i>
+                    <span>Qo'ng'iroq</span>
+                </a>
+                <a href="{% url 'crm:lead_edit' lead.pk %}" 
+                   class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Tahrirlash</span>
+                </a>
+            </div>
         </div>
-        <div>
-          <div class="flex items-center gap-3 mb-1">
-            <h1 class="text-2xl font-bold text-gray-800">{{ lead.name }}</h1>
-            {% if lead.status %}
-            <span class="px-3 py-1 text-sm font-medium rounded-full" 
-                  style="background-color: {{ lead.status.color }}20; color: {{ lead.status.color }}">
-              {{ lead.status.name }}
-            </span>
-            {% endif %}
-          </div>
-          <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-            <span><i class="fas fa-phone mr-1"></i>{{ lead.phone }}</span>
-            {% if lead.secondary_phone %}
-            <span><i class="fas fa-phone-alt mr-1"></i>{{ lead.secondary_phone }}</span>
-            {% endif %}
-            {% if lead.interested_course %}
-            <span><i class="fas fa-book mr-1"></i>{{ lead.interested_course.name }}</span>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <a href="tel:{{ lead.phone }}" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
-          <i class="fas fa-phone mr-2"></i>Qo'ng'iroq
-        </a>
-        <a href="{% url 'crm:lead_edit' lead.pk %}" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">
-          <i class="fas fa-edit mr-2"></i>Tahrirlash
-        </a>
-      </div>
     </div>
-    
+
+    <!-- Quick Info Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Manba</p>
+                    <p class="text-lg font-bold text-gray-900">{{ lead.get_source_display }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-source text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Sotuvchi</p>
+                    <p class="text-lg font-bold text-gray-900">{{ lead.assigned_sales.get_full_name|default:lead.assigned_sales.username|default:"Biriktirilmagan" }}</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-tie text-indigo-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Filial</p>
+                    <p class="text-lg font-bold text-gray-900">{{ lead.branch.name|default:"Ko'rsatilmagan" }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-building text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Yaratilgan</p>
+                    <p class="text-lg font-bold text-gray-900">{{ lead.created_at|date:"d.m.Y" }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Section -->
     {% if lead.notes %}
-    <div class="mt-4 p-4 bg-slate-50 rounded-lg">
-      <p class="text-sm text-gray-600">{{ lead.notes }}</p>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <i class="fas fa-sticky-note text-purple-600"></i>
+            Qo'shimcha ma'lumotlar
+        </h2>
+        <p class="text-gray-700 leading-relaxed">{{ lead.notes }}</p>
     </div>
     {% endif %}
-  </div>
 
-  <!-- Info Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <div class="bg-white shadow rounded-lg p-4">
-      <h3 class="text-sm font-medium text-gray-500 mb-2">Manba</h3>
-      <p class="text-lg font-semibold text-gray-800">{{ lead.get_source_display }}</p>
-    </div>
-    <div class="bg-white shadow rounded-lg p-4">
-      <h3 class="text-sm font-medium text-gray-500 mb-2">Sotuvchi</h3>
-      <p class="text-lg font-semibold text-gray-800">{{ lead.assigned_sales.username|default:"Biriktirilmagan" }}</p>
-    </div>
-    <div class="bg-white shadow rounded-lg p-4">
-      <h3 class="text-sm font-medium text-gray-500 mb-2">Filial</h3>
-      <p class="text-lg font-semibold text-gray-800">{{ lead.branch.name|default:"Ko'rsatilmagan" }}</p>
-    </div>
-  </div>
-
-  <!-- Status Change -->
-  {% if request.user.is_admin or request.user.is_manager or request.user.is_sales_manager or request.user.is_sales %}
-  <div class="bg-white shadow rounded-lg p-4">
-    <h3 class="text-lg font-semibold mb-3">Statusni o'zgartirish</h3>
-    <form method="post" action="{% url 'crm:lead_edit' lead.pk %}" class="flex flex-wrap gap-2">
-      {% csrf_token %}
-      <input type="hidden" name="name" value="{{ lead.name }}">
-      <input type="hidden" name="phone" value="{{ lead.phone }}">
-      {% for status in statuses %}
-      <button type="submit" name="status" value="{{ status.pk }}" 
-              class="px-4 py-2 rounded-lg text-sm font-medium transition
-                     {% if lead.status == status %}ring-2 ring-offset-2{% endif %}"
-              style="background-color: {{ status.color }}20; color: {{ status.color }}">
-        {{ status.name }}
-      </button>
-      {% endfor %}
-    </form>
-  </div>
-  {% endif %}
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Follow-ups -->
-    <div class="bg-white shadow-lg rounded-xl p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">
-          <i class="fas fa-tasks text-blue-600 mr-2"></i>Follow-uplar
+    <!-- Status Change (if authorized) -->
+    {% if request.user.is_admin or request.user.is_manager or request.user.is_sales_manager or request.user.is_sales %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-exchange-alt text-purple-600"></i>
+            Statusni o'zgartirish
         </h2>
-        <a href="{% url 'crm:followup_create' %}?lead={{ lead.pk }}" class="text-sm text-blue-600 hover:text-blue-800">
-          <i class="fas fa-plus mr-1"></i>Yangi
-        </a>
-      </div>
-      <div class="space-y-3">
-        {% for f in followups %}
-        <div class="p-3 rounded-lg border {% if f.is_overdue %}border-red-200 bg-red-50{% elif f.completed %}border-green-200 bg-green-50{% else %}border-slate-200 bg-slate-50{% endif %}">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-sm font-medium text-gray-800">{{ f.notes|default:"Follow-up" }}</p>
-              <p class="text-xs text-gray-500 mt-1">
-                <i class="fas fa-clock mr-1"></i>{{ f.due_date|date:"d.m.Y H:i" }}
-              </p>
+        <form method="post" action="{% url 'crm:lead_edit' lead.pk %}" class="flex flex-wrap gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="{{ lead.name }}">
+            <input type="hidden" name="phone" value="{{ lead.phone }}">
+            {% for status in statuses %}
+            <button type="submit" 
+                    name="status" 
+                    value="{{ status.pk }}" 
+                    class="px-5 py-2.5 rounded-lg text-sm font-semibold transition-all transform hover:scale-105
+                           {% if lead.status == status %}ring-4 ring-offset-2 ring-purple-300 shadow-lg{% endif %}"
+                    style="background-color: {{ status.color }}20; color: {{ status.color }}; border: 2px solid {{ status.color }}40;">
+                {{ status.name }}
+            </button>
+            {% endfor %}
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Follow-ups -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-tasks text-blue-600"></i>
+                    Follow-uplar
+                </h2>
+                <a href="{% url 'crm:followup_create' %}?lead={{ lead.pk }}" 
+                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Yangi</span>
+                </a>
             </div>
-            <div class="flex items-center gap-2">
-              {% if f.is_overdue %}
-              <span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">Overdue</span>
-              {% elif f.completed %}
-              <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Bajarildi</span>
-              {% else %}
-              <form method="post" action="{% url 'crm:followup_complete' f.pk %}">
-                {% csrf_token %}
-                <button type="submit" class="px-2 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">
-                  <i class="fas fa-check"></i>
-                </button>
-              </form>
-              {% endif %}
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                {% for f in followups %}
+                <div class="p-4 rounded-lg border-2 transition-all
+                    {% if f.is_overdue %}border-red-200 bg-red-50 hover:bg-red-100
+                    {% elif f.completed %}border-green-200 bg-green-50 hover:bg-green-100
+                    {% else %}border-blue-200 bg-blue-50 hover:bg-blue-100{% endif %}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-800 mb-1">{{ f.notes|default:"Follow-up"|truncatewords:15 }}</p>
+                            <p class="text-xs text-gray-600 flex items-center gap-2">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ f.due_date|date:"d.m.Y H:i" }}</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if f.is_overdue %}
+                            <span class="px-2.5 py-1 bg-red-600 text-white text-xs font-semibold rounded-full">Kechikkan</span>
+                            {% elif f.completed %}
+                            <span class="px-2.5 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">Bajarildi</span>
+                            {% else %}
+                            <form method="post" action="{% url 'crm:followup_complete' f.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition flex items-center gap-1">
+                                    <i class="fas fa-check"></i>
+                                    <span>Bajarildi</span>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-tasks text-4xl mb-3 opacity-30"></i>
+                    <p class="text-sm">Follow-up yo'q</p>
+                </div>
+                {% endfor %}
             </div>
-          </div>
         </div>
-        {% empty %}
-        <p class="text-gray-500 text-sm text-center py-4">Follow-up yo'q</p>
-        {% endfor %}
-      </div>
+
+        <!-- Trial Lessons -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-chalkboard-teacher text-purple-600"></i>
+                    Sinov darslari
+                </h2>
+                <a href="{% url 'crm:trial_register' lead.pk %}" 
+                   class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Sinovga yozish</span>
+                </a>
+            </div>
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                {% for t in trial_lessons %}
+                <div class="p-4 rounded-lg border-2 border-purple-200 bg-purple-50 hover:bg-purple-100 transition">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-800 mb-1">{{ t.group.name }}</p>
+                            <p class="text-xs text-gray-600 flex items-center gap-3 mt-1">
+                                <span><i class="fas fa-calendar"></i> {{ t.date|date:"d.m.Y" }}</span>
+                                {% if t.time %}
+                                <span><i class="fas fa-clock"></i> {{ t.time|time:"H:i" }}</span>
+                                {% endif %}
+                                {% if t.room %}
+                                <span><i class="fas fa-door-open"></i> {{ t.room.name }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            {% if t.result %}
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-full
+                                {% if t.result == 'attended' %}bg-green-100 text-green-700
+                                {% elif t.result == 'accepted' %}bg-emerald-100 text-emerald-700
+                                {% elif t.result == 'not_attended' %}bg-red-100 text-red-700
+                                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {{ t.get_result_display }}
+                            </span>
+                            {% else %}
+                            <form method="post" action="{% url 'crm:trial_result' t.pk %}" class="flex gap-1">
+                                {% csrf_token %}
+                                <button type="submit" name="result" value="attended" 
+                                        class="px-2.5 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition" 
+                                        title="Keldi">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button type="submit" name="result" value="not_attended" 
+                                        class="px-2.5 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition" 
+                                        title="Kelmadi">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-chalkboard-teacher text-4xl mb-3 opacity-30"></i>
+                    <p class="text-sm">Sinov darsi yo'q</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 
-    <!-- Trial Lessons -->
-    <div class="bg-white shadow-lg rounded-xl p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold text-gray-800">
-          <i class="fas fa-chalkboard-teacher text-purple-600 mr-2"></i>Sinov darslari
+    <!-- Active Offers -->
+    {% if active_offers %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-tags text-amber-600"></i>
+            Faol takliflar
         </h2>
-        <a href="{% url 'crm:trial_register' lead.pk %}" class="text-sm text-purple-600 hover:text-purple-800">
-          <i class="fas fa-plus mr-1"></i>Sinovga yozish
-        </a>
-      </div>
-      <div class="space-y-3">
-        {% for t in trial_lessons %}
-        <div class="p-3 rounded-lg border border-slate-200 bg-slate-50">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-sm font-medium text-gray-800">{{ t.group.name }}</p>
-              <p class="text-xs text-gray-500 mt-1">
-                <i class="fas fa-calendar mr-1"></i>{{ t.date|date:"d.m.Y" }}
-                {% if t.time %}<i class="fas fa-clock ml-2 mr-1"></i>{{ t.time|time:"H:i" }}{% endif %}
-              </p>
-              {% if t.room %}
-              <p class="text-xs text-gray-500"><i class="fas fa-door-open mr-1"></i>{{ t.room.name }}</p>
-              {% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for offer in active_offers %}
+            <div class="p-4 rounded-lg border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 hover:shadow-md transition">
+                <h3 class="font-semibold text-gray-800 mb-2">{{ offer.title }}</h3>
+                <p class="text-sm text-gray-600 mb-3">{{ offer.description|truncatewords:20 }}</p>
+                <p class="text-xs text-gray-500 flex items-center gap-1">
+                    <i class="fas fa-calendar"></i>
+                    <span>{{ offer.valid_until|date:"d.m.Y" }} gacha</span>
+                </p>
             </div>
-            <div>
-              {% if t.result %}
-              <span class="px-2 py-1 text-xs rounded-full 
-                  {% if t.result == 'attended' %}bg-green-100 text-green-700
-                  {% elif t.result == 'accepted' %}bg-emerald-100 text-emerald-700
-                  {% elif t.result == 'not_attended' %}bg-red-100 text-red-700
-                  {% else %}bg-slate-100 text-slate-600{% endif %}">
-                {{ t.get_result_display }}
-              </span>
-              {% else %}
-              <form method="post" action="{% url 'crm:trial_result' t.pk %}" class="flex gap-1">
-                {% csrf_token %}
-                <button type="submit" name="result" value="attended" class="px-2 py-1 bg-green-600 text-white text-xs rounded" title="Keldi">
-                  <i class="fas fa-check"></i>
-                </button>
-                <button type="submit" name="result" value="not_attended" class="px-2 py-1 bg-red-600 text-white text-xs rounded" title="Kelmadi">
-                  <i class="fas fa-times"></i>
-                </button>
-              </form>
-              {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- History -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-history text-gray-600"></i>
+            Tarix
+        </h2>
+        <div class="space-y-3">
+            {% for h in history %}
+            <div class="flex items-start gap-4 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                <div class="w-2 h-2 rounded-full bg-purple-500 mt-2 flex-shrink-0"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-800">
+                        {% if h.old_status and h.new_status %}
+                        <span class="font-semibold">{{ h.old_status.name }}</span> → 
+                        <span class="font-semibold">{{ h.new_status.name }}</span>
+                        {% elif h.new_status %}
+                        <span class="font-semibold">{{ h.new_status.name }}</span>
+                        {% endif %}
+                        {% if h.notes %}
+                        <span class="text-gray-600">- {{ h.notes }}</span>
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-clock"></i> {{ h.created_at|date:"d.m.Y H:i" }}
+                    </p>
+                </div>
             </div>
-          </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-history text-4xl mb-3 opacity-30"></i>
+                <p class="text-sm">Tarix yo'q</p>
+            </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <p class="text-gray-500 text-sm text-center py-4">Sinov darsi yo'q</p>
-        {% endfor %}
-      </div>
     </div>
-  </div>
-
-  <!-- Active Offers -->
-  {% if active_offers %}
-  <div class="bg-white shadow-lg rounded-xl p-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">
-      <i class="fas fa-tags text-amber-600 mr-2"></i>Faol takliflar
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {% for offer in active_offers %}
-      <div class="p-4 rounded-lg border border-amber-200 bg-amber-50">
-        <h3 class="font-semibold text-gray-800">{{ offer.title }}</h3>
-        <p class="text-sm text-gray-600 mt-1">{{ offer.description|truncatewords:20 }}</p>
-        <p class="text-xs text-gray-500 mt-2">
-          <i class="fas fa-calendar mr-1"></i>{{ offer.valid_until|date:"d.m.Y" }} gacha
-        </p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- History -->
-  <div class="bg-white shadow-lg rounded-xl p-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">
-      <i class="fas fa-history text-slate-600 mr-2"></i>Tarix
-    </h2>
-    <div class="space-y-3">
-      {% for h in history %}
-      <div class="flex items-start gap-3 text-sm">
-        <div class="w-2 h-2 rounded-full bg-slate-400 mt-2"></div>
-        <div>
-          <p class="text-gray-800">
-            {% if h.old_status and h.new_status %}
-            {{ h.old_status.name }} → {{ h.new_status.name }}
-            {% elif h.new_status %}
-            {{ h.new_status.name }}
-            {% endif %}
-            {% if h.notes %}<span class="text-gray-500">- {{ h.notes }}</span>{% endif %}
-          </p>
-          <p class="text-xs text-gray-400">{{ h.created_at|date:"d.m.Y H:i" }}</p>
-        </div>
-      </div>
-      {% empty %}
-      <p class="text-gray-500 text-sm text-center">Tarix yo'q</p>
-      {% endfor %}
-    </div>
-  </div>
 </div>
 {% endblock %}

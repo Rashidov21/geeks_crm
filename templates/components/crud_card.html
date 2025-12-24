@@ -4,22 +4,43 @@ Usage: {% include 'components/crud_card.html' with item=item fields="name,phone,
 {% endcomment %}
 {% load crud_tags %}
 
+{% comment %}
+Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
+{% endcomment %}
+{% if color == 'blue' %}
+  {% with bg_light='bg-blue-50' bg_dark='bg-blue-100' bg_main='bg-blue-600' text_color='text-blue-600' text_dark='text-blue-800' %}
+{% elif color == 'purple' %}
+  {% with bg_light='bg-purple-50' bg_dark='bg-purple-100' bg_main='bg-purple-600' text_color='text-purple-600' text_dark='text-purple-800' %}
+{% elif color == 'green' %}
+  {% with bg_light='bg-green-50' bg_dark='bg-green-100' bg_main='bg-green-600' text_color='text-green-600' text_dark='text-green-800' %}
+{% elif color == 'red' %}
+  {% with bg_light='bg-red-50' bg_dark='bg-red-100' bg_main='bg-red-600' text_color='text-red-600' text_dark='text-red-800' %}
+{% elif color == 'indigo' %}
+  {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
+{% elif color == 'yellow' %}
+  {% with bg_light='bg-yellow-50' bg_dark='bg-yellow-100' bg_main='bg-yellow-600' text_color='text-yellow-600' text_dark='text-yellow-800' %}
+{% elif color == 'pink' %}
+  {% with bg_light='bg-pink-50' bg_dark='bg-pink-100' bg_main='bg-pink-600' text_color='text-pink-600' text_dark='text-pink-800' %}
+{% else %}
+  {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
+{% endif %}
+
 <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
     <!-- Card Header -->
-    <div class="p-4 bg-gradient-to-r from-{{ color|default:'indigo' }}-50 to-{{ color|default:'indigo' }}-100 border-b">
+    <div class="p-4 bg-gradient-to-r {{ bg_light }} {{ bg_dark }} border-b">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 {% if item.get_avatar_url %}
                 <img src="{{ item.get_avatar_url }}" alt="{{ item.name }}" class="w-10 h-10 rounded-full">
                 {% else %}
-                <div class="w-10 h-10 rounded-full bg-{{ color|default:'indigo' }}-600 flex items-center justify-center text-white font-bold">
+                <div class="w-10 h-10 rounded-full {{ bg_main }} flex items-center justify-center text-white font-bold">
                     {{ item.name.0|upper|default:"?" }}
                 </div>
                 {% endif %}
                 <div>
                     <h3 class="font-semibold text-gray-900">
                         {% if detail_url %}
-                        <a href="{% url detail_url item.pk %}" class="hover:text-{{ color|default:'indigo' }}-600">
+                        <a href="{% url detail_url item.pk %}" class="hover:{{ text_color }}">
                             {{ item.name|default:item }}
                         </a>
                         {% else %}
@@ -60,7 +81,7 @@ Usage: {% include 'components/crud_card.html' with item=item fields="name,phone,
         <div class="flex gap-2">
             {% if detail_url %}
             <a href="{% url detail_url item.pk %}" 
-               class="text-{{ color|default:'indigo' }}-600 hover:text-{{ color|default:'indigo' }}-800" 
+               class="{{ text_color }} hover:{{ text_dark }}" 
                title="Ko'rish">
                 <i class="fas fa-eye"></i>
             </a>
@@ -83,3 +104,4 @@ Usage: {% include 'components/crud_card.html' with item=item fields="name,phone,
     </div>
 </div>
 
+{% endwith %}

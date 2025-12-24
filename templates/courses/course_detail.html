@@ -1,145 +1,243 @@
 {% extends 'base.html' %}
-{% block title %}Kurs: {{ course.name }}{% endblock %}
+{% load static %}
+
+{% block title %}Kurs: {{ course.name }} | GEEKS CRM{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <p class="text-sm text-gray-500">{{ course.branch.name|default:"Filial belgilanmagan" }}</p>
-                <h1 class="text-2xl font-bold text-gray-900">{{ course.name }}</h1>
-                <p class="text-gray-600 mt-2">{{ course.description|default:"Tavsif mavjud emas" }}</p>
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header Card -->
+    <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            <div class="flex-1 text-center sm:text-left">
+                <p class="text-indigo-100 text-sm mb-2">{{ course.branch.name|default:"Filial belgilanmagan" }}</p>
+                <h1 class="text-3xl font-bold mb-3">{{ course.name }}</h1>
+                <p class="text-indigo-100 leading-relaxed">{{ course.description|default:"Tavsif mavjud emas" }}</p>
+                
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-4">
+                    <div class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-clock"></i>
+                        <span class="font-semibold">{{ course.duration_weeks }} hafta</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-money-bill"></i>
+                        <span class="font-semibold">{{ course.price|floatformat:0 }} so'm</span>
+                    </div>
+                    <div class="px-4 py-2 rounded-lg {% if course.is_active %}bg-green-500 bg-opacity-30{% else %}bg-gray-500 bg-opacity-30{% endif %} backdrop-blur-sm">
+                        <span class="font-semibold">{% if course.is_active %}Faol{% else %}Nofaol{% endif %}</span>
+                    </div>
+                </div>
             </div>
             {% if can_edit %}
             <div class="flex gap-2">
-                <a href="{% url 'courses:course_edit' course.pk %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
-                    <i class="fas fa-edit mr-2"></i>Tahrirlash
-                </a>
-                <a href="{% url 'courses:course_delete' course.pk %}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
-                    <i class="fas fa-trash mr-2"></i>O'chirish
+                <a href="{% url 'courses:course_edit' course.pk %}" 
+                   class="bg-white text-indigo-600 px-5 py-2.5 rounded-lg hover:bg-indigo-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Tahrirlash</span>
                 </a>
             </div>
             {% endif %}
         </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Modullar</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ course.modules.count }}</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-layer-group text-indigo-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
         
-        <div class="flex flex-wrap gap-6 mt-4 pt-4 border-t">
-            <div class="flex items-center gap-2 text-gray-600">
-                <i class="fas fa-clock text-indigo-500"></i>
-                <span>{{ course.duration_weeks }} hafta</span>
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Guruhlar</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ groups.count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-green-600 text-xl"></i>
+                </div>
             </div>
-            <div class="flex items-center gap-2 text-gray-600">
-                <i class="fas fa-money-bill text-green-500"></i>
-                <span>{{ course.price|floatformat:0 }} so'm</span>
-            </div>
-            <div class="flex items-center gap-2">
-                {% if course.is_active %}
-                <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-sm">Faol</span>
-                {% else %}
-                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">Nofaol</span>
-                {% endif %}
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Jami mavzular</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {% for module in course.modules.all %}{{ module.topics.count }}{% if not forloop.last %}+{% endif %}{% endfor %}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-book text-purple-600 text-xl"></i>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Modullar -->
-    <div class="bg-white shadow rounded-lg p-6" x-data="{ showModuleForm: false }">
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100" x-data="{ showModuleForm: false }">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">
-                <i class="fas fa-layer-group text-indigo-500 mr-2"></i>Modullar
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-layer-group text-indigo-600"></i>
+                Modullar
             </h2>
             {% if can_edit %}
-            <button @click="showModuleForm = !showModuleForm" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition">
-                <i class="fas fa-plus mr-1"></i>Modul qo'shish
+            <button @click="showModuleForm = !showModuleForm" 
+                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition text-sm font-medium flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span>Modul qo'shish</span>
             </button>
             {% endif %}
         </div>
         
         <!-- Modul qo'shish formasi -->
-        <div x-show="showModuleForm" x-transition class="mb-4 p-4 bg-gray-50 rounded-lg border">
-            <form method="post" action="{% url 'courses:module_create' course.pk %}" class="space-y-3">
+        <div x-show="showModuleForm" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95"
+             class="mb-6 p-5 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg border-2 border-indigo-200">
+            <form method="post" action="{% url 'courses:module_create' course.pk %}" class="space-y-4">
                 {% csrf_token %}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Modul nomi</label>
-                    <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Modul nomi <span class="text-red-500">*</span></label>
+                    <input type="text" 
+                           name="name" 
+                           required 
+                           class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tavsif</label>
-                    <textarea name="description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tavsif</label>
+                    <textarea name="description" 
+                              rows="3" 
+                              class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition resize-none"></textarea>
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">Saqlash</button>
-                    <button type="button" @click="showModuleForm = false" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Bekor</button>
+                    <button type="submit" 
+                            class="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span>Saqlash</span>
+                    </button>
+                    <button type="button" 
+                            @click="showModuleForm = false" 
+                            class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
+                        Bekor
+                    </button>
                 </div>
             </form>
         </div>
         
         <div class="space-y-4">
             {% for module in course.modules.all %}
-            <div class="border rounded-lg overflow-hidden" x-data="{ open: false, showTopicForm: false }">
-                <div class="p-4 bg-gray-50 flex items-center justify-between cursor-pointer" @click="open = !open">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-semibold">{{ forloop.counter }}</span>
+            <div class="border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition" 
+                 x-data="{ open: false, showTopicForm: false }">
+                <div class="p-4 bg-gradient-to-r from-gray-50 to-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-200 transition" 
+                     @click="open = !open">
+                    <div class="flex items-center gap-4">
+                        <span class="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold shadow-md">{{ forloop.counter }}</span>
                         <div>
-                            <h3 class="font-semibold text-gray-900">{{ module.name }}</h3>
-                            <p class="text-sm text-gray-500">{{ module.topics.count }} mavzu</p>
+                            <h3 class="font-bold text-gray-900 text-lg">{{ module.name }}</h3>
+                            <p class="text-sm text-gray-600 mt-0.5">{{ module.topics.count }} mavzu</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
                         {% if can_edit %}
-                        <form method="post" action="{% url 'courses:module_delete' module.pk %}" class="inline" onsubmit="return confirm('O\'chirishni tasdiqlaysizmi?')">
+                        <form method="post" 
+                              action="{% url 'courses:module_delete' module.pk %}" 
+                              class="inline" 
+                              onsubmit="return confirm('Modulni o\'chirishni tasdiqlaysizmi?')"
+                              @click.stop>
                             {% csrf_token %}
-                            <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded" @click.stop title="O'chirish">
+                            <button type="submit" 
+                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" 
+                                    title="O'chirish">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>
                         {% endif %}
-                        <i class="fas fa-chevron-down text-gray-400 transition-transform" :class="{ 'rotate-180': open }"></i>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform text-xl" 
+                           :class="{ 'rotate-180': open }"></i>
                     </div>
                 </div>
                 
-                <div x-show="open" x-transition class="p-4 border-t">
-                    <p class="text-gray-600 text-sm mb-4">{{ module.description|default:"Tavsif yo'q" }}</p>
+                <div x-show="open" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="p-5 border-t-2 border-gray-200 bg-white">
+                    {% if module.description %}
+                    <p class="text-gray-700 text-sm mb-4 leading-relaxed">{{ module.description }}</p>
+                    {% endif %}
                     
                     <!-- Mavzular -->
-                    <div class="space-y-2">
+                    <div class="space-y-2 mb-4">
                         {% for topic in module.topics.all %}
-                        <div class="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 border-2 border-gray-200 rounded-lg hover:bg-gray-100 transition">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-file-alt text-gray-400"></i>
+                                <i class="fas fa-file-alt text-indigo-500"></i>
                                 <div>
-                                    <p class="font-medium text-gray-900">{{ topic.name }}</p>
-                                    <p class="text-xs text-gray-500">{{ topic.duration_minutes }} daqiqa</p>
+                                    <p class="font-semibold text-gray-900">{{ topic.name }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ topic.duration_minutes }} daqiqa</p>
                                 </div>
                             </div>
                             {% if can_edit %}
-                            <form method="post" action="{% url 'courses:topic_delete' topic.pk %}" class="inline" onsubmit="return confirm('O\'chirishni tasdiqlaysizmi?')">
+                            <form method="post" 
+                                  action="{% url 'courses:topic_delete' topic.pk %}" 
+                                  class="inline" 
+                                  onsubmit="return confirm('Mavzuni o\'chirishni tasdiqlaysizmi?')">
                                 {% csrf_token %}
-                                <button type="submit" class="p-1 text-red-500 hover:bg-red-50 rounded text-sm">
+                                <button type="submit" 
+                                        class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </form>
                             {% endif %}
                         </div>
                         {% empty %}
-                        <p class="text-gray-500 text-sm">Mavzular mavjud emas.</p>
+                        <p class="text-gray-500 text-sm text-center py-4">Mavzular mavjud emas.</p>
                         {% endfor %}
                     </div>
                     
                     {% if can_edit %}
                     <!-- Mavzu qo'shish -->
-                    <div class="mt-4">
-                        <button @click="showTopicForm = !showTopicForm" class="text-sm text-indigo-600 hover:text-indigo-700">
-                            <i class="fas fa-plus mr-1"></i>Mavzu qo'shish
+                    <div>
+                        <button @click="showTopicForm = !showTopicForm" 
+                                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                            <i class="fas fa-plus"></i>
+                            <span>Mavzu qo'shish</span>
                         </button>
                         
-                        <div x-show="showTopicForm" x-transition class="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <form method="post" action="{% url 'courses:topic_create' module.pk %}" class="space-y-2">
+                        <div x-show="showTopicForm" 
+                             x-transition
+                             class="mt-3 p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                            <form method="post" action="{% url 'courses:topic_create' module.pk %}" class="space-y-3">
                                 {% csrf_token %}
-                                <input type="text" name="name" placeholder="Mavzu nomi" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <input type="text" 
+                                       name="name" 
+                                       placeholder="Mavzu nomi" 
+                                       required 
+                                       class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-sm">
                                 <div class="flex gap-2">
-                                    <input type="number" name="duration_minutes" value="90" class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Daqiqa">
-                                    <button type="submit" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">Qo'shish</button>
+                                    <input type="number" 
+                                           name="duration_minutes" 
+                                           value="90" 
+                                           class="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-sm" 
+                                           placeholder="Daqiqa">
+                                    <button type="submit" 
+                                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-semibold">
+                                        Qo'shish
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -148,9 +246,12 @@
                 </div>
             </div>
             {% empty %}
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-folder-open text-4xl mb-2"></i>
-                <p>Modullar mavjud emas.</p>
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-folder-open text-5xl mb-3 opacity-30"></i>
+                <p class="font-medium">Modullar mavjud emas.</p>
+                {% if can_edit %}
+                <p class="text-sm mt-1">Modul qo'shish uchun yuqoridagi tugmani bosing</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -158,16 +259,26 @@
 
     <!-- Guruhlar -->
     {% if groups %}
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">
-            <i class="fas fa-users text-green-500 mr-2"></i>Guruhlar
-        </h2>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-users text-green-600"></i>
+                Guruhlar
+            </h2>
+            <a href="{% url 'courses:group_list' %}?course={{ course.pk }}" 
+               class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                Barchasi →
+            </a>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for group in groups %}
-            <a href="{% url 'courses:group_detail' group.pk %}" class="p-4 border rounded-lg hover:border-green-500 hover:shadow transition">
-                <h3 class="font-semibold text-gray-900">{{ group.name }}</h3>
-                <p class="text-sm text-gray-500">{{ group.mentor.get_full_name|default:"Mentor belgilanmagan" }}</p>
-                <p class="text-sm text-gray-500">{{ group.students.count }} o'quvchi</p>
+            <a href="{% url 'courses:group_detail' group.pk %}" 
+               class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:shadow-lg transition bg-gradient-to-br from-white to-gray-50">
+                <h3 class="font-bold text-gray-900 mb-1">{{ group.name }}</h3>
+                <p class="text-sm text-gray-600 mb-2">{{ group.mentor.get_full_name|default:"Mentor belgilanmagan" }}</p>
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-user-graduate"></i> {{ group.students.count }} o'quvchi
+                </p>
             </a>
             {% endfor %}
         </div>

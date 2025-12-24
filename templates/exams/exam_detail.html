@@ -1,14 +1,169 @@
 {% extends 'base.html' %}
-{% block title %}Imtihon{% endblock %}
+{% load static %}
+
+{% block title %}Imtihon: {{ exam.title }} | GEEKS CRM{% endblock %}
+
 {% block content %}
-<div class="space-y-4">
-  <div class="bg-white shadow rounded-lg p-6">
-    <h1 class="text-2xl font-bold">{{ exam.title }}</h1>
-    <p class="text-sm text-gray-500">{{ exam.date }} · {{ exam.get_exam_type_display }}</p>
-    <p class="text-sm text-gray-600">Davomiylik: {{ exam.duration_minutes }} min · Maks ball: {{ exam.max_score }}</p>
-    {% if exam.group %}<p class="text-sm text-gray-600">Guruh: {{ exam.group.name }}</p>{% endif %}
-    <a href="{% url 'exams:take_exam' exam.pk %}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Imtihonni boshlash</a>
-  </div>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header Card -->
+    <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+            <div class="flex-1 text-center sm:text-left">
+                <h1 class="text-3xl font-bold mb-3">{{ exam.title }}</h1>
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-calendar"></i>
+                        <span class="font-semibold">{{ exam.exam_date|date:"d.m.Y" }}</span>
+                    </span>
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-clock"></i>
+                        <span class="font-semibold">{{ exam.duration_minutes }} daqiqa</span>
+                    </span>
+                    {% if exam.group %}
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-users"></i>
+                        <span class="font-semibold">{{ exam.group.name }}</span>
+                    </span>
+                    {% endif %}
+                    {% if exam.is_active %}
+                    <span class="px-4 py-2 bg-green-500 bg-opacity-30 rounded-lg backdrop-blur-sm font-semibold">
+                        <i class="fas fa-check-circle"></i> Faol
+                    </span>
+                    {% else %}
+                    <span class="px-4 py-2 bg-gray-500 bg-opacity-30 rounded-lg backdrop-blur-sm font-semibold">
+                        Nofaol
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if can_edit %}
+            <div class="flex gap-2">
+                <a href="{% url 'exams:exam_edit' exam.pk %}" 
+                   class="bg-white text-rose-600 px-5 py-2.5 rounded-lg hover:bg-rose-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Tahrirlash</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if exam.description %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-file-alt text-rose-600"></i>
+            Tavsif
+        </h2>
+        <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ exam.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Exam Info Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">O'tish balli</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ exam.passing_score|default:"-" }}</p>
+                </div>
+                <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-trophy text-rose-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Maksimal ball</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ exam.max_score|default:"-" }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-star text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-5 border-2 border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Natijalar</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ exam.results.count|default:0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clipboard-check text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <div class="flex flex-col sm:flex-row gap-4">
+            {% if can_take_exam %}
+            <a href="{% url 'exams:take_exam' exam.pk %}" 
+               class="flex-1 px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-play"></i>
+                <span>Imtihonni boshlash</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'exams:exam_results' exam.pk %}" 
+               class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-chart-bar"></i>
+                <span>Natijalarni ko'rish</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Info -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-info-circle text-rose-600"></i>
+            Ma'lumotlar
+        </h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            {% if exam.group %}
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Guruh</dt>
+                <dd class="font-semibold text-gray-900">
+                    <a href="{% url 'courses:group_detail' exam.group.pk %}" 
+                       class="text-rose-600 hover:text-rose-800">
+                        {{ exam.group.name }}
+                    </a>
+                </dd>
+            </div>
+            {% endif %}
+            {% if exam.course %}
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Kurs</dt>
+                <dd class="font-semibold text-gray-900">
+                    <a href="{% url 'courses:course_detail' exam.course.pk %}" 
+                       class="text-rose-600 hover:text-rose-800">
+                        {{ exam.course.name }}
+                    </a>
+                </dd>
+            </div>
+            {% endif %}
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Sana</dt>
+                <dd class="font-semibold text-gray-900">{{ exam.exam_date|date:"d.m.Y" }}</dd>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Davomiylik</dt>
+                <dd class="font-semibold text-gray-900">{{ exam.duration_minutes }} daqiqa</dd>
+            </div>
+            <div class="flex justify-between items-center">
+                <dt class="text-gray-600">Status</dt>
+                <dd class="font-semibold">
+                    {% if exam.is_active %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Faol</span>
+                    {% else %}
+                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Nofaol</span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+    </div>
 </div>
 {% endblock %}
-

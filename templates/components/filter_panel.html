@@ -3,6 +3,27 @@ Universal Filter Panel Component
 Usage: {% include 'components/filter_panel.html' with form=filter_form %}
 {% endcomment %}
 
+{% comment %}
+Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
+{% endcomment %}
+{% if color == 'blue' %}
+  {% with bg_color='bg-blue-600' hover_bg='hover:bg-blue-700' %}
+{% elif color == 'purple' %}
+  {% with bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' %}
+{% elif color == 'green' %}
+  {% with bg_color='bg-green-600' hover_bg='hover:bg-green-700' %}
+{% elif color == 'red' %}
+  {% with bg_color='bg-red-600' hover_bg='hover:bg-red-700' %}
+{% elif color == 'indigo' %}
+  {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
+{% elif color == 'yellow' %}
+  {% with bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' %}
+{% elif color == 'pink' %}
+  {% with bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' %}
+{% else %}
+  {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
+{% endif %}
+
 <div x-data="{ show: false }" class="mb-6">
     <button @click="show = !show" 
             class="mb-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center gap-2">
@@ -27,7 +48,7 @@ Usage: {% include 'components/filter_panel.html' with form=filter_form %}
             
             <div class="flex items-end gap-2">
                 <button type="submit" 
-                        class="flex-1 px-4 py-2 bg-{{ color|default:'indigo' }}-600 text-white rounded-lg hover:bg-{{ color|default:'indigo' }}-700 text-sm">
+                        class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
                     <i class="fas fa-search mr-1"></i>Qidirish
                 </button>
                 <a href="{{ request.path }}" 
@@ -39,3 +60,4 @@ Usage: {% include 'components/filter_panel.html' with form=filter_form %}
     </div>
 </div>
 
+{% endwith %}

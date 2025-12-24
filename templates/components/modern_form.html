@@ -100,7 +100,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
             {% elif field.field.widget.input_type == 'file' %}
               <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}"
                      {% if field.field.required %}required{% endif %}
-                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold {{ bg_color }} {{ text_color }} hover:{{ bg_color|slice:":-2" }}-100">
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:{{ bg_color }} file:{{ text_color }} hover:file:opacity-90">
             
             {% else %}
               <input type="{{ field.field.widget.input_type|default:'text' }}" 
@@ -108,7 +108,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
                      id="{{ field.id_for_label }}"
                      value="{{ field.value|default:'' }}"
                      {% if field.field.required %}required{% endif %}
-                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-{{ color|default:'blue' }}-500 focus:border-transparent transition-all"
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
                      placeholder="{{ field.help_text|default:field.label }}">
             {% endif %}
             
@@ -137,7 +137,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         <button type="submit" 
                 @click="loading=true"
                 :disabled="loading"
-                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-{{ color|default:'blue' }}-600 to-{{ color|default:'blue' }}-700 hover:from-{{ color|default:'blue' }}-700 hover:to-{{ color|default:'blue' }}-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r {{ hover_from }} {{ hover_to }} hover:{{ hover_from_hover }} hover:{{ hover_to_hover }} text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
           <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
           <span x-text="loading ? 'Saqlanmoqda...' : '{{ submit_text|default:"Saqlash" }}'">{{ submit_text|default:"Saqlash" }}</span>
         </button>
@@ -146,3 +146,4 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
   </div>
 </div>
 
+{% endwith %}

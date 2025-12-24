@@ -1,21 +1,201 @@
 {% extends 'base.html' %}
-{% block title %}Uy vazifasi{% endblock %}
+{% load static %}
+
+{% block title %}Uy vazifasi: {{ homework.title }} | GEEKS CRM{% endblock %}
+
 {% block content %}
-<div class="space-y-4">
-  <div class="bg-white shadow rounded-lg p-6 space-y-2">
-    <h1 class="text-2xl font-bold">{{ homework.title }}</h1>
-    <p class="text-sm text-gray-500">Deadline: {{ homework.deadline }}</p>
-    <p class="text-sm text-gray-600">{{ homework.description|default:"" }}</p>
-    {% if homework.file %}
-      <a href="{{ homework.file.url }}" class="text-blue-600 hover:text-blue-800 text-sm">Faylni yuklab olish</a>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header Card -->
+    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+            <div class="flex-1 text-center sm:text-left">
+                <h1 class="text-3xl font-bold mb-3">{{ homework.title }}</h1>
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-users"></i>
+                        <span class="font-semibold">{{ homework.group.name }}</span>
+                    </span>
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-calendar"></i>
+                        <span class="font-semibold">Muddati: {{ homework.deadline|date:"d.m.Y" }}</span>
+                    </span>
+                    {% if homework.deadline < today %}
+                    <span class="px-4 py-2 bg-red-500 bg-opacity-30 rounded-lg backdrop-blur-sm font-semibold">
+                        <i class="fas fa-exclamation-triangle"></i> Kechikkan
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if can_edit %}
+            <div class="flex gap-2">
+                <a href="{% url 'homework:homework_edit' homework.pk %}" 
+                   class="bg-white text-orange-600 px-5 py-2.5 rounded-lg hover:bg-orange-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-edit"></i>
+                    <span>Tahrirlash</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if homework.description %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-file-alt text-orange-600"></i>
+            Tavsif
+        </h2>
+        <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ homework.description }}</p>
+    </div>
     {% endif %}
-    {% if homework.link %}
-      <a href="{{ homework.link }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Link</a>
-    {% endif %}
+
+    <!-- Files and Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% if homework.file %}
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-file text-orange-600"></i>
+                Fayl
+            </h2>
+            <a href="{{ homework.file.url }}" 
+               target="_blank"
+               class="inline-flex items-center gap-3 px-5 py-3 bg-orange-50 border-2 border-orange-200 rounded-lg hover:bg-orange-100 transition text-sm font-semibold text-orange-700">
+                <i class="fas fa-download"></i>
+                <span>Faylni yuklab olish</span>
+            </a>
+        </div>
+        {% endif %}
+        
+        {% if homework.link %}
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <i class="fas fa-link text-orange-600"></i>
+                Havola
+            </h2>
+            <a href="{{ homework.link }}" 
+               target="_blank"
+               class="inline-flex items-center gap-3 px-5 py-3 bg-orange-50 border-2 border-orange-200 rounded-lg hover:bg-orange-100 transition text-sm font-semibold text-orange-700 break-all">
+                <i class="fas fa-external-link-alt"></i>
+                <span>{{ homework.link|truncatechars:40 }}</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Grade Section -->
     {% if homework.grade %}
-      <p class="text-sm text-gray-600">Bahosi: {{ homework.grade.grade }} · Izoh: {{ homework.grade.comment|default:"" }}</p>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-star text-yellow-500"></i>
+            Baho
+        </h2>
+        <div class="flex items-center gap-4">
+            <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                {{ homework.grade.grade }}
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Baholangan</p>
+                <p class="text-lg font-bold text-gray-900">{{ homework.grade.graded_at|date:"d.m.Y H:i" }}</p>
+                {% if homework.grade.comment %}
+                <p class="text-gray-700 mt-2">{{ homework.grade.comment }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% elif can_grade %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-star text-yellow-500"></i>
+                    Baholash
+                </h2>
+                <p class="text-gray-600 text-sm mt-1">Vazifa hali baholanmagan</p>
+            </div>
+            <a href="{% url 'homework:homework_grade' homework.pk %}" 
+               class="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2">
+                <i class="fas fa-star"></i>
+                <span>Baholash</span>
+            </a>
+        </div>
+    </div>
     {% endif %}
-  </div>
+
+    <!-- Submission Info -->
+    {% if homework.submitted_at %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-check-circle text-green-600"></i>
+            Topshirilgan
+        </h2>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold text-gray-500">Topshirilgan sana:</span>
+                <span class="text-sm font-bold text-gray-900">{{ homework.submitted_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            {% if homework.submission_file %}
+            <div>
+                <span class="text-sm font-semibold text-gray-500 block mb-2">Topshirilgan fayl:</span>
+                <a href="{{ homework.submission_file.url }}" 
+                   target="_blank"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100 transition text-sm font-semibold text-green-700">
+                    <i class="fas fa-file-download"></i>
+                    <span>Faylni ko'rish</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Info -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-info-circle text-orange-600"></i>
+            Ma'lumotlar
+        </h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Guruh</dt>
+                <dd class="font-semibold text-gray-900">
+                    <a href="{% url 'courses:group_detail' homework.group.pk %}" 
+                       class="text-orange-600 hover:text-orange-800">
+                        {{ homework.group.name }}
+                    </a>
+                </dd>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Dars</dt>
+                <dd class="font-semibold text-gray-900">
+                    {% if homework.lesson %}
+                    <a href="{% url 'courses:lesson_detail' homework.lesson.pk %}" 
+                       class="text-orange-600 hover:text-orange-800">
+                        {{ homework.lesson.title|default:"Dars" }}
+                    </a>
+                    {% else %}
+                    <span class="text-gray-400">-</span>
+                    {% endif %}
+                </dd>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Muddati</dt>
+                <dd class="font-semibold text-gray-900">{{ homework.deadline|date:"d.m.Y" }}</dd>
+            </div>
+            <div class="flex justify-between items-center">
+                <dt class="text-gray-600">Status</dt>
+                <dd class="font-semibold">
+                    {% if homework.grade %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Baholangan</span>
+                    {% elif homework.submitted_at %}
+                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">Topshirilgan</span>
+                    {% elif homework.deadline < today %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs">Kechikkan</span>
+                    {% else %}
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Kutilmoqda</span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+    </div>
 </div>
 {% endblock %}
-

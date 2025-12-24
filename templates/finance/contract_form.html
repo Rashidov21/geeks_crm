@@ -1,34 +1,17 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{% if object %}Shartnomani tahrirlash{% else %}Yangi shartnoma{% endif %} - GEEKS CRM{% endblock %}
+{% block title %}{% if object %}Shartnomani tahrirlash{% else %}Yangi shartnoma{% endif %} | GEEKS CRM{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
-    <h2 class="text-2xl font-bold mb-6">{% if object %}Shartnomani tahrirlash{% else %}Yangi shartnoma{% endif %}</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="space-y-4">
-            {% for field in form %}
-            <div>
-                <label class="block text-gray-700 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
-                    {{ field.label }}
-                </label>
-                {{ field }}
-                {% if field.errors %}
-                    <p class="text-red-500 text-xs mt-1">{{ field.errors }}</p>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        <div class="mt-6 flex space-x-4">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                Saqlash
-            </button>
-            <a href="{% url 'finance:contract_list' %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
-                Bekor qilish
-            </a>
-        </div>
-    </form>
-</div>
+{% include 'components/modern_form.html' with 
+    form=form
+    title=object|yesno:"Shartnomani tahrirlash,Yangi shartnoma qo'shish"
+    subtitle="Shartnoma ma'lumotlarini kiriting"
+    icon="fas fa-file-contract"
+    color="blue"
+    back_url="finance:contract_list"
+    back_text="Orqaga"
+    submit_text="Saqlash"
+%}
 {% endblock %}
-

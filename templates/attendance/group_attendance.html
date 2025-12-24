@@ -1,279 +1,326 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load attendance_tags %}
 
-{% block title %}{{ group.name }} - Davomat{% endblock %}
+{% block title %}{{ group.name }} - Davomat | GEEKS CRM{% endblock %}
 
 {% block content %}
-<div class="space-y-4" x-data="attendanceManager()">
+<div class="space-y-6" x-data="attendanceManager()">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-start gap-6">
-        <!-- Group Info Card -->
-        <div class="lg:w-1/3 bg-white rounded-lg shadow-sm border p-5">
-            <h1 class="text-xl font-bold text-gray-900 mb-3">{{ group.name }}</h1>
-            
-            <div class="space-y-2 text-sm">
-                <p class="flex items-center gap-2">
-                    <span class="text-gray-500">O'qituvchi:</span>
-                    <span class="text-indigo-600 font-medium">{{ group.mentor.get_full_name|default:group.mentor.username }}</span>
-                </p>
-                <p class="flex items-center gap-2">
-                    <span class="text-gray-500">Kurs:</span>
-                    <span class="font-medium">{{ group.course.name }}</span>
-                </p>
-                {% if group.room %}
-                <p class="flex items-center gap-2">
-                    <span class="text-gray-500">Xona:</span>
-                    <span class="font-medium">{{ group.room.name }}</span>
-                </p>
-                {% endif %}
-                <p class="flex items-center gap-2">
-                    <span class="text-gray-500">O'quvchilar:</span>
-                    <span class="font-medium">{{ group.students.count }}</span>
-                </p>
-            </div>
-            
-            <!-- Legend -->
-            <div class="mt-4 pt-4 border-t">
-                <div class="flex flex-wrap gap-3 text-xs">
-                    <span class="flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-cyan-500"></span> Keldi
+    <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+            <div class="flex-1 text-center sm:text-left">
+                <h1 class="text-3xl font-bold mb-2">{{ group.name }}</h1>
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span class="font-semibold">{{ group.mentor.get_full_name|default:group.mentor.username }}</span>
                     </span>
-                    <span class="flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-yellow-400"></span> Kech qoldi
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-book"></i>
+                        <span class="font-semibold">{{ group.course.name }}</span>
                     </span>
-                    <span class="flex items-center gap-1">
-                        <span class="w-3 h-3 rounded-full bg-red-500"></span> Kelmadi
+                    {% if group.room %}
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-door-open"></i>
+                        <span class="font-semibold">{{ group.room.name }}</span>
+                    </span>
+                    {% endif %}
+                    <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <i class="fas fa-user-graduate"></i>
+                        <span class="font-semibold">{{ group.students.count }} o'quvchi</span>
                     </span>
                 </div>
+            </div>
+            <a href="{% url 'courses:group_detail' group.pk %}" 
+               class="bg-white text-cyan-600 px-5 py-2.5 rounded-lg hover:bg-cyan-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                <span>Guruhga qaytish</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white rounded-xl shadow-lg border-2 border-gray-100 overflow-hidden" x-data="{ activeTab: 'attendance' }">
+        <!-- Tabs -->
+        <div class="flex border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 overflow-x-auto">
+            <button @click="activeTab = 'attendance'" 
+                :class="activeTab === 'attendance' ? 'text-cyan-600 border-b-4 border-cyan-600 bg-white' : 'text-gray-500 hover:text-gray-700'"
+                class="px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all">
+                <i class="fas fa-calendar-check mr-2"></i>Davomat
+            </button>
+            <button @click="activeTab = 'grading'" 
+                :class="activeTab === 'grading' ? 'text-cyan-600 border-b-4 border-cyan-600 bg-white' : 'text-gray-500 hover:text-gray-700'"
+                class="px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all">
+                <i class="fas fa-star mr-2"></i>Baholash
+            </button>
+            <button @click="activeTab = 'points'" 
+                :class="activeTab === 'points' ? 'text-cyan-600 border-b-4 border-cyan-600 bg-white' : 'text-gray-500 hover:text-gray-700'"
+                class="px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all">
+                <i class="fas fa-trophy mr-2"></i>Reyting
+            </button>
+            <button @click="activeTab = 'comments'" 
+                :class="activeTab === 'comments' ? 'text-cyan-600 border-b-4 border-cyan-600 bg-white' : 'text-gray-500 hover:text-gray-700'"
+                class="px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all">
+                <i class="fas fa-comment mr-2"></i>Izoh
+            </button>
+        </div>
+        
+        <!-- Attendance Tab -->
+        <div x-show="activeTab === 'attendance'" x-transition>
+            <!-- Month Selector -->
+            <div class="flex items-center justify-between p-4 border-b-2 border-gray-200 bg-white">
+                <div class="flex items-center gap-3">
+                    <select class="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-semibold focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition" 
+                            onchange="location.href='?year=' + this.value + '&month={{ month }}'">
+                        <option value="2024" {% if year == 2024 %}selected{% endif %}>2024</option>
+                        <option value="2025" {% if year == 2025 %}selected{% endif %}>2025</option>
+                    </select>
+                    <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                        <a href="?year={{ prev_year }}&month={{ prev_month }}" 
+                           class="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded transition">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        <span class="px-4 py-2 bg-cyan-600 text-white rounded text-sm font-bold">{{ month_name|slice:":3" }}</span>
+                        <a href="?year={{ next_year }}&month={{ next_month }}" 
+                           class="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded transition">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- Legend -->
+                <div class="flex items-center gap-4 text-xs">
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-cyan-500 shadow-sm"></span>
+                        <span class="font-semibold text-gray-700">Keldi</span>
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-yellow-400 shadow-sm"></span>
+                        <span class="font-semibold text-gray-700">Kech qoldi</span>
+                    </span>
+                    <span class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full bg-red-500 shadow-sm"></span>
+                        <span class="font-semibold text-gray-700">Kelmadi</span>
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Attendance Grid -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gradient-to-r from-cyan-50 to-blue-50">
+                            <th class="sticky left-0 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-4 text-left font-bold text-gray-700 min-w-[200px] z-10 border-r-2 border-gray-200">O'quvchilar</th>
+                            {% for date in lesson_dates %}
+                            <th class="px-3 py-4 text-center font-semibold text-gray-700 min-w-[60px] border-r border-gray-200">
+                                <div class="flex flex-col items-center">
+                                    <span class="text-xs text-gray-500">{{ date|date:"D"|slice:":2" }}</span>
+                                    <span class="text-lg font-bold">{{ date|date:"d" }}</span>
+                                </div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for data in student_data %}
+                        <tr class="hover:bg-cyan-50 transition">
+                            <td class="sticky left-0 bg-white px-6 py-4 z-10 border-r-2 border-gray-200">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md">
+                                        {{ forloop.counter }}
+                                    </span>
+                                    <span class="font-semibold text-gray-900">{{ data.student.get_full_name|default:data.student.username }}</span>
+                                </div>
+                            </td>
+                            {% for date in lesson_dates %}
+                            <td class="px-3 py-4 text-center border-r border-gray-100">
+                                {% with status=data.attendances|get_item:date %}
+                                <button 
+                                    class="attendance-btn w-10 h-10 rounded-full flex items-center justify-center transition-all transform hover:scale-110 shadow-sm
+                                           {% if status == 'present' %}bg-cyan-500 text-white hover:bg-cyan-600
+                                           {% elif status == 'late' %}bg-yellow-400 text-white hover:bg-yellow-500
+                                           {% elif status == 'absent' %}bg-red-500 text-white hover:bg-red-600
+                                           {% else %}bg-gray-100 text-gray-400 hover:bg-gray-200{% endif %}"
+                                    @click="toggleAttendance({{ data.student.id }}, '{{ date|date:'Y-m-d' }}', '{% if status %}{{ status }}{% else %}none{% endif %}')"
+                                    data-student="{{ data.student.id }}"
+                                    data-date="{{ date|date:'Y-m-d' }}"
+                                    title="{% if status == 'present' %}Keldi{% elif status == 'late' %}Kech qoldi{% elif status == 'absent' %}Kelmadi{% else %}Belgilanmagan{% endif %}">
+                                    {% if status == 'present' %}<i class="fas fa-check text-sm"></i>
+                                    {% elif status == 'late' %}<i class="fas fa-clock text-sm"></i>
+                                    {% elif status == 'absent' %}<i class="fas fa-times text-sm"></i>
+                                    {% else %}<i class="fas fa-minus text-xs"></i>{% endif %}
+                                </button>
+                                {% endwith %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{{ lesson_dates|length|add:1 }}" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <i class="fas fa-users text-5xl text-gray-300 mb-3"></i>
+                                    <p class="text-gray-500 font-medium">Bu guruhda o'quvchilar yo'q</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
         
-        <!-- Main Content -->
-        <div class="lg:w-2/3 bg-white rounded-lg shadow-sm border overflow-hidden" x-data="{ activeTab: 'attendance' }">
-            <!-- Tabs -->
-            <div class="flex border-b bg-gray-50 overflow-x-auto">
-                <button @click="activeTab = 'attendance'" 
-                    :class="activeTab === 'attendance' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500 hover:text-gray-700'"
-                    class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                    <i class="fas fa-calendar-check mr-1"></i>Davomat
-                </button>
-                <button @click="activeTab = 'grading'" 
-                    :class="activeTab === 'grading' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500 hover:text-gray-700'"
-                    class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                    <i class="fas fa-star mr-1"></i>Baholash
-                </button>
-                <button @click="activeTab = 'points'" 
-                    :class="activeTab === 'points' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500 hover:text-gray-700'"
-                    class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                    <i class="fas fa-trophy mr-1"></i>Reyting
-                </button>
-                <button @click="activeTab = 'exams'" 
-                    :class="activeTab === 'exams' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500 hover:text-gray-700'"
-                    class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                    <i class="fas fa-file-alt mr-1"></i>Imtihonlar
-                </button>
-                <button @click="activeTab = 'comments'" 
-                    :class="activeTab === 'comments' ? 'text-cyan-600 border-b-2 border-cyan-600' : 'text-gray-500 hover:text-gray-700'"
-                    class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                    <i class="fas fa-comment mr-1"></i>Izoh
-                </button>
-            </div>
-            
-            <!-- Attendance Tab -->
-            <div x-show="activeTab === 'attendance'">
-                <!-- Month Selector -->
-                <div class="flex items-center justify-between p-3 border-b">
-                    <div class="flex items-center gap-2">
-                        <select class="border rounded-lg px-3 py-1.5 text-sm" onchange="location.href='?year=' + this.value + '&month={{ month }}'">
-                            <option value="2024" {% if year == 2024 %}selected{% endif %}>2024</option>
-                            <option value="2025" {% if year == 2025 %}selected{% endif %}>2025</option>
+        <!-- Grading Tab -->
+        <div x-show="activeTab === 'grading'" x-transition class="p-6">
+            <div class="space-y-4">
+                {% for data in student_data %}
+                <div class="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                            {{ data.student.first_name.0|upper|default:"S" }}
+                        </div>
+                        <span class="font-semibold text-gray-900">{{ data.student.get_full_name }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select class="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm font-semibold focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition" 
+                                onchange="saveGrade({{ data.student.id }}, this.value)">
+                            <option value="">Baho tanlang</option>
+                            <option value="5">5 - A'lo</option>
+                            <option value="4">4 - Yaxshi</option>
+                            <option value="3">3 - Qoniqarli</option>
+                            <option value="2">2 - Yomon</option>
                         </select>
-                        <div class="flex">
-                            <a href="?year={{ prev_year }}&month={{ prev_month }}" class="px-2 py-1 text-gray-500 hover:text-gray-700">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                            <span class="px-3 py-1 bg-cyan-500 text-white rounded text-sm font-medium">{{ month_name|slice:":3" }}</span>
-                            <a href="?year={{ next_year }}&month={{ next_month }}" class="px-2 py-1 text-gray-500 hover:text-gray-700">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
+                        <input type="text" 
+                               placeholder="Izoh..." 
+                               class="border-2 border-gray-300 rounded-lg px-4 py-2 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition w-48">
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-user-graduate text-5xl mb-3 opacity-30"></i>
+                    <p class="font-medium">O'quvchilar yo'q</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Points/Ranking Tab -->
+        <div x-show="activeTab === 'points'" x-transition class="p-6">
+            <div class="space-y-3">
+                {% for data in student_data %}
+                <div class="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border-2 border-yellow-200 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <span class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                            {{ forloop.counter }}
+                        </span>
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                            {{ data.student.first_name.0|upper|default:"S" }}
+                        </div>
+                        <span class="font-semibold text-gray-900">{{ data.student.get_full_name }}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <span class="text-2xl font-bold text-cyan-600">{{ data.student.total_points|default:0 }}</span>
+                            <span class="text-gray-500 text-sm ml-1">ball</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1.5 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600 transition shadow-sm" 
+                                    onclick="addPoints({{ data.student.id }}, 5)">
+                                +5
+                            </button>
+                            <button class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition shadow-sm" 
+                                    onclick="addPoints({{ data.student.id }}, 10)">
+                                +10
+                            </button>
+                            <button class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition shadow-sm" 
+                                    onclick="addPoints({{ data.student.id }}, -5)">
+                                -5
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Attendance Grid -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="sticky left-0 bg-gray-50 px-4 py-2 text-left font-medium text-gray-700 min-w-[200px]">TALABALAR</th>
-                                {% for date in lesson_dates %}
-                                <th class="px-2 py-2 text-center font-medium text-gray-600 min-w-[50px]">{{ date|date:"d" }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for data in student_data %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="sticky left-0 bg-white px-4 py-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-gray-400 text-xs w-4">{{ forloop.counter }}</span>
-                                        <span class="font-medium text-gray-800">{{ data.student.get_full_name|default:data.student.username }}</span>
-                                    </div>
-                                </td>
-                                {% for date in lesson_dates %}
-                                <td class="px-2 py-2 text-center">
-                                    {% with status=data.attendances|get_item:date %}
-                                    <button 
-                                        class="attendance-btn w-8 h-8 rounded-full flex items-center justify-center transition-all
-                                               {% if status == 'present' %}bg-cyan-500 text-white
-                                               {% elif status == 'late' %}bg-yellow-400 text-white
-                                               {% elif status == 'absent' %}bg-red-100 text-red-600
-                                               {% else %}bg-gray-100 text-gray-400 hover:bg-gray-200{% endif %}"
-                                        @click="toggleAttendance({{ data.student.id }}, '{{ date|date:'Y-m-d' }}', '{% if status %}{{ status }}{% else %}none{% endif %}')"
-                                        data-student="{{ data.student.id }}"
-                                        data-date="{{ date|date:'Y-m-d' }}">
-                                        {% if status == 'present' %}<i class="fas fa-check text-xs"></i>
-                                        {% elif status == 'late' %}<i class="fas fa-clock text-xs"></i>
-                                        {% elif status == 'absent' %}<i class="fas fa-times text-xs"></i>
-                                        {% endif %}
-                                    </button>
-                                    {% endwith %}
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="{{ lesson_dates|length|add:1 }}" class="px-4 py-8 text-center text-gray-500">
-                                    <i class="fas fa-users text-3xl text-gray-300 mb-2"></i>
-                                    <p>Bu guruhda talabalar yo'q</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                {% empty %}
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-trophy text-5xl mb-3 opacity-30"></i>
+                    <p class="font-medium">O'quvchilar yo'q</p>
                 </div>
+                {% endfor %}
             </div>
-            
-            <!-- Grading Tab -->
-            <div x-show="activeTab === 'grading'" class="p-4">
-                <div class="space-y-4">
-                    {% for data in student_data %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <span class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold">
-                                {{ data.student.first_name.0|upper|default:"S" }}
-                            </span>
-                            <span class="font-medium">{{ data.student.get_full_name }}</span>
+        </div>
+        
+        <!-- Comments Tab -->
+        <div x-show="activeTab === 'comments'" x-transition class="p-6">
+            <div class="space-y-4">
+                {% for data in student_data %}
+                <div class="p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-200">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                            {{ data.student.first_name.0|upper|default:"S" }}
                         </div>
-                        <div class="flex items-center gap-2">
-                            <select class="border rounded px-3 py-1 text-sm" onchange="saveGrade({{ data.student.id }}, this.value)">
-                                <option value="">Baho</option>
-                                <option value="5">5 - A'lo</option>
-                                <option value="4">4 - Yaxshi</option>
-                                <option value="3">3 - Qoniqarli</option>
-                                <option value="2">2 - Yomon</option>
-                            </select>
-                            <input type="text" placeholder="Izoh..." class="border rounded px-3 py-1 text-sm w-40">
-                        </div>
+                        <span class="font-semibold text-gray-900">{{ data.student.get_full_name }}</span>
                     </div>
-                    {% empty %}
-                    <p class="text-center text-gray-500 py-8">Talabalar yo'q</p>
-                    {% endfor %}
+                    <textarea class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition resize-none" 
+                              rows="3" 
+                              placeholder="Ota-onalar uchun izoh yozing..."></textarea>
+                    <button class="mt-3 px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-semibold hover:bg-cyan-700 transition shadow-sm">
+                        <i class="fas fa-save mr-1"></i>Saqlash
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Points/Ranking Tab -->
-            <div x-show="activeTab === 'points'" class="p-4">
-                <div class="space-y-3">
-                    {% for data in student_data %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <span class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-sm">
-                                {{ forloop.counter }}
-                            </span>
-                            <span class="font-medium">{{ data.student.get_full_name }}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-lg font-bold text-indigo-600">{{ data.student.total_points|default:0 }}</span>
-                            <span class="text-gray-400 text-sm">ball</span>
-                            <div class="flex gap-1">
-                                <button class="px-2 py-1 bg-green-100 text-green-600 rounded text-sm hover:bg-green-200" onclick="addPoints({{ data.student.id }}, 5)">+5</button>
-                                <button class="px-2 py-1 bg-green-100 text-green-600 rounded text-sm hover:bg-green-200" onclick="addPoints({{ data.student.id }}, 10)">+10</button>
-                                <button class="px-2 py-1 bg-red-100 text-red-600 rounded text-sm hover:bg-red-200" onclick="addPoints({{ data.student.id }}, -5)">-5</button>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <p class="text-center text-gray-500 py-8">Talabalar yo'q</p>
-                    {% endfor %}
+                {% empty %}
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-comment text-5xl mb-3 opacity-30"></i>
+                    <p class="font-medium">O'quvchilar yo'q</p>
                 </div>
-            </div>
-            
-            <!-- Exams Tab -->
-            <div x-show="activeTab === 'exams'" class="p-4">
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-file-alt text-4xl text-gray-300 mb-3"></i>
-                    <p>Imtihon natijalari</p>
-                    <a href="{% url 'exams:exam_list' %}" class="text-indigo-600 hover:underline text-sm">Imtihonlar ro'yxati</a>
-                </div>
-            </div>
-            
-            <!-- Comments Tab -->
-            <div x-show="activeTab === 'comments'" class="p-4">
-                <div class="space-y-4">
-                    {% for data in student_data %}
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="font-medium">{{ data.student.get_full_name }}</span>
-                        </div>
-                        <textarea class="w-full border rounded-lg px-3 py-2 text-sm" rows="2" placeholder="Ota-onalar uchun izoh yozing..."></textarea>
-                        <button class="mt-2 px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Saqlash</button>
-                    </div>
-                    {% empty %}
-                    <p class="text-center text-gray-500 py-8">Talabalar yo'q</p>
-                    {% endfor %}
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
     
     <!-- Status Modal -->
-    <div x-show="showModal" x-transition class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+    <div x-show="showModal" 
+         x-transition
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         style="display: none;">
         <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black opacity-40" @click="showModal = false"></div>
-            <div class="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-5">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Davomat holati</h3>
-                <div class="grid grid-cols-3 gap-3">
+            <div class="fixed inset-0 bg-black opacity-50" @click="showModal = false"></div>
+            <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-calendar-check text-cyan-600"></i>
+                    Davomat holati
+                </h3>
+                <div class="grid grid-cols-3 gap-4">
                     <button @click="setStatus('present')" 
-                            class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 hover:border-cyan-500 transition"
-                            :class="selectedStatus === 'present' ? 'border-cyan-500 bg-cyan-50' : 'border-gray-200'">
-                        <span class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center">
-                            <i class="fas fa-check text-white"></i>
+                            class="flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all transform hover:scale-105"
+                            :class="selectedStatus === 'present' ? 'border-cyan-500 bg-cyan-50 shadow-lg' : 'border-gray-200 hover:border-cyan-300'">
+                        <span class="w-14 h-14 rounded-full bg-cyan-500 flex items-center justify-center shadow-md">
+                            <i class="fas fa-check text-white text-xl"></i>
                         </span>
-                        <span class="text-sm font-medium">Keldi</span>
+                        <span class="text-sm font-semibold text-gray-900">Keldi</span>
                     </button>
                     <button @click="setStatus('late')" 
-                            class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 hover:border-yellow-500 transition"
-                            :class="selectedStatus === 'late' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200'">
-                        <span class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center">
-                            <i class="fas fa-clock text-white"></i>
+                            class="flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all transform hover:scale-105"
+                            :class="selectedStatus === 'late' ? 'border-yellow-500 bg-yellow-50 shadow-lg' : 'border-gray-200 hover:border-yellow-300'">
+                        <span class="w-14 h-14 rounded-full bg-yellow-400 flex items-center justify-center shadow-md">
+                            <i class="fas fa-clock text-white text-xl"></i>
                         </span>
-                        <span class="text-sm font-medium">Kech qoldi</span>
+                        <span class="text-sm font-semibold text-gray-900">Kech qoldi</span>
                     </button>
                     <button @click="setStatus('absent')" 
-                            class="flex flex-col items-center gap-2 p-4 rounded-lg border-2 hover:border-red-500 transition"
-                            :class="selectedStatus === 'absent' ? 'border-red-500 bg-red-50' : 'border-gray-200'">
-                        <span class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                            <i class="fas fa-times text-white"></i>
+                            class="flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all transform hover:scale-105"
+                            :class="selectedStatus === 'absent' ? 'border-red-500 bg-red-50 shadow-lg' : 'border-gray-200 hover:border-red-300'">
+                        <span class="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center shadow-md">
+                            <i class="fas fa-times text-white text-xl"></i>
                         </span>
-                        <span class="text-sm font-medium">Kelmadi</span>
+                        <span class="text-sm font-semibold text-gray-900">Kelmadi</span>
                     </button>
                 </div>
-                <div class="flex gap-2 mt-4">
-                    <button @click="showModal = false" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                <div class="flex gap-3 mt-6">
+                    <button @click="showModal = false" 
+                            class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold">
                         Bekor qilish
                     </button>
-                    <button @click="saveAttendance()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    <button @click="saveAttendance()" 
+                            class="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg">
                         Saqlash
                     </button>
                 </div>
@@ -282,11 +329,16 @@
     </div>
     
     <!-- Toast -->
-    <div x-show="showToast" x-transition 
-         class="fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg"
+    <div x-show="showToast" 
+         x-transition
+         x-cloak
+         class="fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl z-50 min-w-[250px]"
          :class="toastType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'"
          style="display: none;">
-        <span x-text="toastMessage"></span>
+        <div class="flex items-center gap-3">
+            <i :class="toastType === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'" class="text-xl"></i>
+            <span x-text="toastMessage" class="font-semibold"></span>
+        </div>
     </div>
 </div>
 
@@ -351,16 +403,16 @@ function attendanceManager() {
         updateButton(studentId, date, status) {
             const btn = document.querySelector(`button[data-student="${studentId}"][data-date="${date}"]`);
             if (btn) {
-                btn.classList.remove('bg-cyan-500', 'bg-yellow-400', 'bg-red-100', 'bg-gray-100', 'text-white', 'text-red-600', 'text-gray-400');
+                btn.classList.remove('bg-cyan-500', 'bg-yellow-400', 'bg-red-500', 'bg-gray-100', 'text-white', 'text-gray-400');
                 if (status === 'present') {
                     btn.classList.add('bg-cyan-500', 'text-white');
-                    btn.innerHTML = '<i class="fas fa-check text-xs"></i>';
+                    btn.innerHTML = '<i class="fas fa-check text-sm"></i>';
                 } else if (status === 'late') {
                     btn.classList.add('bg-yellow-400', 'text-white');
-                    btn.innerHTML = '<i class="fas fa-clock text-xs"></i>';
+                    btn.innerHTML = '<i class="fas fa-clock text-sm"></i>';
                 } else if (status === 'absent') {
-                    btn.classList.add('bg-red-100', 'text-red-600');
-                    btn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+                    btn.classList.add('bg-red-500', 'text-white');
+                    btn.innerHTML = '<i class="fas fa-times text-sm"></i>';
                 }
             }
         },

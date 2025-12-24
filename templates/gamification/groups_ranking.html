@@ -1,68 +1,85 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Guruhlar reytingi{% endblock %}
+{% block title %}Guruhlar reytingi | GEEKS CRM{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Guruhlar reytingi</h1>
-            <p class="text-gray-500">O'rtacha ball bo'yicha saralangan</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-users text-indigo-600"></i>
+                Guruhlar reytingi
+            </h1>
+            <p class="text-gray-600 mt-1">O'rtacha ball bo'yicha saralangan</p>
         </div>
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-2 border-b pb-2">
-        <a href="{% url 'gamification:student_ranking' %}" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <i class="fas fa-user-graduate mr-2"></i>Talabalar
+    <div class="bg-white rounded-xl shadow-lg p-2 border-2 border-gray-100 flex gap-2 overflow-x-auto">
+        <a href="{% url 'gamification:student_ranking' %}" 
+           class="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg font-semibold flex items-center gap-2 whitespace-nowrap transition">
+            <i class="fas fa-user-graduate"></i>
+            <span>Talabalar</span>
         </a>
-        <a href="{% url 'gamification:groups_ranking' %}" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-medium">
-            <i class="fas fa-users mr-2"></i>Guruhlar
+        <a href="{% url 'gamification:groups_ranking' %}" 
+           class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-semibold flex items-center gap-2 whitespace-nowrap">
+            <i class="fas fa-users"></i>
+            <span>Guruhlar</span>
         </a>
         {% if request.user.is_admin %}
-        <a href="{% url 'gamification:mentor_ranking' %}" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <i class="fas fa-chalkboard-teacher mr-2"></i>Mentorlar
+        <a href="{% url 'gamification:mentor_ranking' %}" 
+           class="px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-lg font-semibold flex items-center gap-2 whitespace-nowrap transition">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Mentorlar</span>
         </a>
         {% endif %}
     </div>
 
     <!-- Ranking Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for data in group_data %}
-        <div class="bg-white rounded-lg border shadow-sm p-4 {% if data.rank <= 3 %}ring-2 ring-yellow-400{% endif %}">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 {% if data.rank <= 3 %}border-yellow-400 ring-4 ring-yellow-200{% else %}border-gray-200{% endif %} hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
                     {% if data.rank == 1 %}
-                    <span class="text-2xl">🥇</span>
+                    <span class="text-4xl">🥇</span>
                     {% elif data.rank == 2 %}
-                    <span class="text-2xl">🥈</span>
+                    <span class="text-4xl">🥈</span>
                     {% elif data.rank == 3 %}
-                    <span class="text-2xl">🥉</span>
+                    <span class="text-4xl">🥉</span>
                     {% else %}
-                    <span class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold">{{ data.rank }}</span>
+                    <span class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-lg">{{ data.rank }}</span>
                     {% endif %}
-                    <h3 class="font-bold text-gray-900">{{ data.group.name }}</h3>
+                    <h3 class="text-xl font-bold text-gray-900">{{ data.group.name }}</h3>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mb-2">{{ data.group.course.name }}</p>
-            <p class="text-sm text-gray-500 mb-3">Mentor: {{ data.group.mentor.get_full_name|default:"-" }}</p>
-            <div class="flex items-center justify-between pt-3 border-t">
+            <p class="text-sm text-gray-600 mb-2 flex items-center gap-1">
+                <i class="fas fa-book text-indigo-500"></i>
+                {{ data.group.course.name }}
+            </p>
+            <p class="text-sm text-gray-600 mb-4 flex items-center gap-1">
+                <i class="fas fa-chalkboard-teacher text-green-500"></i>
+                {{ data.group.mentor.get_full_name|default:"-" }}
+            </p>
+            <div class="flex items-center justify-between pt-4 border-t-2 border-gray-200">
                 <div class="text-center">
-                    <p class="text-2xl font-bold text-indigo-600">{{ data.avg_points|floatformat:0 }}</p>
-                    <p class="text-xs text-gray-500">O'rtacha ball</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ data.avg_points|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-1">O'rtacha ball</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-xl font-bold text-gray-700">{{ data.student_count }}</p>
-                    <p class="text-xs text-gray-500">Talabalar</p>
+                    <p class="text-2xl font-bold text-gray-700">{{ data.student_count }}</p>
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-1">Talabalar</p>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full text-center py-8 text-gray-500">
-            Guruhlar topilmadi
+        <div class="col-span-full bg-white rounded-xl shadow-lg p-12 text-center border-2 border-gray-100">
+            <i class="fas fa-users text-5xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500 font-medium">Guruhlar topilmadi</p>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
-

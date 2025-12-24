@@ -1,22 +1,147 @@
 {% extends 'base.html' %}
-{% block title %}Uy vazifasini baholash{% endblock %}
+{% load static %}
+
+{% block title %}Uy vazifasini baholash | GEEKS CRM{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white shadow rounded-lg p-6">
-  <h1 class="text-2xl font-bold mb-4">Uy vazifasini baholash</h1>
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
-    {% for field in form %}
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<p class="text-red-500 text-xs mt-1">{{ field.errors }}</p>{% endif %}
-      </div>
-    {% endfor %}
-    <div class="flex justify-end space-x-2">
-      <a href="{% url 'homework:homework_detail' object.homework.pk %}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Bekor</a>
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Saqlash</button>
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <i class="fas fa-star text-3xl"></i>
+            </div>
+            <div class="flex-1">
+                <h1 class="text-3xl font-bold mb-2">Uy vazifasini baholash</h1>
+                <p class="text-yellow-100">{{ object.homework.title }}</p>
+            </div>
+        </div>
     </div>
-  </form>
+
+    <!-- Homework Info -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-info-circle text-yellow-600"></i>
+            Vazifa ma'lumotlari
+        </h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">O'quvchi</dt>
+                <dd class="font-semibold text-gray-900">{{ object.homework.student.get_full_name|default:object.homework.student.username }}</dd>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Guruh</dt>
+                <dd class="font-semibold text-gray-900">{{ object.homework.group.name }}</dd>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                <dt class="text-gray-600">Muddati</dt>
+                <dd class="font-semibold text-gray-900">{{ object.homework.deadline|date:"d.m.Y" }}</dd>
+            </div>
+            {% if object.homework.submitted_at %}
+            <div class="flex justify-between items-center">
+                <dt class="text-gray-600">Topshirilgan</dt>
+                <dd class="font-semibold text-gray-900">{{ object.homework.submitted_at|date:"d.m.Y H:i" }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+
+    <!-- Submission Files -->
+    {% if object.homework.submission_file %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-file text-yellow-600"></i>
+            Topshirilgan fayl
+        </h2>
+        <a href="{{ object.homework.submission_file.url }}" 
+           target="_blank"
+           class="inline-flex items-center gap-3 px-5 py-3 bg-yellow-50 border-2 border-yellow-200 rounded-lg hover:bg-yellow-100 transition text-sm font-semibold text-yellow-700">
+            <i class="fas fa-download"></i>
+            <span>Faylni ko'rish</span>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Grade Form -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-100">
+        <form method="post" class="space-y-6" x-data="{loading: false}">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mt-0.5"></i>
+                    <div>
+                        <p class="font-semibold text-red-800">Xato</p>
+                        {% for error in form.non_field_errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Grade Selection -->
+            <div>
+                <label for="{{ form.grade.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-star text-yellow-600 mr-1"></i>
+                    {{ form.grade.label }} <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-5 gap-3">
+                    {% for choice in form.grade %}
+                    <label class="cursor-pointer">
+                        <input type="radio" 
+                               name="{{ form.grade.name }}" 
+                               value="{{ choice.choice_value }}" 
+                               {% if choice.is_checked %}checked{% endif %}
+                               class="peer hidden">
+                        <div class="w-full h-16 bg-gray-100 rounded-lg flex items-center justify-center text-2xl font-bold text-gray-400 transition-all peer-checked:bg-gradient-to-br peer-checked:from-yellow-400 peer-checked:to-yellow-600 peer-checked:text-white peer-checked:shadow-lg transform peer-checked:scale-110 hover:bg-gray-200">
+                            {{ choice.choice_label }}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if form.grade.errors %}
+                <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.grade.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Comment -->
+            <div>
+                <label for="{{ form.comment.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-comment text-yellow-600 mr-1"></i>
+                    {{ form.comment.label }}
+                </label>
+                <textarea name="{{ form.comment.name }}" 
+                          id="{{ form.comment.id_for_label }}"
+                          rows="4"
+                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition resize-none"
+                          placeholder="Izoh yozing (ixtiyoriy)">{{ form.comment.value|default:'' }}</textarea>
+                {% if form.comment.errors %}
+                <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <i class="fas fa-exclamation-circle"></i> {{ form.comment.errors.0 }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t">
+                <a href="{% url 'homework:homework_detail' object.homework.pk %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Orqaga</span>
+                </a>
+                <button type="submit" 
+                        @click="loading=true"
+                        :disabled="loading"
+                        class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+                    <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
+                    <span x-text="loading ? 'Saqlanmoqda...' : 'Saqlash'">Saqlash</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
-

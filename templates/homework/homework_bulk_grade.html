@@ -1,85 +1,116 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Bulk baholash{% endblock %}
+{% block title %}Bulk baholash | GEEKS CRM{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Vazifalarni baholash</h1>
-            <p class="text-gray-500">Topshirilgan vazifalarni bir vaqtda baholash</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-star text-yellow-600"></i>
+                Vazifalarni baholash
+            </h1>
+            <p class="text-gray-600 mt-1">Topshirilgan vazifalarni bir vaqtda baholash</p>
         </div>
     </div>
 
     <!-- Filter -->
-    <div class="bg-white rounded-lg border shadow-sm p-4">
-        <form method="get" class="flex gap-4 items-end">
-            <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
-                <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+    <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border-2 border-gray-100">
+        <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                    <i class="fas fa-users text-yellow-500 text-xs"></i>
+                    <span>Guruh</span>
+                </label>
+                <select name="group" 
+                        class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm">
                     <option value="">Barchasi</option>
                     {% for group in groups %}
                     <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"d" %}selected{% endif %}>{{ group.name }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                Filtrlash
+            <button type="submit" 
+                    class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span>Filtrlash</span>
             </button>
         </form>
     </div>
 
+    <!-- Bulk Grade Form -->
     {% if homeworks %}
-    <form method="post" class="bg-white rounded-lg border shadow-sm overflow-hidden">
+    <form method="post" class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100">
         {% csrf_token %}
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Talaba</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Vazifa</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Guruh</th>
-                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Baho</th>
-                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Izoh</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                {% for hw in homeworks %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3">
-                        <input type="hidden" name="homework_ids" value="{{ hw.id }}">
-                        <span class="font-medium text-gray-900">{{ hw.student.get_full_name }}</span>
-                    </td>
-                    <td class="px-4 py-3 text-gray-600">{{ hw.title }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ hw.lesson.group.name|default:"-" }}</td>
-                    <td class="px-4 py-3 text-center">
-                        <select name="grades" class="px-3 py-1 border rounded-lg text-sm">
-                            <option value="">-</option>
-                            <option value="5">5</option>
-                            <option value="4">4</option>
-                            <option value="3">3</option>
-                            <option value="2">2</option>
-                        </select>
-                    </td>
-                    <td class="px-4 py-3">
-                        <input type="text" name="comments" class="w-full px-2 py-1 border rounded text-sm" placeholder="Izoh...">
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="p-4 bg-gray-50 border-t">
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                <i class="fas fa-save mr-2"></i>Barchasini saqlash
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-yellow-50 to-amber-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">O'quvchi</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Vazifa</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Guruh</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Baho</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Izoh</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for hw in homeworks %}
+                    <tr class="hover:bg-yellow-50 transition">
+                        <td class="px-6 py-4">
+                            <input type="hidden" name="homework_ids" value="{{ hw.id }}">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                                    {{ hw.student.first_name.0|upper|default:hw.student.username.0|upper }}
+                                </div>
+                                <span class="font-semibold text-gray-900">{{ hw.student.get_full_name|default:hw.student.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'homework:homework_detail' hw.pk %}" 
+                               class="text-sm font-medium text-gray-900 hover:text-yellow-600 transition">
+                                {{ hw.title|truncatewords:8 }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ hw.lesson.group.name|default:"-" }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <select name="grades" 
+                                    class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm font-semibold">
+                                <option value="">-</option>
+                                <option value="5">5 - A'lo</option>
+                                <option value="4">4 - Yaxshi</option>
+                                <option value="3">3 - Qoniqarli</option>
+                                <option value="2">2 - Yomon</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4">
+                            <input type="text" 
+                                   name="comments" 
+                                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm" 
+                                   placeholder="Izoh...">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="p-6 bg-gradient-to-r from-yellow-50 to-amber-50 border-t-2 border-gray-200">
+            <button type="submit" 
+                    class="px-8 py-3 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition font-semibold shadow-md hover:shadow-lg flex items-center gap-2">
+                <i class="fas fa-save"></i>
+                <span>Barchasini saqlash</span>
             </button>
         </div>
     </form>
     {% else %}
-    <div class="bg-white rounded-lg p-12 text-center border">
-        <i class="fas fa-check-circle text-5xl text-green-300 mb-4"></i>
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Baholanmagan vazifa yo'q</h3>
-        <p class="text-gray-500">Barcha topshirilgan vazifalar baholangan.</p>
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center border-2 border-gray-100">
+        <div class="flex flex-col items-center justify-center">
+            <i class="fas fa-check-circle text-6xl text-green-300 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Baholanmagan vazifa yo'q</h3>
+            <p class="text-gray-500">Barcha topshirilgan vazifalar baholangan.</p>
+        </div>
     </div>
     {% endif %}
 </div>
 {% endblock %}
-

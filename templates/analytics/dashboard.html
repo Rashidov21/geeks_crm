@@ -1,57 +1,67 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Analitika{% endblock %}
+{% block title %}Analitika | GEEKS CRM{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Analitika</h1>
-        <p class="text-gray-500 mt-1">Umumiy statistika va ko'rsatkichlar</p>
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-chart-bar text-indigo-600"></i>
+                Analitika
+            </h1>
+            <p class="text-gray-600 mt-1">Umumiy statistika va ko'rsatkichlar</p>
+        </div>
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-user-graduate text-blue-600"></i>
-                </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm">O'quvchilar</p>
-                    <p class="text-xl font-bold text-gray-900">{{ total_students|default:0 }}</p>
+                    <p class="text-blue-100 text-sm font-medium mb-1">O'quvchilar</p>
+                    <p class="text-3xl font-bold">{{ total_students|default:0 }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
+                    <i class="fas fa-user-graduate text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-chalkboard-teacher text-purple-600"></i>
-                </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm">Mentorlar</p>
-                    <p class="text-xl font-bold text-gray-900">{{ total_mentors|default:0 }}</p>
+                    <p class="text-purple-100 text-sm font-medium mb-1">Mentorlar</p>
+                    <p class="text-3xl font-bold">{{ total_mentors|default:0 }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
+                    <i class="fas fa-chalkboard-teacher text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-users text-teal-600"></i>
-                </div>
+        
+        <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm">Guruhlar</p>
-                    <p class="text-xl font-bold text-gray-900">{{ total_groups|default:0 }}</p>
+                    <p class="text-teal-100 text-sm font-medium mb-1">Guruhlar</p>
+                    <p class="text-3xl font-bold">{{ total_groups|default:0 }}</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
+                    <i class="fas fa-users text-2xl"></i>
                 </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg p-4 border shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-dollar-sign text-green-600"></i>
-                </div>
+        
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm">Oylik daromad</p>
-                    <p class="text-xl font-bold text-gray-900">{{ monthly_revenue|floatformat:0|default:0 }}</p>
+                    <p class="text-green-100 text-sm font-medium mb-1">Oylik daromad</p>
+                    <p class="text-3xl font-bold">{{ monthly_revenue|floatformat:0|default:0 }} so'm</p>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
+                    <i class="fas fa-dollar-sign text-2xl"></i>
                 </div>
             </div>
         </div>
@@ -59,32 +69,39 @@
 
     <!-- Quick Links -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{% url 'courses:course_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                <i class="fas fa-book text-blue-600"></i>
+        <a href="{% url 'analytics:course_statistics' %}" 
+           class="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-blue-500 hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                <i class="fas fa-book text-blue-600 text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900">Kurslar</h3>
+            <h3 class="font-bold text-gray-900 mb-1">Kurslar</h3>
             <p class="text-gray-500 text-sm">Kurslar statistikasi</p>
         </a>
-        <a href="{% url 'courses:course_list' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
-            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                <i class="fas fa-building text-green-600"></i>
+        
+        <a href="{% url 'analytics:branch_statistics' %}" 
+           class="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-green-500 hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                <i class="fas fa-building text-green-600 text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900">Filiallar</h3>
+            <h3 class="font-bold text-gray-900 mb-1">Filiallar</h3>
             <p class="text-gray-500 text-sm">Filiallar bo'yicha</p>
         </a>
-        <a href="{% url 'crm:analytics' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
-            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                <i class="fas fa-funnel-dollar text-purple-600"></i>
+        
+        <a href="{% url 'crm:analytics' %}" 
+           class="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-purple-500 hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                <i class="fas fa-funnel-dollar text-purple-600 text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900">CRM</h3>
+            <h3 class="font-bold text-gray-900 mb-1">CRM</h3>
             <p class="text-gray-500 text-sm">Sotuvlar statistikasi</p>
         </a>
-        <a href="{% url 'finance:dashboard' %}" class="bg-white rounded-lg p-5 border shadow-sm hover:shadow-md transition">
-            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-3">
-                <i class="fas fa-chart-pie text-yellow-600"></i>
+        
+        <a href="{% url 'finance:dashboard' %}" 
+           class="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-yellow-500 hover:shadow-xl transition transform hover:-translate-y-1">
+            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3">
+                <i class="fas fa-chart-pie text-yellow-600 text-xl"></i>
             </div>
-            <h3 class="font-semibold text-gray-900">Moliya</h3>
+            <h3 class="font-bold text-gray-900 mb-1">Moliya</h3>
             <p class="text-gray-500 text-sm">Moliyaviy tahlil</p>
         </a>
     </div>

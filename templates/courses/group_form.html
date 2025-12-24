@@ -1,106 +1,17 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{% if is_edit %}Guruh tahrirlash{% else %}Yangi guruh{% endif %}{% endblock %}
+{% block title %}{% if is_edit %}Guruh tahrirlash{% else %}Yangi guruh{% endif %} | GEEKS CRM{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto space-y-6">
-    <div class="bg-white rounded-lg shadow-sm border p-6">
-        <div class="flex items-center gap-4 mb-6">
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-users text-xl text-green-600"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">{% if is_edit %}Guruh tahrirlash{% else %}Yangi guruh qo'shish{% endif %}</h1>
-                <p class="text-gray-500">Guruh ma'lumotlari</p>
-            </div>
-        </div>
-
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh nomi <span class="text-red-500">*</span></label>
-                <input type="text" name="name" value="{{ form.name.value|default:'' }}" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Kurs <span class="text-red-500">*</span></label>
-                    <select name="course" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                        <option value="">Tanlang</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}" {% if form.course.value == course.id %}selected{% endif %}>{{ course.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mentor</label>
-                    <select name="mentor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                        <option value="">Tanlanmagan</option>
-                        {% for mentor in mentors %}
-                        <option value="{{ mentor.id }}" {% if form.mentor.value == mentor.id %}selected{% endif %}>{{ mentor.get_full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Xona</label>
-                    <select name="room" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                        <option value="">Tanlanmagan</option>
-                        {% for room in rooms %}
-                        <option value="{{ room.id }}" {% if form.room.value == room.id %}selected{% endif %}>{{ room.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Dars vaqti</label>
-                    <input type="time" name="schedule_time" value="{{ form.schedule_time.value|default:'' }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Boshlanish sanasi</label>
-                    <input type="date" name="start_date" value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tugash sanasi</label>
-                    <input type="date" name="end_date" value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                </div>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Dars kunlari</label>
-                <input type="text" name="schedule_days" value="{{ form.schedule_days.value|default:'' }}"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="Du, Cho, Ju">
-            </div>
-            
-            {% if is_edit %}
-            <div>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="is_active" {% if form.is_active.value %}checked{% endif %} class="rounded text-green-600">
-                    <span class="text-sm font-medium text-gray-700">Faol</span>
-                </label>
-            </div>
-            {% endif %}
-            
-            <div class="flex gap-3 pt-4">
-                <button type="submit" class="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition">
-                    <i class="fas fa-save mr-2"></i>Saqlash
-                </button>
-                <a href="{% url 'courses:group_list' %}" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition">
-                    Bekor qilish
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
+{% include 'components/modern_form.html' with 
+    form=form
+    title=is_edit|yesno:"Guruh tahrirlash,Yangi guruh qo'shish"
+    subtitle="Guruh ma'lumotlarini kiriting"
+    icon="fas fa-users"
+    color="green"
+    back_url="courses:group_list"
+    back_text="Orqaga"
+    submit_text="Saqlash"
+%}
 {% endblock %}
-

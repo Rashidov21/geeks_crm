@@ -7,32 +7,20 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endcomment %}
 {% if color == 'blue' %}
   {% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
+{% elif color == 'purple' %}
+  {% with gradient_from='from-purple-500' gradient_to='to-purple-600' ring_color='ring-purple-500' text_color='text-purple-600' bg_color='bg-purple-50' hover_from='from-purple-600' hover_to='to-purple-700' hover_from_hover='from-purple-700' hover_to_hover='to-purple-800' %}
+{% elif color == 'green' %}
+  {% with gradient_from='from-green-500' gradient_to='to-green-600' ring_color='ring-green-500' text_color='text-green-600' bg_color='bg-green-50' hover_from='from-green-600' hover_to='to-green-700' hover_from_hover='from-green-700' hover_to_hover='to-green-800' %}
+{% elif color == 'red' %}
+  {% with gradient_from='from-red-500' gradient_to='to-red-600' ring_color='ring-red-500' text_color='text-red-600' bg_color='bg-red-50' hover_from='from-red-600' hover_to='to-red-700' hover_from_hover='from-red-700' hover_to_hover='to-red-800' %}
+{% elif color == 'indigo' %}
+  {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' ring_color='ring-indigo-500' text_color='text-indigo-600' bg_color='bg-indigo-50' hover_from='from-indigo-600' hover_to='to-indigo-700' hover_from_hover='from-indigo-700' hover_to_hover='to-indigo-800' %}
+{% elif color == 'yellow' %}
+  {% with gradient_from='from-yellow-500' gradient_to='to-yellow-600' ring_color='ring-yellow-500' text_color='text-yellow-600' bg_color='bg-yellow-50' hover_from='from-yellow-600' hover_to='to-yellow-700' hover_from_hover='from-yellow-700' hover_to_hover='to-yellow-800' %}
+{% elif color == 'pink' %}
+  {% with gradient_from='from-pink-500' gradient_to='to-pink-600' ring_color='ring-pink-500' text_color='text-pink-600' bg_color='bg-pink-50' hover_from='from-pink-600' hover_to='to-pink-700' hover_from_hover='from-pink-700' hover_to_hover='to-pink-800' %}
 {% else %}
-  {% if color == 'purple' %}
-    {% with gradient_from='from-purple-500' gradient_to='to-purple-600' ring_color='ring-purple-500' text_color='text-purple-600' bg_color='bg-purple-50' hover_from='from-purple-600' hover_to='to-purple-700' hover_from_hover='from-purple-700' hover_to_hover='to-purple-800' %}
-  {% else %}
-    {% if color == 'green' %}
-      {% with gradient_from='from-green-500' gradient_to='to-green-600' ring_color='ring-green-500' text_color='text-green-600' bg_color='bg-green-50' hover_from='from-green-600' hover_to='to-green-700' hover_from_hover='from-green-700' hover_to_hover='to-green-800' %}
-    {% else %}
-      {% if color == 'red' %}
-        {% with gradient_from='from-red-500' gradient_to='to-red-600' ring_color='ring-red-500' text_color='text-red-600' bg_color='bg-red-50' hover_from='from-red-600' hover_to='to-red-700' hover_from_hover='from-red-700' hover_to_hover='to-red-800' %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' ring_color='ring-indigo-500' text_color='text-indigo-600' bg_color='bg-indigo-50' hover_from='from-indigo-600' hover_to='to-indigo-700' hover_from_hover='from-indigo-700' hover_to_hover='to-indigo-800' %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% with gradient_from='from-yellow-500' gradient_to='to-yellow-600' ring_color='ring-yellow-500' text_color='text-yellow-600' bg_color='bg-yellow-50' hover_from='from-yellow-600' hover_to='to-yellow-700' hover_from_hover='from-yellow-700' hover_to_hover='to-yellow-800' %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% with gradient_from='from-pink-500' gradient_to='to-pink-600' ring_color='ring-pink-500' text_color='text-pink-600' bg_color='bg-pink-50' hover_from='from-pink-600' hover_to='to-pink-700' hover_from_hover='from-pink-700' hover_to_hover='to-pink-800' %}
-            {% else %}
-              {% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+  {% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
 {% endif %}
 
 <div class="max-w-4xl mx-auto">
@@ -157,32 +145,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
     </form>
   </div>
 </div>
-{% if color == 'blue' %}
-  {% endwith %}
-{% else %}
-  {% if color == 'purple' %}
-    {% endwith %}
-  {% else %}
-    {% if color == 'green' %}
-      {% endwith %}
-    {% else %}
-      {% if color == 'red' %}
-        {% endwith %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% endwith %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% endwith %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% endwith %}
-            {% else %}
-              {% endwith %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-{% endif %}
+
+{% endwith %}

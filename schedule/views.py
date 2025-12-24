@@ -46,12 +46,18 @@ class TimetableView(LoginRequiredMixin, TemplateView):
             lessons = lessons.filter(mentor=self.request.user)
         
         # Kunlar bo'yicha guruhlash
-        lessons_by_day = {day['date']: [] for day in days}
+        lessons_by_day = {}
+        for day in days:
+            lessons_by_day[day['date']] = []
         for lesson in lessons:
             if lesson.date in lessons_by_day:
                 lessons_by_day[lesson.date].append(lesson)
         
+        # Template uchun list formatida ham beramiz
         context['lessons_by_day'] = lessons_by_day
+        # Har bir kun uchun alohida list
+        for day in days:
+            day['lessons'] = lessons_by_day.get(day['date'], [])
         context['rooms'] = Room.objects.filter(is_active=True)
         
         return context
@@ -135,6 +141,11 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 lessons_by_date[lesson.date] = []
             lessons_by_date[lesson.date].append(lesson)
         
+        # Template uchun har bir kun uchun alohida list
+        for week in weeks:
+            for day in week:
+                day['lessons'] = lessons_by_date.get(day['date'], [])
+        
         context['lessons_by_date'] = lessons_by_date
         
         return context
@@ -175,21 +186,21 @@ class RoomScheduleView(LoginRequiredMixin, TemplateView):
         # Xona va vaqt bo'yicha darslar
         room_schedule = {}
         for room in rooms:
-            room_schedule[room.id] = {
-                'room': room,
-                'lessons': {}
-            }
+            room_schedule[room.id] = {}
+            for time_slot in time_slots:
+                room_schedule[room.id][time_slot] = None
         
         for lesson in lessons:
-            if lesson.group and lesson.group.room:
+            if lesson.group and lesson.group.room and lesson.start_time:
                 room_id = lesson.group.room.id
-                if room_id in room_schedule:
-                    start_hour = lesson.start_time.hour if lesson.start_time else 9
-                    time_key = f'{start_hour:02d}:00'
-                    room_schedule[room_id]['lessons'][time_key] = lesson
+                start_hour = lesson.start_time.hour
+                time_key = f'{start_hour:02d}:00'
+                if room_id in room_schedule and time_key in room_schedule[room_id]:
+                    room_schedule[room_id][time_key] = lesson
         
         context['room_schedule'] = room_schedule
         context['rooms'] = rooms
+        context['lessons'] = lessons
         
         return context
 

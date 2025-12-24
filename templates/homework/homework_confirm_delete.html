@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Vazifani o'chirish{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-8">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Vazifani o'chirish</h1>
+                <p class="text-sm text-gray-500 mt-1">Bu amalni qaytarib bo'lmaydi</p>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <p class="text-gray-700 mb-4">
+                <strong>{{ homework.title }}</strong> vazifasini o'chirishni xohlaysizmi?
+            </p>
+            {% if homework.is_submitted %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    Bu vazifa allaqachon topshirilgan va baholangan bo'lishi mumkin.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="post" class="flex gap-3 justify-end">
+            {% csrf_token %}
+            <a href="{% url 'homework:homework_detail' homework.pk %}" 
+               class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                Bekor qilish
+            </a>
+            <button type="submit" 
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
+                <i class="fas fa-trash mr-2"></i>O'chirish
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

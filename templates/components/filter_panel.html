@@ -8,32 +8,20 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endcomment %}
 {% if color == 'blue' %}
   {% with bg_color='bg-blue-600' hover_bg='hover:bg-blue-700' %}
+{% elif color == 'purple' %}
+  {% with bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' %}
+{% elif color == 'green' %}
+  {% with bg_color='bg-green-600' hover_bg='hover:bg-green-700' %}
+{% elif color == 'red' %}
+  {% with bg_color='bg-red-600' hover_bg='hover:bg-red-700' %}
+{% elif color == 'indigo' %}
+  {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
+{% elif color == 'yellow' %}
+  {% with bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' %}
+{% elif color == 'pink' %}
+  {% with bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' %}
 {% else %}
-  {% if color == 'purple' %}
-    {% with bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' %}
-  {% else %}
-    {% if color == 'green' %}
-      {% with bg_color='bg-green-600' hover_bg='hover:bg-green-700' %}
-    {% else %}
-      {% if color == 'red' %}
-        {% with bg_color='bg-red-600' hover_bg='hover:bg-red-700' %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% with bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% with bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' %}
-            {% else %}
-              {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+  {% with bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' %}
 {% endif %}
 
 <div x-data="{ show: false }" class="mb-6">
@@ -71,32 +59,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         </form>
     </div>
 </div>
-{% if color == 'blue' %}
-  {% endwith %}
-{% else %}
-  {% if color == 'purple' %}
-    {% endwith %}
-  {% else %}
-    {% if color == 'green' %}
-      {% endwith %}
-    {% else %}
-      {% if color == 'red' %}
-        {% endwith %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% endwith %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% endwith %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% endwith %}
-            {% else %}
-              {% endwith %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-{% endif %}
+
+{% endwith %}

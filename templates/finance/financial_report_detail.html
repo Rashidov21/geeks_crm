@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Moliya hisoboti | GEEKS CRM{% endblock %}
 
@@ -25,7 +26,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Jami daromad</p>
-                    <p class="text-2xl font-bold text-green-600">{{ report.total_revenue|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-green-600">{{ report.total_revenue|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-arrow-up text-green-600 text-xl"></i>
@@ -37,7 +38,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Jami to'lovlar</p>
-                    <p class="text-2xl font-bold text-blue-600">{{ report.total_payments|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ report.total_payments|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-credit-card text-blue-600 text-xl"></i>
@@ -49,7 +50,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Jami qarzlar</p>
-                    <p class="text-2xl font-bold text-red-600">{{ report.total_debts|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-red-600">{{ report.total_debts|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
@@ -95,7 +96,7 @@
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                 <dt class="text-gray-600">Jami chegirmalar</dt>
-                <dd class="font-semibold text-gray-900">{{ report.total_discounts|floatformat:0 }} so'm</dd>
+                <dd class="font-semibold text-gray-900">{{ report.total_discounts|intcomma }} so'm</dd>
             </div>
         </dl>
     </div>

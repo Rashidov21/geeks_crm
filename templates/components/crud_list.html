@@ -3,13 +3,27 @@ Universal CRUD List View Component
 Usage: {% include 'components/crud_list.html' with title="Lidlar" items=leads fields="name,phone,status" create_url="crm:lead_create" %}
 {% endcomment %}
 {% load crud_tags %}
-{% load color_tags %}
 
 {% comment %}
 Color mapping for Tailwind classes - predefined classes to avoid dynamic class issues
 {% endcomment %}
-{% get_color_classes color|default:"indigo" as color_classes %}
-{% with text_color=color_classes.text_color bg_color=color_classes.bg_color hover_bg=color_classes.hover_bg ring_color=color_classes.ring_color bg_light=color_classes.bg_light border_color=color_classes.border_color text_dark=color_classes.text_dark %}
+{% if color == 'blue' %}
+  {% with text_color='text-blue-600' bg_color='bg-blue-600' hover_bg='hover:bg-blue-700' ring_color='ring-blue-500' bg_light='bg-blue-50' border_color='border-blue-200' text_dark='text-blue-900' %}
+{% elif color == 'purple' %}
+  {% with text_color='text-purple-600' bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' ring_color='ring-purple-500' bg_light='bg-purple-50' border_color='border-purple-200' text_dark='text-purple-900' %}
+{% elif color == 'green' %}
+  {% with text_color='text-green-600' bg_color='bg-green-600' hover_bg='hover:bg-green-700' ring_color='ring-green-500' bg_light='bg-green-50' border_color='border-green-200' text_dark='text-green-900' %}
+{% elif color == 'red' %}
+  {% with text_color='text-red-600' bg_color='bg-red-600' hover_bg='hover:bg-red-700' ring_color='ring-red-500' bg_light='bg-red-50' border_color='border-red-200' text_dark='text-red-900' %}
+{% elif color == 'indigo' %}
+  {% with text_color='text-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' ring_color='ring-indigo-500' bg_light='bg-indigo-50' border_color='border-indigo-200' text_dark='text-indigo-900' %}
+{% elif color == 'yellow' %}
+  {% with text_color='text-yellow-600' bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' ring_color='ring-yellow-500' bg_light='bg-yellow-50' border_color='border-yellow-200' text_dark='text-yellow-900' %}
+{% elif color == 'pink' %}
+  {% with text_color='text-pink-600' bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' ring_color='ring-pink-500' bg_light='bg-pink-50' border_color='border-pink-200' text_dark='text-pink-900' %}
+{% else %}
+  {% with text_color='text-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' ring_color='ring-indigo-500' bg_light='bg-indigo-50' border_color='border-indigo-200' text_dark='text-indigo-900' %}
+{% endif %}
 
 <div class="space-y-6" x-data="{ 
     showFilters: false, 
@@ -113,7 +127,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
             </button>
             {% endif %}
             {% if bulk_delete_url %}
-            <button @click="$dispatch('open-delete-modal', {ids: selectedItems, deleteUrl: '{{ bulk_delete_url }}', redirectUrl: '{{ request.path }}'})" 
+            <button @click="$dispatch('open-delete-modal', {ids: selectedItems})" 
                     class="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
                 <i class="fas fa-trash mr-1"></i>O'chirish
             </button>
@@ -199,7 +213,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
                                     </a>
                                     {% endif %}
                                     {% if delete_url and can_delete %}
-                                    <button @click="$dispatch('open-delete-modal', {id: {{ item.pk }}, name: '{{ item.name|default:item|escapejs }}', deleteUrl: '{% url delete_url item.pk %}', redirectUrl: '{{ request.path }}'})" 
+                                    <button @click="$dispatch('open-delete-modal', {id: {{ item.pk }}, name: '{{ item.name|default:item|escapejs }}', url: '{% url delete_url item.pk %}', redirect: '{{ request.path }}'})" 
                                             class="text-red-600 hover:text-red-800" 
                                             title="O'chirish">
                                         <i class="fas fa-trash"></i>
@@ -239,4 +253,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         </div>
     {% endif %}
 </div>
+
 {% endwith %}

@@ -8,32 +8,20 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endcomment %}
 {% if color == 'blue' %}
   {% with bg_color='bg-blue-600' outline_color='outline-blue-600' %}
+{% elif color == 'purple' %}
+  {% with bg_color='bg-purple-600' outline_color='outline-purple-600' %}
+{% elif color == 'green' %}
+  {% with bg_color='bg-green-600' outline_color='outline-green-600' %}
+{% elif color == 'red' %}
+  {% with bg_color='bg-red-600' outline_color='outline-red-600' %}
+{% elif color == 'indigo' %}
+  {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
+{% elif color == 'yellow' %}
+  {% with bg_color='bg-yellow-600' outline_color='outline-yellow-600' %}
+{% elif color == 'pink' %}
+  {% with bg_color='bg-pink-600' outline_color='outline-pink-600' %}
 {% else %}
-  {% if color == 'purple' %}
-    {% with bg_color='bg-purple-600' outline_color='outline-purple-600' %}
-  {% else %}
-    {% if color == 'green' %}
-      {% with bg_color='bg-green-600' outline_color='outline-green-600' %}
-    {% else %}
-      {% if color == 'red' %}
-        {% with bg_color='bg-red-600' outline_color='outline-red-600' %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% with bg_color='bg-yellow-600' outline_color='outline-yellow-600' %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% with bg_color='bg-pink-600' outline_color='outline-pink-600' %}
-            {% else %}
-              {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+  {% with bg_color='bg-indigo-600' outline_color='outline-indigo-600' %}
 {% endif %}
 
 {% if page_obj.has_other_pages %}
@@ -117,32 +105,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
     </div>
 </nav>
 {% endif %}
-{% if color == 'blue' %}
-  {% endwith %}
-{% else %}
-  {% if color == 'purple' %}
-    {% endwith %}
-  {% else %}
-    {% if color == 'green' %}
-      {% endwith %}
-    {% else %}
-      {% if color == 'red' %}
-        {% endwith %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% endwith %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% endwith %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% endwith %}
-            {% else %}
-              {% endwith %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-{% endif %}
+
+{% endwith %}

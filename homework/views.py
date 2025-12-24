@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, TemplateView, View
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect
@@ -64,9 +64,9 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_mentor
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_mentor
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_mentor') and user.is_mentor)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
         
         return context
 
@@ -195,3 +195,42 @@ class HomeworkGradeView(TailwindFormMixin, MentorRequiredMixin, UpdateView):
     
     def get_success_url(self):
         return reverse_lazy('homework:homework_detail', kwargs={'pk': self.kwargs['pk']})
+
+
+class HomeworkUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
+    """Homework tahrirlash"""
+    model = Homework
+    template_name = 'homework/homework_form.html'
+    fields = ['lesson', 'title', 'description', 'file', 'link', 'code', 'deadline']
+    allowed_roles = ['admin', 'manager', 'mentor']
+    
+    def get_queryset(self):
+        queryset = Homework.objects.all()
+        if self.request.user.is_mentor:
+            queryset = queryset.filter(lesson__group__mentor=self.request.user)
+        return queryset
+    
+    def get_success_url(self):
+        return reverse_lazy('homework:homework_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Vazifa muvaffaqiyatli yangilandi.')
+        return super().form_valid(form)
+
+
+class HomeworkDeleteView(RoleRequiredMixin, DeleteView):
+    """Homework o'chirish"""
+    model = Homework
+    template_name = 'homework/homework_confirm_delete.html'
+    success_url = reverse_lazy('homework:homework_list')
+    allowed_roles = ['admin', 'manager']
+    
+    def get_queryset(self):
+        queryset = Homework.objects.all()
+        if self.request.user.is_mentor:
+            queryset = queryset.filter(lesson__group__mentor=self.request.user)
+        return queryset
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Vazifa o\'chirildi.')
+        return super().delete(request, *args, **kwargs)

@@ -1,30 +1,187 @@
 {% extends 'base.html' %}
-{% block title %}Filial statistikasi{% endblock %}
+{% load static %}
+
+{% block title %}{% if branch %}Filial: {{ branch.name }}{% else %}Filiallar statistikasi{% endif %} | GEEKS CRM{% endblock %}
+
 {% block content %}
-<div class="space-y-4">
-  <h1 class="text-2xl font-bold">Filial statistikasi</h1>
-  <div class="bg-white shadow rounded-lg overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Filial</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">O'quvchilar</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mentorlar</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        {% for b in branches %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 text-sm">{{ b.name }}</td>
-          <td class="px-4 py-3 text-sm">{{ b.student_count|default:"-" }}</td>
-          <td class="px-4 py-3 text-sm">{{ b.mentor_count|default:"-" }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Ma'lumot yo'q.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-building text-green-600"></i>
+                {% if branch %}{{ branch.name }} statistikasi{% else %}Filiallar statistikasi{% endif %}
+            </h1>
+            <p class="text-gray-600 mt-1">Filiallar bo'yicha batafsil statistika</p>
+        </div>
+        <a href="{% url 'analytics:dashboard' %}" 
+           class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-arrow-left"></i>
+            <span>Orqaga</span>
+        </a>
+    </div>
+
+    {% if branch %}
+    <!-- Branch Detail Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1">O'quvchilar</p>
+                    <p class="text-3xl font-bold">{{ students|default:0 }}</p>
+                </div>
+                <i class="fas fa-user-graduate text-2xl"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium mb-1">Guruhlar</p>
+                    <p class="text-3xl font-bold">{{ groups|default:0 }}</p>
+                </div>
+                <i class="fas fa-users text-2xl"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-teal-100 text-sm font-medium mb-1">Kurslar</p>
+                    <p class="text-3xl font-bold">{{ courses|default:0 }}</p>
+                </div>
+                <i class="fas fa-book text-2xl"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl shadow-lg p-5 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-cyan-100 text-sm font-medium mb-1">Davomat</p>
+                    <p class="text-3xl font-bold">{{ attendance_percentage|floatformat:0|default:0 }}%</p>
+                </div>
+                <i class="fas fa-calendar-check text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Breakdown -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-pie text-cyan-600"></i>
+            Davomat tafsilotlari
+        </h3>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="text-center p-4 bg-green-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">Kelgan</p>
+                <p class="text-2xl font-bold text-green-600">{{ present_count|default:0 }}</p>
+            </div>
+            <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">Kechikkan</p>
+                <p class="text-2xl font-bold text-yellow-600">{{ late_count|default:0 }}</p>
+            </div>
+            <div class="text-center p-4 bg-red-50 rounded-lg">
+                <p class="text-xs text-gray-600 mb-1">Qolgan</p>
+                <p class="text-2xl font-bold text-red-600">{{ absent_count|default:0 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rankings -->
+    {% if branch_rankings %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-trophy text-amber-600"></i>
+            Top o'quvchilar
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-amber-50 to-yellow-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">O'rin</th>
+                        <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">O'quvchi</th>
+                        <th class="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Ball</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for ranking in branch_rankings %}
+                    <tr class="hover:bg-amber-50 transition">
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {% if ranking.rank == 1 %}bg-yellow-400 text-yellow-900{% elif ranking.rank == 2 %}bg-gray-300 text-gray-700{% elif ranking.rank == 3 %}bg-amber-600 text-white{% else %}bg-gray-100 text-gray-600{% endif %} font-bold">
+                                {{ ranking.rank }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 font-semibold text-gray-900">{{ ranking.student.get_full_name|default:ranking.student.username }}</td>
+                        <td class="px-4 py-3 text-center font-bold text-amber-600">{{ ranking.total_points|default:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- All Branches List -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-green-50 to-emerald-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Filial</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">O'quvchilar</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Guruhlar</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Kurslar</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Davomat</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for stat in branches_stats %}
+                    <tr class="hover:bg-green-50 transition">
+                        <td class="px-6 py-4">
+                            <span class="font-semibold text-gray-900 text-lg">{{ stat.branch.name }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
+                                {{ stat.students_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-700">
+                                {{ stat.groups_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-teal-100 text-teal-700">
+                                {{ stat.courses_count }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {% if stat.avg_attendance >= 80 %}bg-green-100 text-green-700{% elif stat.avg_attendance >= 60 %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %}">
+                                {{ stat.avg_attendance|floatformat:1 }}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{% url 'analytics:branch_statistics_detail' stat.branch.pk %}" 
+                               class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <i class="fas fa-building text-5xl text-gray-300 mb-3"></i>
+                                <p class="text-gray-500 font-medium">Ma'lumot yo'q</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-

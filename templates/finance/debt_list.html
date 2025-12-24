@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Qarzlar | GEEKS CRM{% endblock %}
 
@@ -43,7 +44,7 @@
                             {{ debt.contract.student.get_full_name|default:debt.contract.student.username }}
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-lg font-bold text-red-600">{{ debt.amount|floatformat:0 }} so'm</span>
+                            <span class="text-lg font-bold text-red-600">{{ debt.amount|intcomma }} so'm</span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ debt.due_date|date:"d.m.Y" }}</td>
                         <td class="px-6 py-4 text-center">

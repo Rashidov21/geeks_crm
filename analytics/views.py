@@ -164,41 +164,79 @@ class BranchStatisticsView(RoleRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         branch_id = self.kwargs.get('branch_id')
-        branch = Branch.objects.get(pk=branch_id)
-        
         now = timezone.now()
         this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        context['branch'] = branch
-        
-        # O'quvchilar
-        context['students'] = User.objects.filter(
-            role='student',
-            student_profile__branch=branch,
-            is_active=True
-        ).count()
-        
-        # Kurslar va guruhlar
-        context['courses'] = Course.objects.filter(branch=branch, is_active=True).count()
-        context['groups'] = Group.objects.filter(
-            course__branch=branch,
-            is_active=True
-        ).count()
-        
-        # Davomat
-        attendances = Attendance.objects.filter(
-            lesson__group__course__branch=branch,
-            lesson__date__gte=this_month_start
-        )
-        context['total_attendances'] = attendances.count()
-        context['present_count'] = attendances.filter(status='present').count()
-        context['late_count'] = attendances.filter(status='late').count()
-        context['absent_count'] = attendances.filter(status='absent').count()
-        
-        # Reytinglar
-        context['branch_rankings'] = BranchRanking.objects.filter(
-            branch=branch
-        ).select_related('student').order_by('rank')[:20]
+        if branch_id:
+            # Bitta filial statistikasi
+            branch = Branch.objects.get(pk=branch_id)
+            context['branch'] = branch
+            
+            # O'quvchilar
+            context['students'] = User.objects.filter(
+                role='student',
+                student_profile__branch=branch,
+                is_active=True
+            ).count()
+            
+            # Kurslar va guruhlar
+            context['courses'] = Course.objects.filter(branch=branch, is_active=True).count()
+            context['groups'] = Group.objects.filter(
+                course__branch=branch,
+                is_active=True
+            ).count()
+            
+            # Davomat
+            attendances = Attendance.objects.filter(
+                lesson__group__course__branch=branch,
+                lesson__date__gte=this_month_start
+            )
+            context['total_attendances'] = attendances.count()
+            context['present_count'] = attendances.filter(status='present').count()
+            context['late_count'] = attendances.filter(status='late').count()
+            context['absent_count'] = attendances.filter(status='absent').count()
+            total_att = attendances.count()
+            present_att = attendances.filter(status__in=['present', 'late']).count()
+            context['attendance_percentage'] = (present_att / total_att * 100) if total_att > 0 else 0
+            
+            # Reytinglar
+            context['branch_rankings'] = BranchRanking.objects.filter(
+                branch=branch
+            ).select_related('student').order_by('rank')[:20]
+        else:
+            # Barcha filiallar ro'yxati
+            branches_stats = []
+            branches = Branch.objects.filter(is_active=True)
+            for branch in branches:
+                students_count = User.objects.filter(
+                    role='student',
+                    student_profile__branch=branch,
+                    is_active=True
+                ).count()
+                groups_count = Group.objects.filter(
+                    course__branch=branch,
+                    is_active=True
+                ).count()
+                courses_count = Course.objects.filter(
+                    branch=branch,
+                    is_active=True
+                ).count()
+                branch_attendances = Attendance.objects.filter(
+                    lesson__group__course__branch=branch,
+                    lesson__date__gte=this_month_start
+                )
+                total_att = branch_attendances.count()
+                present_att = branch_attendances.filter(status__in=['present', 'late']).count()
+                avg_attendance = (present_att / total_att * 100) if total_att > 0 else 0
+                
+                branches_stats.append({
+                    'branch': branch,
+                    'students_count': students_count,
+                    'groups_count': groups_count,
+                    'courses_count': courses_count,
+                    'avg_attendance': avg_attendance,
+                })
+            context['branches_stats'] = branches_stats
         
         return context
 
@@ -213,42 +251,48 @@ class CourseStatisticsView(RoleRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         course_id = self.kwargs.get('course_id')
-        course = Course.objects.get(pk=course_id)
         
-        context['course'] = course
-        
-        # Guruhlar
-        context['groups'] = Group.objects.filter(course=course, is_active=True)
-        context['total_groups'] = context['groups'].count()
-        
-        # O'quvchilar
-        students = User.objects.filter(
-            student_groups__course=course,
-            is_active=True
-        ).distinct()
-        context['students'] = students.count()
-        
-        # Progress
-        progresses = StudentProgress.objects.filter(course=course)
-        context['avg_progress'] = progresses.aggregate(avg=Avg('progress_percentage'))['avg'] or 0
-        context['completed_students'] = progresses.filter(progress_percentage=100).count()
-        
-        # Guruhlar statistikasi
-        groups_stats = []
-        for group in context['groups']:
-            students_count = group.students.filter(role='student').count()
-            avg_progress = StudentProgress.objects.filter(
-                student__in=group.students.all(),
-                course=course
-            ).aggregate(avg=Avg('progress_percentage'))['avg'] or 0
+        if course_id:
+            # Bitta kurs statistikasi
+            course = Course.objects.get(pk=course_id)
+            context['course'] = course
             
-            groups_stats.append({
-                'group': group,
-                'students_count': students_count,
-                'avg_progress': avg_progress,
-            })
-        
-        context['groups_stats'] = groups_stats
+            # Guruhlar
+            groups = Group.objects.filter(course=course, is_active=True)
+            context['groups'] = groups
+            context['total_groups'] = groups.count()
+            
+            # O'quvchilar
+            students = User.objects.filter(
+                student_groups__course=course,
+                is_active=True
+            ).distinct()
+            context['students'] = students.count()
+            
+            # Progress
+            progresses = StudentProgress.objects.filter(course=course)
+            context['avg_progress'] = progresses.aggregate(avg=Avg('progress_percentage'))['avg'] or 0
+            context['completed_students'] = progresses.filter(progress_percentage=100).count()
+            
+            # Guruhlar statistikasi
+            groups_stats = []
+            for group in groups:
+                students_count = group.students.filter(role='student').count()
+                avg_progress = StudentProgress.objects.filter(
+                    student__in=group.students.all(),
+                    course=course
+                ).aggregate(avg=Avg('progress_percentage'))['avg'] or 0
+                
+                groups_stats.append({
+                    'group': group,
+                    'students_count': students_count,
+                    'avg_progress': avg_progress,
+                })
+            
+            context['groups_stats'] = groups_stats
+        else:
+            # Barcha kurslar ro'yxati
+            context['courses'] = Course.objects.filter(is_active=True)
         
         return context
 

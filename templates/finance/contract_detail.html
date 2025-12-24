@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Shartnoma: {{ contract.contract_number }} | GEEKS CRM{% endblock %}
 
@@ -28,7 +29,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Jami summa</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ contract.total_amount|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ contract.total_amount|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-money-bill text-blue-600 text-xl"></i>
@@ -40,7 +41,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">To'langan</p>
-                    <p class="text-2xl font-bold text-green-600">{{ contract.paid_amount|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-green-600">{{ contract.paid_amount|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
@@ -52,7 +53,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Qolgan</p>
-                    <p class="text-2xl font-bold text-red-600">{{ contract.remaining_amount|floatformat:0 }} so'm</p>
+                    <p class="text-2xl font-bold text-red-600">{{ contract.remaining_amount|intcomma }} so'm</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
@@ -116,7 +117,7 @@
                     <tr class="hover:bg-blue-50 transition">
                         <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ plan.installment_number }}</td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-sm font-bold text-gray-900">{{ plan.amount|floatformat:0 }} so'm</span>
+                            <span class="text-sm font-bold text-gray-900">{{ plan.amount|intcomma }} so'm</span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ plan.due_date|date:"d.m.Y" }}</td>
                         <td class="px-6 py-4 text-center">

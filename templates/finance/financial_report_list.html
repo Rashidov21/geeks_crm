@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Moliya hisobotlari | GEEKS CRM{% endblock %}
 
@@ -43,10 +44,10 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ report.branch.name|default:"Barcha" }}</td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-lg font-bold text-green-600">{{ report.total_revenue|floatformat:0 }} so'm</span>
+                            <span class="text-lg font-bold text-green-600">{{ report.total_revenue|intcomma }} so'm</span>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-lg font-bold text-blue-600">{{ report.total_payments|floatformat:0 }} so'm</span>
+                            <span class="text-lg font-bold text-blue-600">{{ report.total_payments|intcomma }} so'm</span>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <a href="{% url 'finance:financial_report_detail' report.pk %}" 

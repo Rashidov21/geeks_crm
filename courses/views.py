@@ -39,9 +39,10 @@ class CourseListView(LoginRequiredMixin, ListView):
         context['total_courses'] = Course.objects.count()
         context['active_courses'] = Course.objects.filter(is_active=True).count()
         # Permissions
-        context['can_create'] = self.request.user.is_admin or self.request.user.is_manager
-        context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
-        context['can_delete'] = self.request.user.is_admin or self.request.user.is_manager
+        user = self.request.user
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = context['can_create']
         return context
 
 

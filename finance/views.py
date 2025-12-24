@@ -56,9 +56,9 @@ class ContractListView(RoleRequiredMixin, ListView):
         context['total_amount'] = self.get_queryset().aggregate(total=Sum('total_amount'))['total'] or 0
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_accountant
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_accountant
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = False  # Contracts usually shouldn't be deleted
         return context
 
 
@@ -167,9 +167,9 @@ class PaymentListView(RoleRequiredMixin, ListView):
         context['total_count'] = self.get_queryset().count()
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_accountant
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_accountant
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = False  # Payments usually shouldn't be deleted
         return context
 
 
@@ -356,6 +356,20 @@ class DashboardView(RoleRequiredMixin, TemplateView):
             })
         
         context['monthly_data'] = list(reversed(monthly_data))
+        
+        # Template uchun to'g'ri nomlar
+        context['monthly_income'] = context['payments_this_month']
+        context['total_debt'] = context['total_debts']
+        context['contracts_count'] = context['total_contracts']
+        context['pending_payments'] = PaymentPlan.objects.filter(
+            is_paid=False,
+            due_date__gte=now.date()
+        ).count()
+        
+        # So'nggi to'lovlar
+        context['recent_payments'] = Payment.objects.select_related(
+            'contract', 'contract__student'
+        ).order_by('-paid_at')[:10]
         
         return context
 

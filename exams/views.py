@@ -47,9 +47,9 @@ class ExamListView(LoginRequiredMixin, ListView):
         
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_mentor
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_mentor
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_mentor') and user.is_mentor)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
         
         return context
 

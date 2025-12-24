@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Moliya | GEEKS CRM{% endblock %}
 
@@ -36,7 +37,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-emerald-100 text-sm font-medium mb-1">Oylik daromad</p>
-                    <p class="text-3xl font-bold">{{ monthly_income|floatformat:0|default:0 }} so'm</p>
+                    <p class="text-3xl font-bold">{{ monthly_income|intcomma|default:0 }} so'm</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
                     <i class="fas fa-arrow-up text-2xl"></i>
@@ -48,7 +49,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-red-100 text-sm font-medium mb-1">Qarzdorlik</p>
-                    <p class="text-3xl font-bold">{{ total_debt|floatformat:0|default:0 }} so'm</p>
+                    <p class="text-3xl font-bold">{{ total_debt|intcomma|default:0 }} so'm</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-3 backdrop-blur-sm">
                     <i class="fas fa-exclamation-triangle text-2xl"></i>
@@ -145,21 +146,26 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for payment in recent_payments %}
                     <tr class="hover:bg-emerald-50 transition">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ payment.date|date:"d.m.Y" }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ payment.paid_at|date:"d.m.Y"|default:payment.created_at|date:"d.m.Y" }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ payment.contract.student.get_full_name|default:payment.contract.student.username }}</td>
                         <td class="px-6 py-4 text-right">
-                            <span class="text-lg font-bold text-emerald-600">{{ payment.amount|floatformat:0 }} so'm</span>
+                            <span class="text-lg font-bold text-emerald-600">{{ payment.amount|intcomma }} so'm</span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            {% if payment.status == 'confirmed' %}
+                            {% if payment.status == 'completed' %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                                 <i class="fas fa-check-circle mr-1"></i>
-                                Tasdiqlangan
+                                To'langan
                             </span>
-                            {% else %}
+                            {% elif payment.status == 'pending' %}
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
                                 <i class="fas fa-clock mr-1"></i>
                                 Kutilmoqda
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                {{ payment.get_status_display }}
                             </span>
                             {% endif %}
                         </td>

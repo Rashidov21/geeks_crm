@@ -286,9 +286,9 @@ class LeadListView(LoginRequiredMixin, ListView):
         ).count()
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
         return context
 
 
@@ -710,9 +710,9 @@ class FollowUpListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         # Permissions
         user = self.request.user
-        context['can_create'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
-        context['can_edit'] = user.is_admin or user.is_manager or user.is_sales_manager or user.is_sales
-        context['can_delete'] = user.is_admin or user.is_manager
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
+        context['can_edit'] = context['can_create']
+        context['can_delete'] = False  # Follow-ups usually shouldn't be deleted
         return context
 
 

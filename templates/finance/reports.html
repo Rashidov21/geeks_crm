@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Moliya hisobotlari | GEEKS CRM{% endblock %}
 
@@ -49,9 +50,9 @@
                     <tr class="hover:bg-green-50 transition">
                         <td class="px-6 py-4 font-semibold text-gray-900">{{ course.name }}</td>
                         <td class="px-6 py-4 text-right text-gray-600">{{ course.contracts }}</td>
-                        <td class="px-6 py-4 text-right font-bold text-gray-900">{{ course.revenue|floatformat:0 }} so'm</td>
-                        <td class="px-6 py-4 text-right font-bold text-green-600">{{ course.paid|floatformat:0 }} so'm</td>
-                        <td class="px-6 py-4 text-right font-bold text-red-600">{{ course.revenue|add:course.paid|floatformat:0 }} so'm</td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900">{{ course.revenue|intcomma }} so'm</td>
+                        <td class="px-6 py-4 text-right font-bold text-green-600">{{ course.paid|intcomma }} so'm</td>
+                        <td class="px-6 py-4 text-right font-bold text-red-600">{{ course.revenue|add:course.paid|intcomma }} so'm</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -88,7 +89,7 @@
                     <tr class="hover:bg-blue-50 transition">
                         <td class="px-6 py-4 font-semibold text-gray-900">{{ item.month }}</td>
                         <td class="px-6 py-4 text-right text-gray-600">{{ item.contracts|floatformat:0 }}</td>
-                        <td class="px-6 py-4 text-right font-bold text-green-600">{{ item.payments|floatformat:0 }} so'm</td>
+                        <td class="px-6 py-4 text-right font-bold text-green-600">{{ item.payments|intcomma }} so'm</td>
                     </tr>
                     {% empty %}
                     <tr>

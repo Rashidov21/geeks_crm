@@ -9,32 +9,20 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endcomment %}
 {% if color == 'blue' %}
   {% with gradient_from='from-blue-500' gradient_to='to-blue-600' bg_color='bg-blue-600' hover_bg='hover:bg-blue-700' text_color='text-blue-600' text_dark='text-blue-800' %}
+{% elif color == 'purple' %}
+  {% with gradient_from='from-purple-500' gradient_to='to-purple-600' bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' text_color='text-purple-600' text_dark='text-purple-800' %}
+{% elif color == 'green' %}
+  {% with gradient_from='from-green-500' gradient_to='to-green-600' bg_color='bg-green-600' hover_bg='hover:bg-green-700' text_color='text-green-600' text_dark='text-green-800' %}
+{% elif color == 'red' %}
+  {% with gradient_from='from-red-500' gradient_to='to-red-600' bg_color='bg-red-600' hover_bg='hover:bg-red-700' text_color='text-red-600' text_dark='text-red-800' %}
+{% elif color == 'indigo' %}
+  {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' text_color='text-indigo-600' text_dark='text-indigo-800' %}
+{% elif color == 'yellow' %}
+  {% with gradient_from='from-yellow-500' gradient_to='to-yellow-600' bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' text_color='text-yellow-600' text_dark='text-yellow-800' %}
+{% elif color == 'pink' %}
+  {% with gradient_from='from-pink-500' gradient_to='to-pink-600' bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' text_color='text-pink-600' text_dark='text-pink-800' %}
 {% else %}
-  {% if color == 'purple' %}
-    {% with gradient_from='from-purple-500' gradient_to='to-purple-600' bg_color='bg-purple-600' hover_bg='hover:bg-purple-700' text_color='text-purple-600' text_dark='text-purple-800' %}
-  {% else %}
-    {% if color == 'green' %}
-      {% with gradient_from='from-green-500' gradient_to='to-green-600' bg_color='bg-green-600' hover_bg='hover:bg-green-700' text_color='text-green-600' text_dark='text-green-800' %}
-    {% else %}
-      {% if color == 'red' %}
-        {% with gradient_from='from-red-500' gradient_to='to-red-600' bg_color='bg-red-600' hover_bg='hover:bg-red-700' text_color='text-red-600' text_dark='text-red-800' %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' text_color='text-indigo-600' text_dark='text-indigo-800' %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% with gradient_from='from-yellow-500' gradient_to='to-yellow-600' bg_color='bg-yellow-600' hover_bg='hover:bg-yellow-700' text_color='text-yellow-600' text_dark='text-yellow-800' %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% with gradient_from='from-pink-500' gradient_to='to-pink-600' bg_color='bg-pink-600' hover_bg='hover:bg-pink-700' text_color='text-pink-600' text_dark='text-pink-800' %}
-            {% else %}
-              {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' text_color='text-indigo-600' text_dark='text-indigo-800' %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+  {% with gradient_from='from-indigo-500' gradient_to='to-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' text_color='text-indigo-600' text_dark='text-indigo-800' %}
 {% endif %}
 
 <div class="space-y-6">
@@ -61,7 +49,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
                 </a>
                 {% endif %}
                 {% if delete_url and can_delete %}
-                <button @click="$dispatch('open-delete-modal', {id: {{ object.pk }}, name: '{{ object.name|default:object|escapejs }}', deleteUrl: '{% url delete_url object.pk %}', redirectUrl: '{% if back_url %}{% url back_url %}{% else %}{{ request.path }}{% endif %}'})" 
+                <button @click="$dispatch('open-delete-modal', {id: {{ object.pk }}, name: '{{ object.name|default:object|escapejs }}', url: '{% url delete_url object.pk %}', redirect: '{% if back_url %}{% url back_url %}{% else %}{{ request.path }}{% endif %}'})" 
                         class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-2">
                     <i class="fas fa-trash"></i>
                     <span>O'chirish</span>
@@ -199,32 +187,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
     </div>
     {% endif %}
 </div>
-{% if color == 'blue' %}
-  {% endwith %}
-{% else %}
-  {% if color == 'purple' %}
-    {% endwith %}
-  {% else %}
-    {% if color == 'green' %}
-      {% endwith %}
-    {% else %}
-      {% if color == 'red' %}
-        {% endwith %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% endwith %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% endwith %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% endwith %}
-            {% else %}
-              {% endwith %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-{% endif %}
+
+{% endwith %}

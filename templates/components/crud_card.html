@@ -9,32 +9,20 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endcomment %}
 {% if color == 'blue' %}
   {% with bg_light='bg-blue-50' bg_dark='bg-blue-100' bg_main='bg-blue-600' text_color='text-blue-600' text_dark='text-blue-800' %}
+{% elif color == 'purple' %}
+  {% with bg_light='bg-purple-50' bg_dark='bg-purple-100' bg_main='bg-purple-600' text_color='text-purple-600' text_dark='text-purple-800' %}
+{% elif color == 'green' %}
+  {% with bg_light='bg-green-50' bg_dark='bg-green-100' bg_main='bg-green-600' text_color='text-green-600' text_dark='text-green-800' %}
+{% elif color == 'red' %}
+  {% with bg_light='bg-red-50' bg_dark='bg-red-100' bg_main='bg-red-600' text_color='text-red-600' text_dark='text-red-800' %}
+{% elif color == 'indigo' %}
+  {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
+{% elif color == 'yellow' %}
+  {% with bg_light='bg-yellow-50' bg_dark='bg-yellow-100' bg_main='bg-yellow-600' text_color='text-yellow-600' text_dark='text-yellow-800' %}
+{% elif color == 'pink' %}
+  {% with bg_light='bg-pink-50' bg_dark='bg-pink-100' bg_main='bg-pink-600' text_color='text-pink-600' text_dark='text-pink-800' %}
 {% else %}
-  {% if color == 'purple' %}
-    {% with bg_light='bg-purple-50' bg_dark='bg-purple-100' bg_main='bg-purple-600' text_color='text-purple-600' text_dark='text-purple-800' %}
-  {% else %}
-    {% if color == 'green' %}
-      {% with bg_light='bg-green-50' bg_dark='bg-green-100' bg_main='bg-green-600' text_color='text-green-600' text_dark='text-green-800' %}
-    {% else %}
-      {% if color == 'red' %}
-        {% with bg_light='bg-red-50' bg_dark='bg-red-100' bg_main='bg-red-600' text_color='text-red-600' text_dark='text-red-800' %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% with bg_light='bg-yellow-50' bg_dark='bg-yellow-100' bg_main='bg-yellow-600' text_color='text-yellow-600' text_dark='text-yellow-800' %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% with bg_light='bg-pink-50' bg_dark='bg-pink-100' bg_main='bg-pink-600' text_color='text-pink-600' text_dark='text-pink-800' %}
-            {% else %}
-              {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
+  {% with bg_light='bg-indigo-50' bg_dark='bg-indigo-100' bg_main='bg-indigo-600' text_color='text-indigo-600' text_dark='text-indigo-800' %}
 {% endif %}
 
 <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
@@ -106,7 +94,7 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
             </a>
             {% endif %}
             {% if delete_url and can_delete %}
-            <button @click="$dispatch('open-delete-modal', {id: {{ item.pk }}, name: '{{ item.name|default:item|escapejs }}', deleteUrl: '{% url delete_url item.pk %}', redirectUrl: '{{ request.path }}'})" 
+            <button @click="$dispatch('open-delete-modal', {id: {{ item.pk }}, name: '{{ item.name|default:item|escapejs }}', url: '{% url delete_url item.pk %}', redirect: '{{ request.path }}'})" 
                     class="text-red-600 hover:text-red-800" 
                     title="O'chirish">
                 <i class="fas fa-trash"></i>
@@ -115,32 +103,5 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         </div>
     </div>
 </div>
-{% if color == 'blue' %}
-  {% endwith %}
-{% else %}
-  {% if color == 'purple' %}
-    {% endwith %}
-  {% else %}
-    {% if color == 'green' %}
-      {% endwith %}
-    {% else %}
-      {% if color == 'red' %}
-        {% endwith %}
-      {% else %}
-        {% if color == 'indigo' %}
-          {% endwith %}
-        {% else %}
-          {% if color == 'yellow' %}
-            {% endwith %}
-          {% else %}
-            {% if color == 'pink' %}
-              {% endwith %}
-            {% else %}
-              {% endwith %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-{% endif %}
+
+{% endwith %}

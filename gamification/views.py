@@ -40,6 +40,7 @@ class StudentBadgesView(LoginRequiredMixin, ListView):
     model = StudentBadge
     template_name = 'gamification/student_badges.html'
     context_object_name = 'badges'
+    paginate_by = 20
     
     def get_queryset(self):
         student_id = self.kwargs.get('student_id')
@@ -178,6 +179,7 @@ class PointHistoryView(LoginRequiredMixin, ListView):
     model = PointTransaction
     template_name = 'gamification/point_history.html'
     context_object_name = 'transactions'
+    paginate_by = 30
     
     def get_queryset(self):
         student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')

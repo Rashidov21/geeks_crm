@@ -43,8 +43,12 @@ def handle_lead_changes(sender, instance, created, **kwargs):
                 notes="Yangi lid yaratildi"
             )
         
-        # Agar sotuvchi tayinlangan bo'lsa, follow-up yaratish
-        if instance.assigned_sales:
+        # Agar sotuvchi tayinlanmagan bo'lsa, avtomatik taqsimlash
+        if not instance.assigned_sales:
+            from .tasks import assign_leads_to_sales
+            assign_leads_to_sales.delay()
+        else:
+            # Agar sotuvchi tayinlangan bo'lsa, follow-up yaratish
             from .tasks import create_initial_followup
             create_initial_followup.delay(instance.id)
             
@@ -174,11 +178,16 @@ def handle_followup_completion(sender, instance, created, **kwargs):
         
         # Contacted statusidagi lidlar uchun ketma-ket follow-up'lar
         if lead.status and lead.status.code == 'contacted':
-            # Ketma-ketlik: 24, 48, 72 soat
+            # Ketma-ketlik: 24 soat, 3 kun, 7 kun, 14 kun
             sequence = instance.followup_sequence
             
-            if sequence < 4:  # Maksimum 3 ta follow-up
-                intervals = {1: 24, 2: 48, 3: 72}
+            if sequence < 5:  # Maksimum 4 ta follow-up
+                intervals = {
+                    1: 24,      # 24 soat
+                    2: 72,      # 3 kun (72 soat)
+                    3: 168,     # 7 kun (168 soat)
+                    4: 336      # 14 kun (336 soat)
+                }
                 hours = intervals.get(sequence, 24)
                 
                 due_date = timezone.now() + timedelta(hours=hours)
@@ -191,11 +200,12 @@ def handle_followup_completion(sender, instance, created, **kwargs):
                 ).exists()
                 
                 if not existing:
+                    days_text = {1: '24 soat', 2: '3 kun', 3: '7 kun', 4: '14 kun'}
                     FollowUp.objects.create(
                         lead=lead,
                         sales=lead.assigned_sales,
                         due_date=due_date,
-                        notes=f"Follow-up #{sequence + 1} ({hours} soat keyin)",
+                        notes=f"Follow-up #{sequence + 1} ({days_text.get(sequence, '24 soat')} keyin)",
                         followup_sequence=sequence + 1
                     )
 

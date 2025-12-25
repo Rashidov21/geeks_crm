@@ -31,6 +31,13 @@
                 <i class="fas fa-history"></i>
                 <span>Ball tarixi</span>
             </a>
+            {% if request.user.is_admin or request.user.is_manager %}
+            <a href="/admin/gamification/badge/" target="_blank"
+               class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition text-sm font-semibold flex items-center gap-2">
+                <i class="fas fa-cog"></i>
+                <span>Badge'lar boshqaruvi</span>
+            </a>
+            {% endif %}
         </div>
     </div>
     

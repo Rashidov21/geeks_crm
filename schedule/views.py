@@ -43,7 +43,7 @@ class TimetableView(LoginRequiredMixin, TemplateView):
         if self.request.user.is_student:
             lessons = lessons.filter(group__students=self.request.user)
         elif self.request.user.is_mentor:
-            lessons = lessons.filter(mentor=self.request.user)
+            lessons = lessons.filter(group__mentor=self.request.user)
         
         # Kunlar bo'yicha guruhlash
         lessons_by_day = {}
@@ -132,7 +132,7 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         if self.request.user.is_student:
             lessons = lessons.filter(group__students=self.request.user)
         elif self.request.user.is_mentor:
-            lessons = lessons.filter(mentor=self.request.user)
+            lessons = lessons.filter(group__mentor=self.request.user)
         
         # Kunlar bo'yicha guruhlash
         lessons_by_date = {}

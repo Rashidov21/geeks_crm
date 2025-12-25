@@ -223,6 +223,7 @@ class DebtListView(RoleRequiredMixin, ListView):
     template_name = 'finance/debt_list.html'
     context_object_name = 'debts'
     allowed_roles = ['admin', 'manager', 'accountant']
+    paginate_by = 30
     
     def get_queryset(self):
         queryset = Debt.objects.select_related('contract', 'contract__student')
@@ -265,6 +266,7 @@ class FinancialReportListView(AdminRequiredMixin, ListView):
     model = FinancialReport
     template_name = 'finance/financial_report_list.html'
     context_object_name = 'reports'
+    paginate_by = 25
     
     def get_queryset(self):
         return FinancialReport.objects.select_related('branch').order_by('-period_end', '-period_start')

@@ -132,6 +132,7 @@ class MonthlyReportListView(MentorRequiredMixin, ListView):
     model = MonthlyReport
     template_name = 'mentors/monthly_report_list.html'
     context_object_name = 'reports'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = MonthlyReport.objects.filter(mentor=self.request.user)

@@ -269,6 +269,7 @@ class LeadListView(LoginRequiredMixin, ListView):
     model = Lead
     template_name = 'crm/lead_list.html'
     context_object_name = 'leads'
+    paginate_by = 50
     
     def get_queryset(self):
         queryset = Lead.objects.select_related('status', 'assigned_sales', 'interested_course', 'branch')
@@ -570,6 +571,7 @@ class FollowUpTodayView(LoginRequiredMixin, ListView):
     model = FollowUp
     template_name = 'crm/followup_today.html'
     context_object_name = 'followups'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = FollowUp.objects.select_related('lead', 'sales')
@@ -596,6 +598,7 @@ class FollowUpOverdueView(LoginRequiredMixin, ListView):
     model = FollowUp
     template_name = 'crm/followup_overdue.html'
     context_object_name = 'followups'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = FollowUp.objects.select_related('lead', 'sales').filter(
@@ -936,6 +939,7 @@ class OfferListView(LoginRequiredMixin, ListView):
     model = Offer
     template_name = 'crm/offer_list.html'
     context_object_name = 'offers'
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = Offer.objects.select_related('course', 'created_by')
@@ -1023,6 +1027,7 @@ class LeaveListView(LoginRequiredMixin, ListView):
     model = Leave
     template_name = 'crm/leave_list.html'
     context_object_name = 'leaves'
+    paginate_by = 25
     
     def get_queryset(self):
         if self.request.user.is_sales or self.request.user.is_sales_manager:
@@ -1038,6 +1043,7 @@ class LeavePendingView(RoleRequiredMixin, ListView):
     template_name = 'crm/leave_pending.html'
     context_object_name = 'leaves'
     allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 25
     
     def get_queryset(self):
         return Leave.objects.filter(status='pending').select_related('sales').order_by('start_date')
@@ -1087,6 +1093,7 @@ class SalesUserListView(RoleRequiredMixin, ListView):
     template_name = 'crm/sales_list.html'
     context_object_name = 'sales_profiles'
     allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = SalesProfile.objects.select_related('user', 'branch').filter(user__is_active=True)
@@ -1110,10 +1117,31 @@ class SalesUserListView(RoleRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         profiles = self.get_queryset()
         
-        # Statistikalar
+        # Basic counts
         context['total_count'] = profiles.count()
         context['active_count'] = profiles.filter(is_active_sales=True, is_on_leave=False).count()
         context['on_leave_count'] = profiles.filter(is_on_leave=True).count()
+        
+        # Get all sales users from filtered profiles
+        sales_users = [profile.user for profile in profiles]
+        
+        # Overall statistics for filtered salespeople
+        total_leads = Lead.objects.filter(assigned_sales__in=sales_users).count() if sales_users else 0
+        total_enrolled = Lead.objects.filter(
+            assigned_sales__in=sales_users,
+            status__code='enrolled'
+        ).count() if sales_users else 0
+        avg_conversion = (total_enrolled / total_leads * 100) if total_leads > 0 else 0
+        
+        # Average KPI score (current month)
+        current_month = timezone.now().month
+        current_year = timezone.now().year
+        kpis = SalesKPI.objects.filter(
+            sales__in=sales_users,
+            month=current_month,
+            year=current_year
+        ).aggregate(avg_kpi=Avg('total_kpi_score'))
+        avg_kpi = kpis['avg_kpi'] or 0
         
         # Har bir sotuvchi uchun lid va sotuvlar soni
         for profile in context['sales_profiles']:
@@ -1122,6 +1150,14 @@ class SalesUserListView(RoleRequiredMixin, ListView):
                 assigned_sales=profile.user, 
                 status__code='enrolled'
             ).count()
+        
+        # Overall statistics
+        context['overall_stats'] = {
+            'total_leads': total_leads,
+            'total_enrolled': total_enrolled,
+            'avg_conversion': avg_conversion,
+            'avg_kpi': avg_kpi,
+        }
         
         # Filter uchun filiallar
         context['branches'] = Branch.objects.all()
@@ -1238,11 +1274,25 @@ class SalesUserDeleteView(AdminRequiredMixin, DeleteView):
     template_name = 'crm/sales_confirm_delete.html'
     success_url = reverse_lazy('crm:sales_list')
     
-    def get_queryset(self):
-        return User.objects.filter(role='sales')
+    def get_object(self):
+        """
+        PK can be either SalesProfile PK or User PK
+        Handle both cases
+        """
+        pk = self.kwargs.get('pk')
+        # Try to get SalesProfile first (since sales_list.html uses profile.pk)
+        try:
+            profile = SalesProfile.objects.get(pk=pk)
+            return profile.user
+        except SalesProfile.DoesNotExist:
+            # If not SalesProfile, try User directly
+            user = get_object_or_404(User, pk=pk, role='sales')
+            return user
     
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Sotuvchi o\'chirildi.')
+        user = self.get_object()
+        user_name = user.get_full_name() or user.username
+        messages.success(request, f'Sotuvchi {user_name} o\'chirildi.')
         return super().delete(request, *args, **kwargs)
 
 
@@ -1277,6 +1327,7 @@ class ManagerUserListView(AdminRequiredMixin, ListView):
     model = User
     template_name = 'crm/manager_list.html'
     context_object_name = 'managers'
+    paginate_by = 25
     
     def get_queryset(self):
         return User.objects.filter(role='sales_manager', is_active=True).order_by('username')
@@ -1360,6 +1411,7 @@ class MessageSentView(RoleRequiredMixin, ListView):
     template_name = 'crm/message_sent.html'
     context_object_name = 'messages_list'
     allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 25
     
     def get_queryset(self):
         return SalesMessage.objects.filter(sender=self.request.user).order_by('-created_at')
@@ -1372,6 +1424,7 @@ class MessageInboxView(LoginRequiredMixin, ListView):
     model = SalesMessage
     template_name = 'crm/message_inbox.html'
     context_object_name = 'messages_list'
+    paginate_by = 25
     
     def get_queryset(self):
         return SalesMessage.objects.filter(recipients=self.request.user).order_by('-created_at')
@@ -1462,6 +1515,60 @@ class CRMAnalyticsView(RoleRequiredMixin, TemplateView):
         return context
 
 
+class SalesKPIListView(RoleRequiredMixin, TemplateView):
+    """
+    Barcha sotuvchilar KPI ko'rish (admin uchun)
+    """
+    template_name = 'crm/kpi_list.html'
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.db.models import Sum, Avg
+        
+        # Month/year filter (default to current month/year)
+        month = int(self.request.GET.get('month', timezone.now().month))
+        year = int(self.request.GET.get('year', timezone.now().year))
+        
+        context['selected_month'] = month
+        context['selected_year'] = year
+        
+        # Get all sales users
+        sales_users = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        
+        # Get KPI data for each salesperson for selected month/year
+        sales_kpi_data = []
+        for sales in sales_users:
+            try:
+                kpi = SalesKPI.objects.get(sales=sales, month=month, year=year)
+            except SalesKPI.DoesNotExist:
+                # Create default KPI if doesn't exist
+                kpi = SalesKPI.objects.create(sales=sales, month=month, year=year)
+            
+            # Get additional stats
+            total_leads = Lead.objects.filter(assigned_sales=sales).count()
+            enrolled_leads = Lead.objects.filter(assigned_sales=sales, status__code='enrolled').count()
+            conversion_rate = (enrolled_leads / total_leads * 100) if total_leads > 0 else 0
+            
+            sales_kpi_data.append({
+                'sales': sales,
+                'kpi': kpi,
+                'total_leads': total_leads,
+                'enrolled_leads': enrolled_leads,
+                'conversion_rate': conversion_rate,
+            })
+        
+        # Sort by KPI score
+        sales_kpi_data.sort(key=lambda x: x['kpi'].total_kpi_score, reverse=True)
+        context['sales_kpi_data'] = sales_kpi_data
+        
+        # Month options for dropdown
+        context['months'] = [(i, timezone.datetime(2000, i, 1).strftime('%B')) for i in range(1, 13)]
+        context['years'] = range(timezone.now().year - 2, timezone.now().year + 1)
+        
+        return context
+
+
 class SalesKPIDetailView(RoleRequiredMixin, DetailView):
     """
     Sotuvchi KPI ko'rish
@@ -1477,12 +1584,13 @@ class SalesKPIDetailView(RoleRequiredMixin, DetailView):
         else:
             sales_id = self.kwargs.get('sales_id')
             if sales_id:
-                sales = get_object_or_404(User, pk=sales_id)
+                sales = get_object_or_404(User, pk=sales_id, role__in=['sales', 'sales_manager'])
             else:
                 sales = self.request.user
         
-        month = self.kwargs.get('month', timezone.now().month)
-        year = self.kwargs.get('year', timezone.now().year)
+        # Get month/year from URL kwargs or query params
+        month = self.kwargs.get('month') or int(self.request.GET.get('month', timezone.now().month))
+        year = self.kwargs.get('year') or int(self.request.GET.get('year', timezone.now().year))
         
         kpi, created = SalesKPI.objects.get_or_create(
             sales=sales,
@@ -1501,6 +1609,7 @@ class SalesKPIRankingView(RoleRequiredMixin, ListView):
     template_name = 'crm/sales_kpi_ranking.html'
     context_object_name = 'kpis'
     allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 25
     
     def get_queryset(self):
         month = self.kwargs.get('month', timezone.now().month)
@@ -1534,6 +1643,7 @@ class MessageListView(LoginRequiredMixin, ListView):
     model = SalesMessage
     template_name = 'crm/message_list.html'
     context_object_name = 'messages_list'
+    paginate_by = 25
     
     def get_queryset(self):
         if self.request.user.is_sales:

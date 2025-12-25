@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Ish jadvalini tahrirlash{% else %}Yangi ish jadvali{% endif %} | GEEKS CRM{% endblock %}
+
+{% block content %}
+{% with gradient_from='from-blue-500' gradient_to='to-blue-600' ring_color='ring-blue-500' text_color='text-blue-600' bg_color='bg-blue-50' hover_from='from-blue-600' hover_to='to-blue-700' hover_from_hover='from-blue-700' hover_to_hover='to-blue-800' %}
+<div class="max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div class="flex items-center gap-4">
+      <div class="bg-gradient-to-br {{ gradient_from }} {{ gradient_to }} rounded-full p-4">
+        <i class="fas fa-calendar-alt text-3xl text-white"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900">{% if is_edit %}Ish jadvalini tahrirlash{% else %}Yangi ish jadvali qo'shish{% endif %}</h1>
+        <p class="text-gray-600 mt-1">Sotuvchi ish jadvali ma'lumotlarini kiriting</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-white rounded-xl shadow-lg p-8">
+    <form method="post" class="space-y-6" x-data="{loading: false}">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+            <div>
+              <p class="font-semibold text-red-800">Xato</p>
+              {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label for="{{ form.sales.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+            Sotuvchi <span class="text-red-500">*</span>
+          </label>
+          {{ form.sales }}
+          {% if form.sales.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.sales.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.weekday.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+            Hafta kuni <span class="text-red-500">*</span>
+          </label>
+          {{ form.weekday }}
+          {% if form.weekday.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.weekday.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.start_time.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+            Boshlanish vaqti <span class="text-red-500">*</span>
+          </label>
+          <input type="time" name="{{ form.start_time.name }}" id="{{ form.start_time.id_for_label }}"
+                 value="{{ form.start_time.value|default:'' }}"
+                 required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all">
+          {% if form.start_time.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.start_time.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.end_time.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+            Tugash vaqti <span class="text-red-500">*</span>
+          </label>
+          <input type="time" name="{{ form.end_time.name }}" id="{{ form.end_time.id_for_label }}"
+                 value="{{ form.end_time.value|default:'' }}"
+                 required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all">
+          {% if form.end_time.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.end_time.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="{{ form.is_active.name }}" id="{{ form.is_active.id_for_label }}"
+                   {% if form.is_active.value %}checked{% endif %}
+                   class="w-5 h-5 {{ text_color }} border-gray-300 rounded focus:ring-2 {{ ring_color }}">
+            <span class="text-sm font-medium text-gray-700">Faol</span>
+          </label>
+          {% if form.is_active.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-6 border-t">
+        <a href="{% url 'crm:work_schedule_list' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+          <i class="fas fa-arrow-left"></i>
+          <span>Orqaga</span>
+        </a>
+        <button type="submit" 
+                @click="loading=true"
+                :disabled="loading"
+                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r {{ hover_from }} {{ hover_to }} hover:{{ hover_from_hover }} hover:{{ hover_to_hover }} text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+          <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
+          <span x-text="loading ? 'Saqlanmoqda...' : 'Saqlash'">Saqlash</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+

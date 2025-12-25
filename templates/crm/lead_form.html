@@ -4,14 +4,133 @@
 {% block title %}{% if object %}Lidni tahrirlash{% else %}Yangi lid{% endif %} | GEEKS CRM{% endblock %}
 
 {% block content %}
-{% include 'components/modern_form.html' with 
-    form=form
-    title=object|yesno:"Lidni tahrirlash,Yangi lid qo'shish"
-    subtitle="Potensial mijoz ma'lumotlarini kiriting"
-    icon="fas fa-user-plus"
-    color="purple"
-    back_url="crm:lead_list"
-    back_text="Orqaga"
-    submit_text="Saqlash"
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: purple (hardcoded)
+{% endcomment %}
+{% with gradient_from='from-purple-500' gradient_to='to-purple-600' ring_color='ring-purple-500' text_color='text-purple-600' bg_color='bg-purple-50' hover_from='from-purple-600' hover_to='to-purple-700' hover_from_hover='from-purple-700' hover_to_hover='to-purple-800' %}
+<div class="max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div class="flex items-center gap-4">
+      <div class="bg-gradient-to-br {{ gradient_from }} {{ gradient_to }} rounded-full p-4">
+        <i class="fas fa-user-plus text-3xl text-white"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900">{% if object %}Lidni tahrirlash{% else %}Yangi lid qo'shish{% endif %}</h1>
+        <p class="text-gray-600 mt-1">Potensial mijoz ma'lumotlarini kiriting</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-white rounded-xl shadow-lg p-8">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+            <div>
+              <p class="font-semibold text-red-800">Xato</p>
+              {% for error in form.non_field_errors %}
+                <p class="text-red-600 text-sm">{{ error }}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for field in form %}
+          <div class="{% if field.field.widget.input_type == 'textarea' %}col-span-full{% endif %}">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+              {{ field.label }}
+              {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+            </label>
+            
+            {% if field.field.widget.input_type == 'textarea' %}
+              <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                        {% if field.field.required %}required{% endif %}
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all resize-none"
+                        rows="4" 
+                        placeholder="{{ field.help_text|default:field.label }}">{{ field.value|default:'' }}</textarea>
+            
+            {% elif field.field.widget.input_type == 'select' %}
+              {{ field }}
+              <style>
+                #{{ field.id_for_label }} {
+                  width: 100%;
+                  padding: 0.75rem 1rem;
+                  border: 2px solid #d1d5db;
+                  border-radius: 0.5rem;
+                  transition: all 0.2s;
+                }
+                #{{ field.id_for_label }}:focus {
+                  outline: none;
+                  border-color: #a855f7;
+                  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+                }
+              </style>
+            
+            {% elif field.field.widget.input_type == 'checkbox' %}
+              <div class="flex items-center gap-3">
+                <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                       {% if field.value %}checked{% endif %}
+                       class="w-5 h-5 {{ text_color }} border-gray-300 rounded focus:ring-2 {{ ring_color }}">
+                <label for="{{ field.id_for_label }}" class="text-sm text-gray-700">
+                  {{ field.help_text|default:field.label }}
+                </label>
+              </div>
+            
+            {% elif field.field.widget.input_type == 'file' %}
+              <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}"
+                     {% if field.field.required %}required{% endif %}
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:{{ bg_color }} file:{{ text_color }} hover:file:opacity-90">
+            
+            {% else %}
+              <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                     name="{{ field.name }}" 
+                     id="{{ field.id_for_label }}"
+                     value="{{ field.value|default:'' }}"
+                     {% if field.field.required %}required{% endif %}
+                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                     placeholder="{{ field.help_text|default:field.label }}">
+            {% endif %}
+            
+            {% if field.help_text and field.field.widget.input_type != 'checkbox' %}
+              <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                <i class="fas fa-info-circle"></i> {{ field.help_text }}
+              </p>
+            {% endif %}
+            
+            {% if field.errors %}
+              <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                <i class="fas fa-exclamation-circle"></i> {{ field.errors.0 }}
+              </p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-6 border-t">
+        <a href="{% if object %}{% url 'crm:lead_detail' object.pk %}{% else %}{% url 'crm:lead_list' %}{% endif %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+          <i class="fas fa-arrow-left"></i>
+          <span>Orqaga</span>
+        </a>
+        <button type="submit" 
+                @click="loading=true"
+                :disabled="loading"
+                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r {{ hover_from }} {{ hover_to }} hover:{{ hover_from_hover }} hover:{{ hover_to_hover }} text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+          <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
+          <span x-text="loading ? 'Saqlanmoqda...' : 'Saqlash'">Saqlash</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endwith %}
 {% endblock %}

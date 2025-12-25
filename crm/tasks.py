@@ -292,31 +292,81 @@ def check_overdue_followups():
 @shared_task
 def send_trial_reminders():
     """
-    Sinov darsi eslatmalarini yuborish (Har soat)
+    Sinov darsi eslatmalarini yuborish (Har soat yoki har 5 daqiqada)
+    Ish vaqtini hisobga olgan holda: 8-10 soat va 2 soat oldin
     """
     try:
-        from .models import TrialLesson
+        from .models import TrialLesson, FollowUp
+        from datetime import datetime, timedelta
         
-        tomorrow = timezone.now().date() + timedelta(days=1)
+        now = timezone.now()
         
-        # Ertangi sinov darslari
+        # Kelajakdagi sinov darslari (7 kun ichida)
+        future_date = now.date() + timedelta(days=7)
         trials = TrialLesson.objects.filter(
-            date=tomorrow,
-            reminder_sent=False,
+            date__lte=future_date,
+            date__gte=now.date(),
             result__isnull=True
-        )
+        ).select_related('lead', 'lead__assigned_sales')
         
         for trial in trials:
-            try:
-                from telegram_bot.tasks import send_trial_reminder
-                send_trial_reminder.delay(trial.id)
-            except ImportError:
-                pass
+            if not trial.lead.assigned_sales or not trial.time:
+                continue
             
-            trial.reminder_sent = True
-            trial.save()
+            # Sinov darsi vaqti
+            trial_datetime = timezone.make_aware(
+                datetime.combine(trial.date, trial.time)
+            )
+            
+            # Eslatma vaqtlari (ish vaqti hisobga olingan holda)
+            reminder_8_10_hours = trial_datetime - timedelta(hours=10)  # 10 soat oldin
+            reminder_2_hours = trial_datetime - timedelta(hours=2)       # 2 soat oldin
+            
+            # Hozirgi vaqt
+            current_time = now
+            
+            # 8-10 soat oldin eslatma (ish vaqti ichida bo'lishi kerak)
+            if (reminder_8_10_hours <= current_time <= reminder_8_10_hours + timedelta(hours=2) and
+                not trial.reminder_8_10_sent):
+                
+                # Ish vaqtida yuborilishi kerak
+                due_date = FollowUp.calculate_work_hours_due_date(
+                    trial.lead.assigned_sales,
+                    current_time
+                )
+                
+                # Agar eslatma vaqti ish vaqtida bo'lsa, yuborish
+                sales_profile = trial.lead.assigned_sales.sales_profile if hasattr(trial.lead.assigned_sales, 'sales_profile') else None
+                if sales_profile and sales_profile.is_working_now():
+                    try:
+                        from telegram_bot.tasks import send_trial_reminder
+                        send_trial_reminder.delay(trial.id, reminder_type='8_10_hours')
+                        trial.reminder_8_10_sent = True
+                        trial.save(update_fields=['reminder_8_10_sent'])
+                    except ImportError:
+                        pass
+            
+            # 2 soat oldin eslatma (ish vaqtida)
+            if (reminder_2_hours <= current_time <= reminder_2_hours + timedelta(minutes=15) and
+                not trial.reminder_2_hours_sent):
+                
+                # Ish vaqtida yuborilishi kerak
+                due_date = FollowUp.calculate_work_hours_due_date(
+                    trial.lead.assigned_sales,
+                    current_time
+                )
+                
+                sales_profile = trial.lead.assigned_sales.sales_profile if hasattr(trial.lead.assigned_sales, 'sales_profile') else None
+                if sales_profile and sales_profile.is_working_now():
+                    try:
+                        from telegram_bot.tasks import send_trial_reminder
+                        send_trial_reminder.delay(trial.id, reminder_type='2_hours')
+                        trial.reminder_2_hours_sent = True
+                        trial.save(update_fields=['reminder_2_hours_sent'])
+                    except ImportError:
+                        pass
         
-        logger.info(f"{trials.count()} ta sinov eslatmasi yuborildi")
+        logger.info(f"Sinov eslatmalari tekshirildi")
     
     except Exception as e:
         logger.error(f"Sinov eslatma xatosi: {e}")
@@ -595,13 +645,13 @@ def create_status_followup(lead_id, status_code):
         if not lead.assigned_sales:
             return
         
-        # Follow-up vaqtlari (TZ bo'yicha)
+        # Follow-up vaqtlari (daqiqalar bo'yicha)
         followup_times = {
             'new': 5,  # 5 daqiqa
-            'contacted': 24 * 60,  # 24 soat
+            'contacted': 24 * 60,  # 24 soat (birinchi, keyin sequential follow-up'lar)
             'interested': 24 * 60,  # 24 soat
             'trial_registered': 24 * 60,  # Sinov sanasidan 1 kun oldin (alohida logic)
-            'trial_attended': 24 * 60,  # 24 soat
+            'trial_attended': 90,  # 90 daqiqa (sinov tugagandan keyin)
             'trial_not_attended': 24 * 60,  # 24 soat
             'offer_sent': 48 * 60,  # 48 soat
         }

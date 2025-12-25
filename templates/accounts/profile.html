@@ -90,7 +90,7 @@
             </div>
 
             <!-- Account Statistics (if student) -->
-            {% if user.role == 'student' %}
+            {% if user_profile.role == 'student' %}
             <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
                 <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-chart-line text-indigo-600"></i>
@@ -98,7 +98,7 @@
                 </h2>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                        <p class="text-2xl font-bold text-blue-600">{{ user.student_profile.groups.count|default:0 }}</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ user_profile.student_profile.groups.count|default:0 }}</p>
                         <p class="text-xs text-gray-600 mt-1">Guruhlar</p>
                     </div>
                     <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
@@ -112,6 +112,31 @@
                     <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
                         <p class="text-2xl font-bold text-purple-600">-</p>
                         <p class="text-xs text-gray-600 mt-1">Ballar</p>
+                    </div>
+                </div>
+            </div>
+            {% elif user_profile.role == 'mentor' %}
+            <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-indigo-600"></i>
+                    Statistika
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                        <p class="text-2xl font-bold text-blue-600">{{ mentor_groups_count|default:0 }}</p>
+                        <p class="text-xs text-gray-600 mt-1">Guruhlar</p>
+                    </div>
+                    <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                        <p class="text-2xl font-bold text-green-600">{{ mentor_students_count|default:0 }}</p>
+                        <p class="text-xs text-gray-600 mt-1">O'quvchilar</p>
+                    </div>
+                    <div class="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
+                        <p class="text-2xl font-bold text-red-600">{{ mentor_debtors_count|default:0 }}</p>
+                        <p class="text-xs text-gray-600 mt-1">Qarzdorlar</p>
+                    </div>
+                    <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                        <p class="text-2xl font-bold text-purple-600">{{ mentor_active_students_count|default:0 }}</p>
+                        <p class="text-xs text-gray-600 mt-1">Faol o'quvchilar</p>
                     </div>
                 </div>
             </div>

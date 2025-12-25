@@ -19,6 +19,12 @@ class CourseListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Course.objects.select_related('branch')
         
+        # Mentorlar uchun faqat o'z guruhlaridagi kurslar
+        if self.request.user.is_mentor:
+            mentor_groups = Group.objects.filter(mentor=self.request.user, is_active=True)
+            course_ids = mentor_groups.values_list('course_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=course_ids)
+        
         # Filterlar
         branch = self.request.GET.get('branch')
         if branch:
@@ -60,7 +66,17 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'course'
     
     def get_queryset(self):
-        return Course.objects.prefetch_related('modules__topics', 'modules__topics__materials')
+        queryset = Course.objects.prefetch_related('modules__topics', 'modules__topics__materials')
+        
+        # Mentorlar uchun faqat o'z guruhlaridagi kurslar
+        if self.request.user.is_mentor:
+            mentor_courses = Group.objects.filter(
+                mentor=self.request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=mentor_courses)
+        
+        return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -122,10 +138,21 @@ class CourseDeleteView(RoleRequiredMixin, DeleteView):
 # ==================== MODULE VIEWS ====================
 
 class ModuleCreateView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, course_id):
         course = get_object_or_404(Course, pk=course_id)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun modul qo'sha olmaysiz")
+        
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         order = Module.objects.filter(course=course).count() + 1
@@ -145,10 +172,21 @@ class ModuleCreateView(RoleRequiredMixin, View):
 
 
 class ModuleUpdateView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, pk):
         module = get_object_or_404(Module, pk=pk)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if module.course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun modul tahrirlay olmaysiz")
+        
         module.name = request.POST.get('name', module.name)
         module.description = request.POST.get('description', module.description)
         module.save()
@@ -161,10 +199,21 @@ class ModuleUpdateView(RoleRequiredMixin, View):
 
 
 class ModuleDeleteView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, pk):
         module = get_object_or_404(Module, pk=pk)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if module.course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun modul o'chira olmaysiz")
+        
         course_id = module.course.pk
         module.delete()
         
@@ -178,10 +227,21 @@ class ModuleDeleteView(RoleRequiredMixin, View):
 # ==================== TOPIC VIEWS ====================
 
 class TopicCreateView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, module_id):
         module = get_object_or_404(Module, pk=module_id)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if module.course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun mavzu qo'sha olmaysiz")
+        
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         duration = request.POST.get('duration_minutes', 90)
@@ -203,10 +263,21 @@ class TopicCreateView(RoleRequiredMixin, View):
 
 
 class TopicUpdateView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, pk):
         topic = get_object_or_404(Topic, pk=pk)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if topic.module.course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun mavzu tahrirlay olmaysiz")
+        
         topic.name = request.POST.get('name', topic.name)
         topic.description = request.POST.get('description', topic.description)
         topic.duration_minutes = request.POST.get('duration_minutes', topic.duration_minutes)
@@ -220,10 +291,21 @@ class TopicUpdateView(RoleRequiredMixin, View):
 
 
 class TopicDeleteView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+    allowed_roles = ['admin', 'manager', 'mentor']
     
     def post(self, request, pk):
         topic = get_object_or_404(Topic, pk=pk)
+        
+        # Mentorlar uchun tekshiruv - faqat o'z guruhlaridagi kurslar
+        if request.user.is_mentor:
+            from django.core.exceptions import PermissionDenied
+            mentor_courses = Group.objects.filter(
+                mentor=request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            if topic.module.course.id not in mentor_courses:
+                raise PermissionDenied("Siz bu kurs uchun mavzu o'chira olmaysiz")
+        
         course_id = topic.module.course.pk
         topic.delete()
         
@@ -261,6 +343,10 @@ class GroupListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Group.objects.select_related('course', 'mentor', 'room')
         
+        # Mentorlar uchun faqat o'z guruhlari
+        if self.request.user.is_mentor:
+            queryset = queryset.filter(mentor=self.request.user)
+        
         # Filterlar
         course = self.request.GET.get('course')
         if course:
@@ -295,7 +381,13 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'group'
     
     def get_queryset(self):
-        return Group.objects.prefetch_related('students', 'lessons').select_related('course', 'mentor', 'room')
+        queryset = Group.objects.select_related('course', 'mentor', 'room').prefetch_related('students', 'lessons')
+        
+        # Mentorlar uchun faqat o'z guruhlari
+        if self.request.user.is_mentor:
+            queryset = queryset.filter(mentor=self.request.user)
+        
+        return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -390,11 +482,11 @@ class LessonListView(LoginRequiredMixin, ListView):
     paginate_by = 30
     
     def get_queryset(self):
-        queryset = Lesson.objects.select_related('group', 'topic', 'mentor')
+        queryset = Lesson.objects.select_related('group', 'group__mentor', 'topic')
         if self.request.user.is_student:
             queryset = queryset.filter(group__students=self.request.user)
         elif self.request.user.is_mentor:
-            queryset = queryset.filter(mentor=self.request.user)
+            queryset = queryset.filter(group__mentor=self.request.user)
         return queryset.order_by('-date', '-start_time')
 
 
@@ -409,14 +501,15 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Get previous and next lessons in the same group
-        group_lessons = Lesson.objects.filter(group=self.object.group).order_by('date', 'start_time')
-        lesson_list = list(group_lessons.values_list('id', flat=True))
-        current_index = lesson_list.index(self.object.id) if self.object.id in lesson_list else -1
-        
-        if current_index > 0:
-            context['prev_lesson'] = group_lessons[current_index - 1]
-        if current_index < len(lesson_list) - 1:
-            context['next_lesson'] = group_lessons[current_index + 1]
+        group_lessons = list(Lesson.objects.filter(group=self.object.group).order_by('date', 'start_time'))
+        try:
+            current_index = next(i for i, lesson in enumerate(group_lessons) if lesson.id == self.object.id)
+            if current_index > 0:
+                context['prev_lesson'] = group_lessons[current_index - 1]
+            if current_index < len(group_lessons) - 1:
+                context['next_lesson'] = group_lessons[current_index + 1]
+        except StopIteration:
+            pass
         
         return context
 
@@ -459,6 +552,7 @@ class GroupTransferListView(RoleRequiredMixin, ListView):
     template_name = 'courses/group_transfer_list.html'
     context_object_name = 'transfers'
     allowed_roles = ['admin', 'manager']
+    paginate_by = 25
     
     def get_queryset(self):
         queryset = GroupTransfer.objects.select_related('student', 'from_group', 'to_group', 'transferred_by')

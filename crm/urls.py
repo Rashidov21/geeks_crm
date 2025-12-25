@@ -63,6 +63,12 @@ urlpatterns = [
     path('users/managers/<int:pk>/edit/', views.ManagerUserUpdateView.as_view(), name='manager_edit'),
     path('users/managers/<int:pk>/delete/', views.ManagerUserDeleteView.as_view(), name='manager_delete'),
     
+    # Work Schedules
+    path('work-schedules/', views.WorkScheduleListView.as_view(), name='work_schedule_list'),
+    path('work-schedules/create/', views.WorkScheduleCreateView.as_view(), name='work_schedule_create'),
+    path('work-schedules/<int:pk>/edit/', views.WorkScheduleUpdateView.as_view(), name='work_schedule_edit'),
+    path('work-schedules/<int:pk>/delete/', views.WorkScheduleDeleteView.as_view(), name='work_schedule_delete'),
+    
     # Messages
     path('messages/', views.MessageListView.as_view(), name='message_list'),
     path('messages/create/', views.MessageCreateView.as_view(), name='message_create'),
@@ -73,8 +79,9 @@ urlpatterns = [
     
     # Analytics / KPI
     path('analytics/', views.CRMAnalyticsView.as_view(), name='analytics'),
-    path('kpi/', views.SalesKPIDetailView.as_view(), name='sales_kpi'),
-    path('kpi/<int:sales_id>/<int:year>/<int:month>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_detail'),
+    path('kpi/', views.SalesKPIListView.as_view(), name='sales_kpi'),
+    path('kpi/<int:sales_id>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_detail'),
+    path('kpi/<int:sales_id>/<int:year>/<int:month>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_detail_month'),
     path('kpi/ranking/', views.SalesKPIRankingView.as_view(), name='sales_kpi_ranking'),
     
     # Landing

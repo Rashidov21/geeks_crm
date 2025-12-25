@@ -285,6 +285,8 @@ class TrialLesson(models.Model):
     notes = models.TextField(blank=True, null=True, verbose_name='Izohlar')
     reminder_sent = models.BooleanField(default=False, verbose_name='Eslatma yuborildi')
     sales_reminder_sent = models.BooleanField(default=False, verbose_name='Sotuvchi eslatmasi')
+    reminder_8_10_sent = models.BooleanField(default=False, verbose_name='8-10 soat oldin eslatma yuborildi')
+    reminder_2_hours_sent = models.BooleanField(default=False, verbose_name='2 soat oldin eslatma yuborildi')
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan vaqt')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan vaqt')

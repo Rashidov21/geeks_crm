@@ -1,27 +1,187 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Kurslar{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Kurslar"
-    subtitle="Barcha mavjud kurslar ro'yxati"
-    icon="fas fa-book"
-    color="indigo"
-    items=courses
-    fields="name,branch,duration_weeks,price,is_active"
-    create_url="courses:course_create"
-    create_text="Yangi kurs"
-    detail_url="courses:course_detail"
-    edit_url="courses:course_edit"
-    delete_url="courses:course_delete"
-    view_mode="grid"
-    show_search=True
-    show_filters=True
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-    stats=stats
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: indigo (hardcoded)
+{% endcomment %}
+{% with text_color='text-indigo-600' bg_color='bg-indigo-600' hover_bg='hover:bg-indigo-700' ring_color='ring-indigo-500' bg_light='bg-indigo-50' border_color='border-indigo-200' text_dark='text-indigo-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-book {{ text_color }}"></i>
+                Kurslar
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha mavjud kurslar ro'yxati</p>
+            {% if courses %}<p class="text-sm text-gray-500 mt-1">Jami: {{ courses|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span class="hidden sm:inline">Filterlar</span>
+            </button>
+            
+            {% if can_create %}
+            <a href="{% url 'courses:course_create' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi kurs</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% if branches %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Filial</label>
+                <select name="branch" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch.id }}" {% if request.GET.branch == branch.id|stringformat:"s" %}selected{% endif %}>{{ branch.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Faol</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Nofaol</option>
+                    <option value="" {% if not request.GET.status %}selected{% endif %}>Barchasi</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Qidirish
+                </button>
+                <a href="{% url 'courses:course_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Grid -->
+    {% if courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">
+                            <a href="{% url 'courses:course_detail' course.pk %}" class="hover:{{ text_dark }} {{ text_color }}">
+                                {{ course.name }}
+                            </a>
+                        </h3>
+                        {% if course.branch %}
+                        <p class="text-sm text-gray-600">{{ course.branch.name }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full {% if course.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {% if course.is_active %}Faol{% else %}Nofaol{% endif %}
+                    </span>
+                </div>
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-4">
+                    {% if course.duration_weeks %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clock w-4"></i>
+                        <span>{{ course.duration_weeks }} hafta</span>
+                    </div>
+                    {% endif %}
+                    {% if course.price %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-money-bill-wave w-4"></i>
+                        <span>{{ course.price|intcomma }} so'm</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center gap-2 pt-4 border-t border-gray-200">
+                    <a href="{% url 'courses:course_detail' course.pk %}" 
+                       class="flex-1 text-center px-3 py-2 text-sm {{ text_color }} hover:{{ text_dark }} border border-current rounded-lg transition">
+                        <i class="fas fa-eye mr-1"></i>Ko'rish
+                    </a>
+                    {% if can_edit %}
+                    <a href="{% url 'courses:course_edit' course.pk %}" 
+                       class="px-3 py-2 text-sm text-blue-600 hover:text-blue-800 border border-blue-600 rounded-lg transition">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if can_delete %}
+                    <button @click="$dispatch('open-delete-modal', {id: {{ course.pk }}, name: '{{ course.name|escapejs }}', url: '{% url 'courses:course_delete' course.pk %}', redirect: '{% url 'courses:course_list' %}'})" 
+                            class="px-3 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 rounded-lg transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.branch %}&branch={{ request.GET.branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.branch %}&branch={{ request.GET.branch }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-book text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday kurs mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'courses:course_create' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi kursni yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

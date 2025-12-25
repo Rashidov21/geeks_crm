@@ -1,26 +1,192 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Davomat{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Davomat"
-    subtitle="Barcha davomat yozuvlari"
-    icon="fas fa-calendar-check"
-    color="cyan"
-    items=attendances
-    fields="student,lesson,date,status"
-    create_url="attendance:attendance_create"
-    create_text="Yangi davomat"
-    detail_url=""
-    edit_url=""
-    delete_url=""
-    view_mode="table"
-    show_search=True
-    show_filters=True
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-    stats=stats
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: cyan (hardcoded)
+{% endcomment %}
+{% with text_color='text-cyan-600' bg_color='bg-cyan-600' hover_bg='hover:bg-cyan-700' ring_color='ring-cyan-500' bg_light='bg-cyan-50' border_color='border-cyan-200' text_dark='text-cyan-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-calendar-check {{ text_color }}"></i>
+                Davomat
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha davomat yozuvlari</p>
+            {% if attendances %}<p class="text-sm text-gray-500 mt-1">Jami: {{ attendances|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span class="hidden sm:inline">Filterlar</span>
+            </button>
+            
+            {% if can_create %}
+            <a href="{% url 'attendance:attendance_form' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi davomat</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if stats %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500">{{ stat.label }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value|intcomma }}</p>
+                </div>
+                <i class="{{ stat.icon }} text-2xl {{ stat.color }}"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% if groups %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    <option value="present" {% if request.GET.status == 'present' %}selected{% endif %}>Kelgan</option>
+                    <option value="late" {% if request.GET.status == 'late' %}selected{% endif %}>Kechikkan</option>
+                    <option value="absent" {% if request.GET.status == 'absent' %}selected{% endif %}>Kelmagan</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Qidirish
+                </button>
+                <a href="{% url 'attendance:attendance_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Table -->
+    {% if attendances %}
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">O'quvchi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dars</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sana</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for attendance in attendances %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if attendance.student %}
+                            {{ attendance.student.get_full_name|default:attendance.student.username }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if attendance.lesson %}
+                            {{ attendance.lesson.topic.name|default:attendance.lesson.group.name }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if attendance.lesson %}
+                            {{ attendance.lesson.date|date:"d.m.Y" }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if attendance.status == 'present' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Kelgan</span>
+                            {% elif attendance.status == 'late' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Kechikkan</span>
+                            {% elif attendance.status == 'absent' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Kelmagan</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{{ attendance.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-calendar-check text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday davomat yozuvi mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'attendance:attendance_form' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi davomatni yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

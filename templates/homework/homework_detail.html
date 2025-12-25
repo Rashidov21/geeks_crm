@@ -11,10 +11,12 @@
             <div class="flex-1 text-center sm:text-left">
                 <h1 class="text-3xl font-bold mb-3">{{ homework.title }}</h1>
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm">
+                    {% if homework.lesson and homework.lesson.group %}
                     <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <i class="fas fa-users"></i>
-                        <span class="font-semibold">{{ homework.group.name }}</span>
+                        <span class="font-semibold">{{ homework.lesson.group.name }}</span>
                     </span>
+                    {% endif %}
                     <span class="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
                         <i class="fas fa-calendar"></i>
                         <span class="font-semibold">Muddati: {{ homework.deadline|date:"d.m.Y" }}</span>
@@ -158,10 +160,12 @@
             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                 <dt class="text-gray-600">Guruh</dt>
                 <dd class="font-semibold text-gray-900">
-                    <a href="{% url 'courses:group_detail' homework.group.pk %}" 
+                    {% if homework.lesson and homework.lesson.group %}
+                    <a href="{% url 'courses:group_detail' homework.lesson.group.pk %}" 
                        class="text-orange-600 hover:text-orange-800">
-                        {{ homework.group.name }}
+                        {{ homework.lesson.group.name }}
                     </a>
+                    {% else %}-{% endif %}
                 </dd>
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-gray-200">

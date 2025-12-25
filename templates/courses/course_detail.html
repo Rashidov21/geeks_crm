@@ -151,18 +151,12 @@
                     </div>
                     <div class="flex items-center gap-2">
                         {% if can_edit %}
-                        <form method="post" 
-                              action="{% url 'courses:module_delete' module.pk %}" 
-                              class="inline" 
-                              onsubmit="return confirm('Modulni o\'chirishni tasdiqlaysizmi?')"
-                              @click.stop>
-                            {% csrf_token %}
-                            <button type="submit" 
-                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" 
-                                    title="O'chirish">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        <button type="button"
+                                @click="$dispatch('open-delete-modal', {id: {{ module.pk }}, name: '{{ module.name|escapejs }}', url: '{% url 'courses:module_delete' module.pk %}', redirect: window.location.pathname})"
+                                class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" 
+                                title="O'chirish">
+                            <i class="fas fa-trash"></i>
+                        </button>
                         {% endif %}
                         <i class="fas fa-chevron-down text-gray-400 transition-transform text-xl" 
                            :class="{ 'rotate-180': open }"></i>
@@ -193,16 +187,11 @@
                                 </div>
                             </div>
                             {% if can_edit %}
-                            <form method="post" 
-                                  action="{% url 'courses:topic_delete' topic.pk %}" 
-                                  class="inline" 
-                                  onsubmit="return confirm('Mavzuni o\'chirishni tasdiqlaysizmi?')">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
+                            <button type="button"
+                                    @click="$dispatch('open-delete-modal', {id: {{ topic.pk }}, name: '{{ topic.name|escapejs }}', url: '{% url 'courses:topic_delete' topic.pk %}', redirect: window.location.pathname})"
+                                    class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition">
+                                <i class="fas fa-times"></i>
+                            </button>
                             {% endif %}
                         </div>
                         {% empty %}

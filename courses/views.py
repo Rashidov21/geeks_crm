@@ -404,7 +404,21 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'lesson'
     
     def get_queryset(self):
-        return Lesson.objects.select_related('group', 'group__mentor', 'topic')
+        return Lesson.objects.select_related('group', 'group__mentor', 'topic').prefetch_related('topic__materials')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get previous and next lessons in the same group
+        group_lessons = Lesson.objects.filter(group=self.object.group).order_by('date', 'start_time')
+        lesson_list = list(group_lessons.values_list('id', flat=True))
+        current_index = lesson_list.index(self.object.id) if self.object.id in lesson_list else -1
+        
+        if current_index > 0:
+            context['prev_lesson'] = group_lessons[current_index - 1]
+        if current_index < len(lesson_list) - 1:
+            context['next_lesson'] = group_lessons[current_index + 1]
+        
+        return context
 
 
 class StudentProgressView(LoginRequiredMixin, DetailView):

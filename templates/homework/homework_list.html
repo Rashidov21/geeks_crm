@@ -1,26 +1,205 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
 
 {% block title %}Uy vazifalari{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Uy vazifalari"
-    subtitle="Barcha uy vazifalari ro'yxati"
-    icon="fas fa-tasks"
-    color="orange"
-    items=homeworks
-    fields="title,group,deadline,status"
-    create_url="homework:homework_create"
-    create_text="Yangi vazifa"
-    detail_url="homework:homework_detail"
-    edit_url="homework:homework_edit"
-    delete_url="homework:homework_delete"
-    view_mode="grid"
-    show_search=True
-    show_filters=True
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-    stats=stats
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: orange (hardcoded)
+{% endcomment %}
+{% with text_color='text-orange-600' bg_color='bg-orange-600' hover_bg='hover:bg-orange-700' ring_color='ring-orange-500' bg_light='bg-orange-50' border_color='border-orange-200' text_dark='text-orange-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-tasks {{ text_color }}"></i>
+                Uy vazifalari
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha uy vazifalari ro'yxati</p>
+            {% if homeworks %}<p class="text-sm text-gray-500 mt-1">Jami: {{ homeworks|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span class="hidden sm:inline">Filterlar</span>
+            </button>
+            
+            {% if can_create %}
+            <a href="{% url 'homework:homework_create' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi vazifa</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if stats %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500">{{ stat.label }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value|intcomma }}</p>
+                </div>
+                <i class="{{ stat.icon }} text-2xl {{ stat.color }}"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% if groups %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    <option value="submitted" {% if request.GET.status == 'submitted' %}selected{% endif %}>Topshirilgan</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Kutilmoqda</option>
+                    <option value="overdue" {% if request.GET.status == 'overdue' %}selected{% endif %}>Kechikkan</option>
+                    <option value="graded" {% if request.GET.status == 'graded' %}selected{% endif %}>Baholangan</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Qidirish
+                </button>
+                <a href="{% url 'homework:homework_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Grid -->
+    {% if homeworks %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for homework in homeworks %}
+        <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">
+                            <a href="{% url 'homework:homework_detail' homework.pk %}" class="hover:{{ text_dark }} {{ text_color }}">
+                                {{ homework.title }}
+                            </a>
+                        </h3>
+                        {% if homework.lesson %}
+                        <p class="text-sm text-gray-600">{{ homework.lesson.group.name }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full {% if homework.is_submitted %}bg-green-100 text-green-700{% elif homework.deadline < now %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {% if homework.is_submitted %}Topshirilgan{% elif homework.deadline < now %}Kechikkan{% else %}Kutilmoqda{% endif %}
+                    </span>
+                </div>
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-4">
+                    {% if homework.deadline %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-calendar w-4"></i>
+                        <span>{{ homework.deadline|date:"d.m.Y" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if homework.grade %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-star w-4"></i>
+                        <span>Baholandi: {{ homework.grade.score }}/{{ homework.grade.max_score }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center gap-2 pt-4 border-t border-gray-200">
+                    <a href="{% url 'homework:homework_detail' homework.pk %}" 
+                       class="flex-1 text-center px-3 py-2 text-sm {{ text_color }} hover:{{ text_dark }} border border-current rounded-lg transition">
+                        <i class="fas fa-eye mr-1"></i>Ko'rish
+                    </a>
+                    {% if can_edit %}
+                    <a href="{% url 'homework:homework_edit' homework.pk %}" 
+                       class="px-3 py-2 text-sm text-blue-600 hover:text-blue-800 border border-blue-600 rounded-lg transition">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if can_delete %}
+                    <button @click="$dispatch('open-delete-modal', {id: {{ homework.pk }}, name: '{{ homework.title|default:homework.pk|escapejs }}', url: '{% url 'homework:homework_delete' homework.pk %}', redirect: '{% url 'homework:homework_list' %}'})" 
+                            class="px-3 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 rounded-lg transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-tasks text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday vazifa mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'homework:homework_create' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi vazifani yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

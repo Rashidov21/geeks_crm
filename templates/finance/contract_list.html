@@ -1,26 +1,216 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Shartnomalar{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Shartnomalar"
-    subtitle="Barcha shartnomalar ro'yxati"
-    icon="fas fa-file-contract"
-    color="emerald"
-    items=contracts
-    fields="student,course,start_date,end_date,status"
-    create_url="finance:contract_create"
-    create_text="Yangi shartnoma"
-    detail_url="finance:contract_detail"
-    edit_url=""
-    delete_url=""
-    view_mode="table"
-    show_search=True
-    show_filters=True
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-    stats=stats
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: emerald (hardcoded)
+{% endcomment %}
+{% with text_color='text-emerald-600' bg_color='bg-emerald-600' hover_bg='hover:bg-emerald-700' ring_color='ring-emerald-500' bg_light='bg-emerald-50' border_color='border-emerald-200' text_dark='text-emerald-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-file-contract {{ text_color }}"></i>
+                Shartnomalar
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha shartnomalar ro'yxati</p>
+            {% if contracts %}<p class="text-sm text-gray-500 mt-1">Jami: {{ contracts|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span class="hidden sm:inline">Filterlar</span>
+            </button>
+            
+            {% if can_create %}
+            <a href="{% url 'finance:contract_create' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi shartnoma</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if stats %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500">{{ stat.label }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value|intcomma }}</p>
+                </div>
+                <i class="{{ stat.icon }} text-2xl {{ stat.color }}"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% if courses %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kurs</label>
+                <select name="course" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"s" %}selected{% endif %}>{{ course.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            {% if groups %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Faol</option>
+                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Yakunlangan</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Bekor qilingan</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Qidirish
+                </button>
+                <a href="{% url 'finance:contract_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Table -->
+    {% if contracts %}
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">O'quvchi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kurs</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Boshlanish</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tugash</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for contract in contracts %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if contract.student %}
+                            {{ contract.student.get_full_name|default:contract.student.username }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if contract.course %}
+                            {{ contract.course.name }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ contract.start_date|date:"d.m.Y"|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ contract.end_date|date:"d.m.Y"|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if contract.status == 'active' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Faol</span>
+                            {% elif contract.status == 'completed' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">Yakunlangan</span>
+                            {% elif contract.status == 'cancelled' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Bekor qilingan</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{{ contract.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'finance:contract_detail' contract.pk %}" 
+                                   class="{{ text_color }} hover:{{ text_dark }}" 
+                                   title="Ko'rish">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-file-contract text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday shartnoma mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'finance:contract_create' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi shartnomani yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

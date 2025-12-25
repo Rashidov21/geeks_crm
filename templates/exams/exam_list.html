@@ -1,26 +1,187 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Imtihonlar{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Imtihonlar"
-    subtitle="Barcha imtihonlar ro'yxati"
-    icon="fas fa-file-alt"
-    color="rose"
-    items=exams
-    fields="title,group,exam_date,is_active"
-    create_url="exams:exam_create"
-    create_text="Yangi imtihon"
-    detail_url="exams:exam_detail"
-    edit_url="exams:exam_edit"
-    delete_url="exams:exam_delete"
-    view_mode="grid"
-    show_search=True
-    show_filters=True
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-    stats=stats
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: rose (hardcoded)
+{% endcomment %}
+{% with text_color='text-rose-600' bg_color='bg-rose-600' hover_bg='hover:bg-rose-700' ring_color='ring-rose-500' bg_light='bg-rose-50' border_color='border-rose-200' text_dark='text-rose-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-file-alt {{ text_color }}"></i>
+                Imtihonlar
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha imtihonlar ro'yxati</p>
+            {% if exams %}<p class="text-sm text-gray-500 mt-1">Jami: {{ exams|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            <button @click="showFilters = !showFilters" 
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
+                <i class="fas fa-filter"></i>
+                <span class="hidden sm:inline">Filterlar</span>
+            </button>
+            
+            {% if can_create %}
+            <a href="{% url 'exams:exam_create' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi imtihon</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    {% if stats %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for stat in stats %}
+        <div class="bg-white rounded-lg shadow-sm border p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500">{{ stat.label }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ stat.value|intcomma }}</p>
+                </div>
+                <i class="{{ stat.icon }} text-2xl {{ stat.color }}"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filters Panel -->
+    <div x-show="showFilters" x-transition class="bg-white rounded-lg shadow-sm p-4 border">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% if groups %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Guruh</label>
+                <select name="group" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Barchasi</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg text-sm">
+                    <i class="fas fa-search mr-1"></i>Qidirish
+                </button>
+                <a href="{% url 'exams:exam_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Grid -->
+    {% if exams %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for exam in exams %}
+        <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1">
+                            <a href="{% url 'exams:exam_detail' exam.pk %}" class="hover:{{ text_dark }} {{ text_color }}">
+                                {{ exam.title }}
+                            </a>
+                        </h3>
+                        {% if exam.group %}
+                        <p class="text-sm text-gray-600">{{ exam.group.name }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full {% if exam.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                        {% if exam.is_active %}Faol{% else %}Nofaol{% endif %}
+                    </span>
+                </div>
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-4">
+                    {% if exam.exam_date %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-calendar w-4"></i>
+                        <span>{{ exam.exam_date|date:"d.m.Y" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center gap-2 pt-4 border-t border-gray-200">
+                    <a href="{% url 'exams:exam_detail' exam.pk %}" 
+                       class="flex-1 text-center px-3 py-2 text-sm {{ text_color }} hover:{{ text_dark }} border border-current rounded-lg transition">
+                        <i class="fas fa-eye mr-1"></i>Ko'rish
+                    </a>
+                    {% if can_edit %}
+                    <a href="{% url 'exams:exam_edit' exam.pk %}" 
+                       class="px-3 py-2 text-sm text-blue-600 hover:text-blue-800 border border-blue-600 rounded-lg transition">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if can_delete %}
+                    <button @click="$dispatch('open-delete-modal', {id: {{ exam.pk }}, name: '{{ exam.title|escapejs }}', url: '{% url 'exams:exam_delete' exam.pk %}', redirect: '{% url 'exams:exam_list' %}'})" 
+                            class="px-3 py-2 text-sm text-red-600 hover:text-red-800 border border-red-600 rounded-lg transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}" 
+               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-file-alt text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday imtihon mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'exams:exam_create' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi imtihonni yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
 {% endblock %}

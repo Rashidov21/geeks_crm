@@ -36,9 +36,10 @@
                     <i class="fas fa-calendar mr-1"></i>Qayta rejalashtirish
                 </button>
                 {% if request.user.is_admin %}
-                <button type="submit" formaction="{% url 'crm:followup_bulk_delete' %}" 
-                        onclick="return confirm('O\'chirishni tasdiqlaysizmi?')"
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                <button type="button" 
+                        @click="$dispatch('open-delete-modal', {id: 'bulk', name: 'Tanlangan follow-uplar', url: '{% url 'crm:followup_bulk_delete' %}', redirect: window.location.pathname})"
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                        x-data="{bulkForm: document.getElementById('bulkForm')}">
                     <i class="fas fa-trash mr-1"></i>O'chirish
                 </button>
                 {% endif %}
@@ -130,7 +131,12 @@ document.getElementById('selectAll').addEventListener('change', function() {
 function showRescheduleModal() {
     const checked = document.querySelectorAll('.followup-checkbox:checked');
     if (checked.length === 0) {
-        alert('Kamida bitta follow-up tanlang');
+        // Use Alpine.js or show a message instead of alert
+        const message = document.createElement('div');
+        message.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        message.textContent = 'Kamida bitta follow-up tanlang';
+        document.body.appendChild(message);
+        setTimeout(() => message.remove(), 3000);
         return;
     }
     

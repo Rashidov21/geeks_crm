@@ -1,39 +1,153 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Follow-uplar{% endblock %}
 
 {% block content %}
-{% include 'components/crud_list.html' with 
-    title="Follow-uplar"
-    subtitle="Barcha follow-uplar ro'yxati"
-    icon="fas fa-tasks"
-    color="blue"
-    items=followups
-    fields="lead,notes,due_date,status"
-    create_url="crm:followup_create"
-    create_text="Yangi follow-up"
-    detail_url=""
-    edit_url="crm:followup_edit"
-    delete_url=""
-    view_mode="table"
-    show_search=True
-    show_filters=False
-    can_create=can_create
-    can_edit=can_edit
-    can_delete=can_delete
-%}
+{% comment %}
+To'liq alohida template - component'siz
+Color: blue (hardcoded)
+{% endcomment %}
+{% with text_color='text-blue-600' bg_color='bg-blue-600' hover_bg='hover:bg-blue-700' ring_color='ring-blue-500' bg_light='bg-blue-50' border_color='border-blue-200' text_dark='text-blue-900' %}
+<div class="space-y-6" x-data="{ 
+    showFilters: false, 
+    selectedItems: [],
+    showBulkActions: false,
+    searchQuery: '{{ request.GET.search|default:"" }}'
+}">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-tasks {{ text_color }}"></i>
+                Follow-uplar
+            </h1>
+            <p class="text-gray-600 mt-1">Barcha follow-uplar ro'yxati</p>
+            {% if followups %}<p class="text-sm text-gray-500 mt-1">Jami: {{ followups|length }} ta</p>{% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <div class="relative flex-1 sm:flex-initial sm:w-64">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" 
+                       x-model="searchQuery"
+                       placeholder="Qidirish..." 
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
+            </div>
+            
+            {% if can_create %}
+            <a href="{% url 'crm:followup_create' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Yangi follow-up</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
 
-<!-- Quick Actions -->
-<div class="flex gap-2 mt-4">
-    <a href="{% url 'crm:followup_today' %}" 
-       class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition text-sm flex items-center gap-2">
-        <i class="fas fa-calendar-day"></i>
-        <span>Bugungi follow-uplar</span>
-    </a>
-    <a href="{% url 'crm:followup_overdue' %}" 
-       class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm flex items-center gap-2">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Kechikkan follow-uplar</span>
-    </a>
+    <!-- Items Table -->
+    {% if followups %}
+    <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lid</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Izoh</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Muddat</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for followup in followups %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if followup.lead %}
+                            <a href="{% url 'crm:lead_detail' followup.lead.pk %}" class="font-medium {{ text_color }} hover:{{ text_dark }}">
+                                {{ followup.lead.name }}
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ followup.notes|truncatewords:10|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ followup.due_date|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if followup.completed %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">Bajarilgan</span>
+                            {% elif followup.is_overdue %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">Kechikkan</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">Kutilmoqda</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm">
+                            <div class="flex items-center justify-end gap-2">
+                                {% if can_edit %}
+                                <a href="{% url 'crm:followup_edit' followup.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800" 
+                                   title="Tahrirlash">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
+        <div class="text-sm text-gray-700">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
+            {% endif %}
+            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border p-12 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-tasks text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Ma'lumot topilmadi</h3>
+            <p class="text-gray-600 mb-6">Hozircha hech qanday follow-up mavjud emas.</p>
+            {% if can_create %}
+            <a href="{% url 'crm:followup_create' %}" 
+               class="inline-flex items-center gap-2 {{ bg_color }} {{ hover_bg }} text-white px-6 py-3 rounded-lg transition">
+                <i class="fas fa-plus"></i>
+                <span>Birinchi follow-upni yaratish</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="flex gap-2 mt-4">
+        <a href="{% url 'crm:followup_today' %}" 
+           class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition text-sm flex items-center gap-2">
+            <i class="fas fa-calendar-day"></i>
+            <span>Bugungi follow-uplar</span>
+        </a>
+        <a href="{% url 'crm:followup_overdue' %}" 
+           class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Kechikkan follow-uplar</span>
+        </a>
+    </div>
 </div>
+{% endwith %}
 {% endblock %}

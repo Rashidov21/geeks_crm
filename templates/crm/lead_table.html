@@ -30,6 +30,19 @@
                 <i class="fas fa-plus"></i>
                 <span>Yangi lid</span>
             </a>
+            {% if request.GET.search or request.GET.status or request.GET.source or request.GET.course or request.GET.sales %}
+            <a href="{% url 'crm:lead_export' %}?format=excel{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.source %}&source={{ request.GET.source }}{% endif %}{% if request.GET.course %}&course={{ request.GET.course }}{% endif %}{% if request.GET.sales %}&sales={{ request.GET.sales }}{% endif %}" 
+               class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+                <i class="fas fa-file-excel"></i>
+                <span>Excel export</span>
+            </a>
+            {% else %}
+            <a href="{% url 'crm:lead_export' %}?format=excel" 
+               class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition text-sm font-medium shadow-md hover:shadow-lg flex items-center gap-2">
+                <i class="fas fa-file-excel"></i>
+                <span>Excel export</span>
+            </a>
+            {% endif %}
         </div>
     </div>
 

@@ -105,6 +105,31 @@
                 </div>
             </div>
             
+            <!-- Quick Actions -->
+            {% if lesson_dates and student_data %}
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-2 items-center">
+                <span class="text-sm font-semibold text-gray-700">Tezkor amallar:</span>
+                {% if lesson_dates %}
+                <div class="flex flex-wrap gap-2">
+                    <button @click="markAllForToday('present')" 
+                            class="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1">
+                        <i class="fas fa-check"></i>
+                        <span>Bugungi uchun barcha keldi</span>
+                    </button>
+                    <button @click="markAllForToday('absent')" 
+                            class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1">
+                        <i class="fas fa-times"></i>
+                        <span>Bugungi uchun barcha kelmadi</span>
+                    </button>
+                </div>
+                {% endif %}
+                <div class="ml-auto text-xs text-gray-600">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Jami: {{ student_data|length }} o'quvchi, {{ lesson_dates|length }} dars</span>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Attendance Grid -->
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -398,6 +423,37 @@ function attendanceManager() {
                 this.showToastMessage('Tarmoq xatosi', 'error');
             }
             this.showModal = false;
+        },
+        
+        async markAllForToday(status) {
+            const today = new Date().toISOString().split('T')[0];
+            const buttons = document.querySelectorAll(`button[data-date="${today}"]`);
+            
+            for (const btn of buttons) {
+                const studentId = btn.dataset.student;
+                try {
+                    const response = await fetch('{% url "attendance:attendance_toggle" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            student_id: studentId,
+                            date: today,
+                            group_id: {{ group.id }},
+                            status: status
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateButton(studentId, today, status);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+            this.showToastMessage(`Barcha o'quvchilar ${status === 'present' ? 'keldi' : 'kelmadi'} sifatida belgilandi`, 'success');
         },
         
         updateButton(studentId, date, status) {

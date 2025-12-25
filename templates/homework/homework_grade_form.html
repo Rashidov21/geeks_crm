@@ -31,7 +31,7 @@
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                 <dt class="text-gray-600">Guruh</dt>
-                <dd class="font-semibold text-gray-900">{{ object.homework.group.name }}</dd>
+                <dd class="font-semibold text-gray-900">{% if object.homework.lesson and object.homework.lesson.group %}{{ object.homework.lesson.group.name }}{% else %}-{% endif %}</dd>
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
                 <dt class="text-gray-600">Muddati</dt>

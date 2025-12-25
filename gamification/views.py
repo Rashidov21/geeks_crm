@@ -42,7 +42,19 @@ class StudentBadgesView(LoginRequiredMixin, ListView):
     context_object_name = 'badges'
     
     def get_queryset(self):
-        student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')
+        student_id = self.kwargs.get('student_id')
+        
+        # Get student object safely
+        if self.request.user.is_student:
+            student = self.request.user
+        elif student_id:
+            try:
+                student = User.objects.get(pk=student_id)
+            except User.DoesNotExist:
+                student = self.request.user
+        else:
+            student = self.request.user
+        
         queryset = StudentBadge.objects.filter(student=student).select_related('badge', 'group').order_by('-earned_at')
         
         # Filter by group
@@ -61,12 +73,27 @@ class StudentBadgesView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         from courses.models import Group
         from .models import Badge
+        from django.http import Http404
         
         student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')
-        context['groups'] = Group.objects.filter(students=student, is_active=True)
+        
+        # Get student object safely
+        if isinstance(student, User):
+            student_obj = student
+        elif student:
+            try:
+                student_obj = User.objects.get(pk=student)
+            except User.DoesNotExist:
+                # If student_id is invalid, default to current user
+                student_obj = self.request.user
+        else:
+            # If no student_id provided, use current user
+            student_obj = self.request.user
+        
+        context['groups'] = Group.objects.filter(students=student_obj, is_active=True)
         context['badge_types'] = Badge.BADGE_TYPE_CHOICES
         context['total_badges'] = self.get_queryset().count()
-        context['student'] = student if isinstance(student, User) else User.objects.get(pk=student)
+        context['student'] = student_obj
         return context
 
 

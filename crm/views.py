@@ -155,7 +155,7 @@ class LeadExportView(LoginRequiredMixin, View):
     def get(self, request):
         format_type = request.GET.get('format', 'excel')
         
-        # Lidlarni olish
+        # Lidlarni olish - LeadTableView bilan bir xil filterlar
         leads = Lead.objects.select_related('status', 'assigned_sales', 'interested_course', 'branch')
         
         # Role bo'yicha filtrlash
@@ -167,14 +167,29 @@ class LeadExportView(LoginRequiredMixin, View):
                 if branch:
                     leads = leads.filter(branch=branch)
         
-        # Filterlar
+        # Filterlar - LeadTableView bilan bir xil
         status = request.GET.get('status')
         if status:
-            leads = leads.filter(status__slug=status)
+            leads = leads.filter(status__code=status)
         
         source = request.GET.get('source')
         if source:
             leads = leads.filter(source=source)
+        
+        course = request.GET.get('course')
+        if course:
+            leads = leads.filter(interested_course_id=course)
+        
+        sales = request.GET.get('sales')
+        if sales and (request.user.is_admin or request.user.is_manager or request.user.is_sales_manager):
+            leads = leads.filter(assigned_sales_id=sales)
+        
+        search = request.GET.get('search')
+        if search:
+            from django.db.models import Q
+            leads = leads.filter(
+                Q(name__icontains=search) | Q(phone__icontains=search)
+            )
         
         leads = leads.order_by('-created_at')
         

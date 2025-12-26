@@ -247,6 +247,39 @@
         </div>
     </div>
 
+    <!-- Darslar -->
+    {% if lessons %}
+    <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-chalkboard text-blue-600"></i>
+                Darslar
+            </h2>
+            <a href="{% url 'courses:lesson_list' %}" 
+               class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Barchasi →
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for lesson in lessons %}
+            <a href="{% url 'courses:lesson_detail' lesson.pk %}" 
+               class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg transition bg-gradient-to-br from-white to-gray-50">
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                    <span>{{ lesson.date|date:"d.m.Y" }}</span>
+                    {% if lesson.start_time %}
+                    <span>{{ lesson.start_time|time:"H:i" }}</span>
+                    {% endif %}
+                </div>
+                <p class="font-semibold text-gray-900 mb-1">{{ lesson.topic.name|default:lesson.title|default:"Mavzu belgilanmagan" }}</p>
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-users"></i> {{ lesson.group.name }}
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Guruhlar -->
     {% if groups %}
     <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-100">

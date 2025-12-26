@@ -51,6 +51,27 @@ Color: orange (hardcoded)
         </div>
     </div>
 
+    <!-- Gamification Banner for Students -->
+    {% if user.role == 'student' %}
+    <div class="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-star text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white mb-1">Ball to'plang va yutun!</h3>
+                    <p class="text-yellow-100 text-sm">Vazifalarni vaqtida bajarganingizda <span class="font-bold text-white">+10 ball</span> olasiz. Har bir bajarilgan vazifa sizga qo'shimcha imkoniyatlar beradi!</p>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <i class="fas fa-trophy text-white text-xl"></i>
+                <a href="{% url 'gamification:overall_ranking' %}" class="text-white font-semibold hover:underline">Reytingga o'tish</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Stats Cards -->
     {% if stats %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

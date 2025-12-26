@@ -134,6 +134,18 @@ class StudentDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class StudentGuideView(LoginRequiredMixin, TemplateView):
+    """
+    Student qo'llanmasi
+    """
+    template_name = 'accounts/student_guide.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.role != 'student':
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
+
 class MentorDashboardView(LoginRequiredMixin, TemplateView):
     """
     Mentor dashboard

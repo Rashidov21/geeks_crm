@@ -26,5 +26,8 @@ urlpatterns = [
     # Dashboards
     path('dashboard/student/', dashboard_views.StudentDashboardView.as_view(), name='student_dashboard'),
     path('dashboard/mentor/', dashboard_views.MentorDashboardView.as_view(), name='mentor_dashboard'),
+    
+    # Student Guide
+    path('guide/', dashboard_views.StudentGuideView.as_view(), name='student_guide'),
 ]
 

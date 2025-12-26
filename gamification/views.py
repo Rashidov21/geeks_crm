@@ -178,14 +178,33 @@ class PointHistoryView(LoginRequiredMixin, ListView):
     """
     model = PointTransaction
     template_name = 'gamification/point_history.html'
-    context_object_name = 'transactions'
+    context_object_name = 'points'
     paginate_by = 30
     
     def get_queryset(self):
-        student = self.request.user if self.request.user.is_student else self.kwargs.get('student_id')
-        return PointTransaction.objects.filter(student=student).select_related(
-            'attendance', 'homework', 'exam_result'
-        ).order_by('-created_at')
+        # Studentlar uchun faqat o'z ballari
+        if self.request.user.is_student:
+            student = self.request.user
+        else:
+            # Admin yoki boshqa rollar uchun student_id query parameter orqali
+            student_id = self.request.GET.get('student_id')
+            if student_id:
+                from accounts.models import User
+                try:
+                    student = User.objects.get(pk=student_id, role='student')
+                except User.DoesNotExist:
+                    student = None
+            else:
+                student = None
+        
+        if student:
+            queryset = PointTransaction.objects.filter(student=student).select_related(
+                'attendance', 'homework', 'exam_result', 'student'
+            ).order_by('-created_at')
+        else:
+            queryset = PointTransaction.objects.none()
+        
+        return queryset
 
 
 class StudentRankingView(LoginRequiredMixin, TemplateView):

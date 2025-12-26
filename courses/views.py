@@ -19,8 +19,13 @@ class CourseListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Course.objects.select_related('branch')
         
+        # Studentlar uchun faqat o'zi o'qiyotgan kurslar
+        if self.request.user.is_student:
+            student_groups = Group.objects.filter(students=self.request.user, is_active=True)
+            course_ids = student_groups.values_list('course_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=course_ids)
         # Mentorlar uchun faqat o'z guruhlaridagi kurslar
-        if self.request.user.is_mentor:
+        elif self.request.user.is_mentor:
             mentor_groups = Group.objects.filter(mentor=self.request.user, is_active=True)
             course_ids = mentor_groups.values_list('course_id', flat=True).distinct()
             queryset = queryset.filter(id__in=course_ids)
@@ -68,8 +73,15 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         queryset = Course.objects.prefetch_related('modules__topics', 'modules__topics__materials')
         
+        # Studentlar uchun faqat o'zi o'qiyotgan kurslar
+        if self.request.user.is_student:
+            student_courses = Group.objects.filter(
+                students=self.request.user,
+                is_active=True
+            ).values_list('course_id', flat=True).distinct()
+            queryset = queryset.filter(id__in=student_courses)
         # Mentorlar uchun faqat o'z guruhlaridagi kurslar
-        if self.request.user.is_mentor:
+        elif self.request.user.is_mentor:
             mentor_courses = Group.objects.filter(
                 mentor=self.request.user,
                 is_active=True
@@ -80,7 +92,21 @@ class CourseDetailView(LoginRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.filter(course=self.object, is_active=True)
+        
+        # Studentlar uchun faqat o'zi o'qiyotgan guruhlar
+        if self.request.user.is_student:
+            groups = Group.objects.filter(course=self.object, students=self.request.user, is_active=True)
+        else:
+            groups = Group.objects.filter(course=self.object, is_active=True)
+        
+        context['groups'] = groups
+        
+        # Kurs bo'yicha barcha darslar (barcha guruhlardan)
+        context['lessons'] = Lesson.objects.filter(
+            group__course=self.object,
+            group__in=groups
+        ).select_related('group', 'topic').order_by('-date', '-start_time')[:20]  # Oxirgi 20 ta dars
+        
         context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
         return context
 
@@ -343,8 +369,11 @@ class GroupListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Group.objects.select_related('course', 'mentor', 'room')
         
+        # Studentlar uchun faqat o'zi o'qiyotgan guruhlar
+        if self.request.user.is_student:
+            queryset = queryset.filter(students=self.request.user)
         # Mentorlar uchun faqat o'z guruhlari
-        if self.request.user.is_mentor:
+        elif self.request.user.is_mentor:
             queryset = queryset.filter(mentor=self.request.user)
         
         # Filterlar
@@ -383,8 +412,11 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         queryset = Group.objects.select_related('course', 'mentor', 'room').prefetch_related('students', 'lessons')
         
+        # Studentlar uchun faqat o'zi o'qiyotgan guruhlar
+        if self.request.user.is_student:
+            queryset = queryset.filter(students=self.request.user)
         # Mentorlar uchun faqat o'z guruhlari
-        if self.request.user.is_mentor:
+        elif self.request.user.is_mentor:
             queryset = queryset.filter(mentor=self.request.user)
         
         return queryset

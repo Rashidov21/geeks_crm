@@ -794,10 +794,10 @@ class FollowUpListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = FollowUp.objects.select_related('lead', 'sales')
         
-        if self.request.user.is_sales:
+        if self.request.user.is_sales or self.request.user.is_sales_manager:
             queryset = queryset.filter(sales=self.request.user)
         
-        filter_type = self.request.GET.get('filter', 'today')
+        filter_type = self.request.GET.get('filter', 'all')
         today = timezone.now().date()
         
         if filter_type == 'today':
@@ -806,6 +806,7 @@ class FollowUpListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(is_overdue=True, completed=False)
         elif filter_type == 'upcoming':
             queryset = queryset.filter(due_date__gt=timezone.now(), completed=False)
+        # 'all' yoki boshqa value bo'lsa, barcha follow-uplarni ko'rsatadi
         
         return queryset.order_by('due_date')
     
@@ -1241,43 +1242,71 @@ class SalesUserCreateView(RoleRequiredMixin, TemplateView):
         return context
     
     def post(self, request):
+        from django import forms
+        from django.core.exceptions import ValidationError
+        
+        # Error collection
+        errors = {}
+        form_data = {}
+        
         # User yaratish
-        username = request.POST.get('username')
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Bu username allaqachon mavjud.')
-            return redirect('crm:sales_create')
+        username = request.POST.get('username', '').strip()
+        if not username:
+            errors['username'] = 'Username majburiy maydon.'
+        elif User.objects.filter(username=username).exists():
+            errors['username'] = 'Bu username allaqachon mavjud.'
         
-        user = User.objects.create(
-            username=username,
-            first_name=request.POST.get('first_name', ''),
-            last_name=request.POST.get('last_name', ''),
-            email=request.POST.get('email', ''),
-            phone=request.POST.get('phone', ''),
-            telegram_id=request.POST.get('telegram_chat_id') or None,
-            role='sales',
-        )
-        password = request.POST.get('password', 'changeme123')
-        user.set_password(password)
-        user.save()
+        email = request.POST.get('email', '').strip()
+        if email and User.objects.filter(email=email).exclude(username=username).exists():
+            errors['email'] = 'Bu email allaqachon mavjud.'
         
-        # SalesProfile yaratish
-        branch_id = request.POST.get('branch')
-        SalesProfile.objects.create(
-            user=user,
-            branch_id=branch_id if branch_id else None,
-            work_start_time=request.POST.get('work_start_time', '09:00'),
-            work_end_time=request.POST.get('work_end_time', '18:00'),
-            work_monday='work_monday' in request.POST,
-            work_tuesday='work_tuesday' in request.POST,
-            work_wednesday='work_wednesday' in request.POST,
-            work_thursday='work_thursday' in request.POST,
-            work_friday='work_friday' in request.POST,
-            work_saturday='work_saturday' in request.POST,
-            work_sunday='work_sunday' in request.POST,
-        )
+        # Form data ni saqlash (error bo'lsa qayta ko'rsatish uchun)
+        form_data = request.POST.copy()
         
-        messages.success(request, f'Sotuvchi muvaffaqiyatli yaratildi. Parol: {password}')
-        return redirect('crm:sales_list')
+        if errors:
+            context = self.get_context_data()
+            context['errors'] = errors
+            context['form_data'] = form_data
+            return self.render_to_response(context)
+        
+        try:
+            user = User.objects.create(
+                username=username,
+                first_name=request.POST.get('first_name', ''),
+                last_name=request.POST.get('last_name', ''),
+                email=email,
+                phone=request.POST.get('phone', ''),
+                telegram_id=request.POST.get('telegram_chat_id') or None,
+                role='sales',
+            )
+            password = request.POST.get('password', 'changeme123')
+            user.set_password(password)
+            user.save()
+            
+            # SalesProfile yaratish
+            branch_id = request.POST.get('branch')
+            SalesProfile.objects.create(
+                user=user,
+                branch_id=branch_id if branch_id else None,
+                work_start_time=request.POST.get('work_start_time', '09:00'),
+                work_end_time=request.POST.get('work_end_time', '18:00'),
+                work_monday='work_monday' in request.POST,
+                work_tuesday='work_tuesday' in request.POST,
+                work_wednesday='work_wednesday' in request.POST,
+                work_thursday='work_thursday' in request.POST,
+                work_friday='work_friday' in request.POST,
+                work_saturday='work_saturday' in request.POST,
+                work_sunday='work_sunday' in request.POST,
+            )
+            
+            messages.success(request, f'Sotuvchi muvaffaqiyatli yaratildi. Parol: {password}')
+            return redirect('crm:sales_list')
+        except Exception as e:
+            errors['general'] = f'Xatolik yuz berdi: {str(e)}'
+            context = self.get_context_data()
+            context['errors'] = errors
+            context['form_data'] = form_data
+            return self.render_to_response(context)
 
 
 class SalesUserUpdateView(RoleRequiredMixin, TemplateView):

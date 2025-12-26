@@ -72,7 +72,7 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-2">
                                 <i class="fas {% if p.points > 0 %}fa-arrow-up text-green-600{% else %}fa-arrow-down text-red-600{% endif %}"></i>
-                                <span class="text-sm text-gray-700">{{ p.reason }}</span>
+                                <span class="text-sm text-gray-700">{{ p.get_point_type_display }}{% if p.description %}: {{ p.description }}{% endif %}</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">

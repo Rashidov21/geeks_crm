@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
+from django.urls import reverse_lazy
 from .models import (
     Contract, Payment, PaymentPlan, Debt, PaymentReminder, FinancialReport
 )
@@ -202,6 +203,7 @@ class PaymentCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
     template_name = 'finance/payment_form.html'
     fields = ['contract', 'payment_plan', 'amount', 'payment_method', 'receipt_number', 'notes']
     allowed_roles = ['admin', 'manager', 'accountant']
+    success_url = reverse_lazy('finance:payment_list')
     
     def form_valid(self, form):
         # To'lov raqamini yaratish

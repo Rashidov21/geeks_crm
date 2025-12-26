@@ -50,6 +50,27 @@ Color: rose (hardcoded)
         </div>
     </div>
 
+    <!-- Gamification Banner for Students -->
+    {% if user.role == 'student' %}
+    <div class="bg-gradient-to-r from-rose-500 via-pink-600 to-red-600 rounded-xl shadow-lg p-5 border-2 border-rose-300">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <i class="fas fa-medal text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white mb-1">Imtihonlardan yuqori ball oling!</h3>
+                    <p class="text-rose-100 text-sm">Imtihonlardan yuqori natija ko'rsatganingizda <span class="font-bold text-white">+20 ball</span> bonus olasiz. Tayyor bo'ling va yaxshi natija ko'rsating!</p>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <i class="fas fa-chart-line text-white text-lg"></i>
+                <a href="{% url 'gamification:point_history' %}" class="text-white font-semibold hover:underline">Ball tarixi</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Stats Cards -->
     {% if stats %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

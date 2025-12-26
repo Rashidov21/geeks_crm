@@ -44,12 +44,8 @@ class HomeworkListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        homeworks = Homework.objects.all()
-        
-        if self.request.user.is_student:
-            homeworks = homeworks.filter(student=self.request.user)
-        elif self.request.user.is_mentor:
-            homeworks = homeworks.filter(lesson__group__mentor=self.request.user)
+        # Use queryset from get_queryset() instead of querying again
+        homeworks = self.get_queryset()
         
         total_homeworks = homeworks.count()
         submitted_count = homeworks.filter(is_submitted=True).count()
@@ -186,7 +182,25 @@ class HomeworkDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'homework'
     
     def get_queryset(self):
-        return Homework.objects.select_related('student', 'lesson', 'grade__mentor')
+        queryset = Homework.objects.select_related('student', 'lesson', 'grade__mentor')
+        
+        # Rol bo'yicha filter
+        if self.request.user.is_student:
+            queryset = queryset.filter(student=self.request.user)
+        elif self.request.user.is_mentor:
+            queryset = queryset.filter(lesson__group__mentor=self.request.user)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_edit'] = (self.request.user.is_admin or 
+                               self.request.user.is_manager or 
+                               (self.request.user.is_mentor and 
+                                hasattr(self.object.lesson, 'group') and 
+                                self.object.lesson.group.mentor == self.request.user))
+        context['today'] = timezone.now().date()
+        return context
 
 
 class HomeworkGradeView(TailwindFormMixin, MentorRequiredMixin, UpdateView):

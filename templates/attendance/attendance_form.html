@@ -18,7 +18,7 @@
 
   <!-- Form -->
   <div class="bg-white rounded-xl shadow-lg p-8">
-    <form method="post" class="space-y-6" x-data="{loading: false}">
+    <form method="post" class="space-y-6" x-data="{loading: false}" @submit.prevent="loading=true; $el.submit()">
       {% csrf_token %}
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,7 +101,6 @@
           <span>Orqaga</span>
         </a>
         <button type="submit" 
-                @click="loading=true"
                 :disabled="loading"
                 class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
           <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>

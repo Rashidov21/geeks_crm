@@ -391,7 +391,13 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['can_edit'] = self.request.user.is_admin or self.request.user.is_manager
+        # Admin, Manager va o'z guruhlarini boshqaruvchi mentorlar uchun tahrirlash ruxsati
+        user = self.request.user
+        context['can_edit'] = (
+            user.is_admin or 
+            user.is_manager or 
+            (user.is_mentor and self.object.mentor == user)
+        )
         context['available_students'] = User.objects.filter(role='student', is_active=True).exclude(
             pk__in=self.object.students.values_list('pk', flat=True)
         )
@@ -452,8 +458,23 @@ class GroupDeleteView(RoleRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-class GroupStudentsView(RoleRequiredMixin, View):
-    allowed_roles = ['admin', 'manager']
+class GroupStudentsView(LoginRequiredMixin, View):
+    """
+    Guruhga o'quvchi qo'shish/chiqarish
+    Admin, Manager va o'z guruhlarini boshqaruvchi mentorlar uchun
+    """
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Ruxsatni tekshirish
+        pk = kwargs.get('pk')
+        group = get_object_or_404(Group, pk=pk)
+        
+        user = request.user
+        if not (user.is_admin or user.is_manager or (user.is_mentor and group.mentor == user)):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Sizga bu guruhga o'quvchi qo'shish/chiqarish ruxsati yo'q")
+        
+        return super().dispatch(request, *args, **kwargs)
     
     def post(self, request, pk):
         group = get_object_or_404(Group, pk=pk)

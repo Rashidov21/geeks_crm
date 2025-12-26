@@ -113,14 +113,13 @@ class StudentDashboardView(LoginRequiredMixin, TemplateView):
             is_active=True
         ).order_by('date')[:5]
         
-        # My Points and Ranking
-        try:
-            student_points = StudentPoints.objects.get(student=student)
-            context['my_points'] = student_points.total_points
-            context['my_level'] = student_points.level
-        except StudentPoints.DoesNotExist:
-            context['my_points'] = 0
-            context['my_level'] = 1
+        # My Points and Ranking (sum across all groups)
+        from gamification.models import StudentPoints
+        student_points_list = StudentPoints.objects.filter(student=student)
+        total_points = sum(sp.total_points for sp in student_points_list)
+        context['my_points'] = total_points
+        # Level calculation (you may want to adjust this logic)
+        context['my_level'] = min(total_points // 100 + 1, 10)  # Example: 100 points per level, max level 10
         
         # My Badges
         context['my_badges'] = StudentBadge.objects.filter(

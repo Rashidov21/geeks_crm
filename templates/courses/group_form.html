@@ -25,7 +25,7 @@ Color: green (hardcoded)
 
   <!-- Form -->
   <div class="bg-white rounded-xl shadow-lg p-8">
-    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}" @submit.prevent="loading=true; $el.submit()">
       {% csrf_token %}
       
       {% if form.non_field_errors %}
@@ -135,7 +135,6 @@ Color: green (hardcoded)
           <span>Orqaga</span>
         </a>
         <button type="submit" 
-                @click="loading=true"
                 :disabled="loading"
                 class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r {{ hover_from }} {{ hover_to }} hover:{{ hover_from_hover }} hover:{{ hover_to_hover }} text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
           <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>

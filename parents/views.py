@@ -28,36 +28,51 @@ class ParentDashboardView(LoginRequiredMixin, TemplateView):
         except:
             students = User.objects.none()
         
-        context['students'] = students
-        
-        # Har bir farzand uchun statistikalar
+        # Har bir farzand uchun statistikalar va student obyektiga qo'shish
         student_stats = []
         for student in students:
             # Davomat
             from attendance.models import AttendanceStatistics
             attendance_stats = AttendanceStatistics.objects.filter(student=student).first()
+            attendance_percentage = attendance_stats.attendance_percentage if attendance_stats else 0
             
             # Uy vazifalari
             total_homeworks = Homework.objects.filter(student=student).count()
             completed_homeworks = Homework.objects.filter(student=student, is_submitted=True).count()
+            homework_completion = (completed_homeworks / total_homeworks * 100) if total_homeworks > 0 else 0
             
             # Imtihonlar
             total_exams = ExamResult.objects.filter(student=student).count()
             passed_exams = ExamResult.objects.filter(student=student, is_passed=True).count()
+            exam_pass_rate = (passed_exams / total_exams * 100) if total_exams > 0 else 0
             
             # Progress
             from courses.models import StudentProgress
             progress = StudentProgress.objects.filter(student=student).first()
+            progress_percentage = progress.progress_percentage if progress else 0
+            
+            # Student obyektiga statistika ma'lumotlarini qo'shish (template uchun)
+            student.attendance_percentage = attendance_percentage
+            student.progress_percentage = progress_percentage
+            student.homework_completion = homework_completion
+            student.exam_pass_rate = exam_pass_rate
             
             student_stats.append({
                 'student': student,
-                'attendance_percentage': attendance_stats.attendance_percentage if attendance_stats else 0,
-                'homework_completion': (completed_homeworks / total_homeworks * 100) if total_homeworks > 0 else 0,
-                'exam_pass_rate': (passed_exams / total_exams * 100) if total_exams > 0 else 0,
-                'progress_percentage': progress.progress_percentage if progress else 0,
+                'attendance_percentage': attendance_percentage,
+                'homework_completion': homework_completion,
+                'exam_pass_rate': exam_pass_rate,
+                'progress_percentage': progress_percentage,
             })
         
+        context['students'] = students
         context['student_stats'] = student_stats
+        
+        # Oylik hisobotlar soni
+        context['monthly_reports_count'] = MonthlyReport.objects.filter(
+            student__in=students
+        ).count()
+        
         return context
 
 
@@ -71,10 +86,13 @@ class StudentDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         # Faqat ota-onaning farzandlari
-        return User.objects.filter(
-            role='student',
-            parents=self.request.user
-        )
+        # Check if user has parent_profile and get students from there
+        if hasattr(self.request.user, 'parent_profile'):
+            parent_profile = self.request.user.parent_profile
+            return parent_profile.students.all()
+        else:
+            # If no parent_profile, return empty queryset
+            return User.objects.none()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

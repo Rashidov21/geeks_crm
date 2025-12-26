@@ -76,6 +76,15 @@ class ExamDetailView(LoginRequiredMixin, DetailView):
                 exam=self.object,
                 student=self.request.user
             ).first()
+        
+        # Permissions
+        user = self.request.user
+        context['can_edit'] = (user.is_superuser or 
+                               user.is_admin or 
+                               user.is_manager or
+                               (user.is_mentor and 
+                                self.object.group and 
+                                self.object.group.mentor == user))
         return context
 
 

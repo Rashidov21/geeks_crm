@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.core.cache',
     
     # Third party apps
     # 'django_extensions',  # Optional - comment qilindi

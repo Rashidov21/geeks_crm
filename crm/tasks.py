@@ -681,6 +681,85 @@ def create_status_followup(lead_id, status_code):
 
 
 @shared_task
+def create_contacted_followups():
+    """
+    'Contacted' statusidagi lidlar uchun ketma-ket follow-up'lar yaratish
+    Har 2 soatda tekshiriladi va kerakli follow-up'lar yaratiladi
+    """
+    try:
+        from .models import Lead, LeadStatus, FollowUp
+        
+        contacted_status = LeadStatus.objects.filter(code='contacted').first()
+        if not contacted_status:
+            return
+        
+        # 'Contacted' statusidagi lidlar
+        contacted_leads = Lead.objects.filter(
+            status=contacted_status,
+            assigned_sales__isnull=False
+        ).select_related('assigned_sales')
+        
+        for lead in contacted_leads:
+            # Oxirgi bajarilgan follow-up'ni topish
+            last_completed = FollowUp.objects.filter(
+                lead=lead,
+                completed=True
+            ).order_by('-completed_at').first()
+            
+            if not last_completed:
+                continue
+            
+            # Ketma-ketlik raqami
+            sequence = last_completed.followup_sequence if last_completed.followup_sequence else 1
+            
+            # Maksimum 4 ta follow-up (24s, 3k, 7k, 14k)
+            if sequence >= 4:
+                continue
+            
+            # Keyingi follow-up mavjudmi?
+            next_sequence = sequence + 1
+            existing = FollowUp.objects.filter(
+                lead=lead,
+                followup_sequence=next_sequence,
+                completed=False
+            ).exists()
+            
+            if existing:
+                continue
+            
+            # Vaqt intervallari
+            intervals = {
+                1: 24,      # 24 soat
+                2: 72,      # 3 kun (72 soat)
+                3: 168,     # 7 kun (168 soat)
+                4: 336      # 14 kun (336 soat)
+            }
+            
+            hours = intervals.get(next_sequence)
+            if not hours:
+                continue
+            
+            # Oxirgi follow-up bajarilgan vaqtdan boshlab hisoblash
+            due_date = last_completed.completed_at + timedelta(hours=hours)
+            due_date = FollowUp.calculate_work_hours_due_date(lead.assigned_sales, due_date)
+            
+            # Follow-up yaratish
+            days_text = {1: '24 soat', 2: '3 kun', 3: '7 kun', 4: '14 kun'}
+            FollowUp.objects.create(
+                lead=lead,
+                sales=lead.assigned_sales,
+                due_date=due_date,
+                notes=f"Follow-up #{next_sequence} ({days_text.get(next_sequence, '24 soat')} keyin)",
+                followup_sequence=next_sequence
+            )
+        
+        logger.info("Contacted follow-up'lar tekshirildi")
+    
+    except Exception as e:
+        logger.error(f"Contacted follow-up yaratish xatosi: {e}")
+
+
+@shared_task
 def check_leave_expiry():
     """
     Ruxsatlar tugashini tekshirish

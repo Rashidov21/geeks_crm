@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load crud_tags %}
 
 {% block title %}Dars: {{ lesson.title|default:lesson.topic.name }} | GEEKS CRM{% endblock %}
 
@@ -116,7 +117,7 @@ Blog-style lesson detail page for reading and learning
                         {% if material.material_type == 'video' and material.link %}
                         <div class="aspect-video rounded-lg overflow-hidden bg-gray-100 mb-4">
                             {% if 'youtube.com' in material.link or 'youtu.be' in material.link %}
-                            <iframe src="{% if 'embed' not in material.link %}{{ material.link|replace:'watch?v=','embed/' }}{% else %}{{ material.link }}{% endif %}" 
+                            <iframe src="{% if 'embed' not in material.link %}{{ material.link|replace:'watch?v=,embed/' }}{% else %}{{ material.link }}{% endif %}" 
                                     frameborder="0" 
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                     allowfullscreen

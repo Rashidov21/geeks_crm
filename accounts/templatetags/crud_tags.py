@@ -56,3 +56,15 @@ def can_user_delete(user, obj=None):
         return True
     return False
 
+
+@register.filter
+def replace(value, arg):
+    """Replace substring in string. Usage: value|replace:"old,new" """
+    if not value:
+        return value
+    try:
+        old, new = arg.split(',', 1)
+        return value.replace(old, new)
+    except ValueError:
+        return value
+

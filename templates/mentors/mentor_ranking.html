@@ -15,8 +15,7 @@
             <p class="text-gray-600 mt-1">KPI va ishlash ko'rsatkichlari</p>
         </div>
         {% if can_create %}
-        <a href="/admin/accounts/user/add/?role=mentor" 
-           target="_blank"
+        <a href="{% url 'mentors:mentor_create' %}" 
            class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2">
             <i class="fas fa-user-plus"></i>
             <span class="hidden sm:inline">Yangi mentor</span>
@@ -97,11 +96,12 @@
                                    title="KPI">
                                     <i class="fas fa-chart-bar text-green-600"></i>
                                 </a>
-                                {% if user.role == 'admin' %}
-                                <button class="p-2 hover:bg-gray-100 rounded-lg transition" 
-                                        title="Tahrirlash">
+                                {% if user.role == 'admin' or user.role == 'manager' %}
+                                <a href="{% url 'mentors:mentor_edit' mentor.user.pk %}" 
+                                   class="p-2 hover:bg-gray-100 rounded-lg transition" 
+                                   title="Tahrirlash">
                                     <i class="fas fa-edit text-gray-600"></i>
-                                </button>
+                                </a>
                                 {% endif %}
                             </div>
                         </td>

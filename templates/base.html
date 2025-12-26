@@ -21,7 +21,8 @@
         <div class="max-w-full mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-4">
-                    <button id="sidebarToggle" class="p-2 rounded-lg hover:bg-gray-100 lg:hidden">
+                    <button id="sidebarToggle" class="p-2 rounded-lg hover:bg-gray-100 transition" 
+                            onclick="toggleSidebar()" title="Sidebar'ni yashirish/ko'rsatish">
                         <i class="fas fa-bars text-gray-600"></i>
                     </button>
                     <a href="{% url 'dashboard' %}" class="flex items-center gap-3">
@@ -32,6 +33,11 @@
                 
                 {% if user.is_authenticated %}
                 <div class="flex items-center gap-4">
+                    <!-- Fullscreen Toggle -->
+                    <button id="fullscreenToggle" class="p-2 rounded-lg hover:bg-gray-100 transition hidden sm:block" 
+                            onclick="toggleFullscreen()" title="To'liq ekran rejimi">
+                        <i class="fas fa-expand text-gray-600"></i>
+                    </button>
                     <!-- User Menu -->
                     <div class="relative" x-data="{open: false}">
                         <button @click="open = !open" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
@@ -206,23 +212,39 @@
         {% endif %}
 
         <!-- Main Content -->
-        <main class="flex-1 p-4 sm:p-6 {% if user.is_authenticated %}lg:ml-64{% endif %}" style="min-height: 0;">
-            <!-- Messages -->
+        <main id="mainContent" class="flex-1 p-4 sm:p-6 transition-all duration-200" style="min-height: 0;">
+            <!-- Fixed Top Messages -->
             {% if messages %}
-            <div class="mb-6 space-y-2">
+            <div class="fixed top-20 left-0 right-0 z-50 px-4 sm:px-6 space-y-2 pointer-events-none {% if user.is_authenticated %}lg:left-64{% endif %}" 
+                 x-data="{ messages: [] }" 
+                 x-init="messages = Array.from(document.querySelectorAll('.message-toast')); messages.forEach((msg, idx) => { setTimeout(() => msg.remove(), 5000 + idx * 200); })">
                 {% for message in messages %}
-                <div class="p-4 rounded-lg flex items-center justify-between
-                    {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
-                    {% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
-                    {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
-                    {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
-                        <span>{{ message }}</span>
+                <div class="message-toast max-w-md mx-auto bg-white rounded-lg shadow-xl border-2 pointer-events-auto transform transition-all duration-300
+                    {% if message.tags == 'error' %}border-red-300
+                    {% elif message.tags == 'success' %}border-green-300
+                    {% elif message.tags == 'warning' %}border-yellow-300
+                    {% else %}border-blue-300{% endif %}"
+                     x-data="{ show: true }"
+                     x-show="show"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 transform translate-y-[-20px]"
+                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                     x-transition:leave-end="opacity-0 transform translate-y-[-20px]">
+                    <div class="p-4 flex items-center justify-between
+                        {% if message.tags == 'error' %}bg-red-50 text-red-800
+                        {% elif message.tags == 'success' %}bg-green-50 text-green-800
+                        {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800
+                        {% else %}bg-blue-50 text-blue-800{% endif %}">
+                        <div class="flex items-center gap-3 flex-1">
+                            <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} text-lg"></i>
+                            <span class="font-medium">{{ message }}</span>
+                        </div>
+                        <button @click="show = false" class="ml-4 hover:opacity-70 transition">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <button onclick="this.parentElement.remove()" class="hover:opacity-70">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
                 {% endfor %}
             </div>
@@ -250,13 +272,104 @@
     {% include 'components/delete_modal.html' %}
 
     <script>
+        // Sidebar toggle with localStorage
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (window.innerWidth >= 1024) {
+                // Desktop: toggle and save to localStorage
+                const isClosing = !sidebar.classList.contains('-translate-x-full');
+                sidebar.classList.toggle('-translate-x-full');
+                
+                if (isClosing) {
+                    mainContent.classList.remove('lg:ml-64');
+                } else {
+                    mainContent.classList.add('lg:ml-64');
+                }
+                
+                localStorage.setItem('sidebarOpen', !sidebar.classList.contains('-translate-x-full'));
+            } else {
+                // Mobile: toggle overlay
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
         }
-        document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
+        
+        // Restore sidebar state on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarOpen = localStorage.getItem('sidebarOpen') !== 'false';
+            
+            if (window.innerWidth >= 1024) {
+                if (!sidebarOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    mainContent.classList.remove('lg:ml-64');
+                } else {
+                    mainContent.classList.add('lg:ml-64');
+                }
+            } else {
+                mainContent.classList.remove('lg:ml-64');
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth >= 1024) {
+                overlay.classList.add('hidden');
+                const sidebarOpen = localStorage.getItem('sidebarOpen') !== 'false';
+                if (sidebarOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    mainContent.classList.add('lg:ml-64');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    mainContent.classList.remove('lg:ml-64');
+                }
+            } else {
+                mainContent.classList.remove('lg:ml-64');
+            }
+        });
+        
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            const btn = document.getElementById('fullscreenToggle');
+            const icon = btn.querySelector('i');
+            
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                }).catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                });
+            }
+        }
+        
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            const btn = document.getElementById('fullscreenToggle');
+            const icon = btn?.querySelector('i');
+            if (icon) {
+                if (document.fullscreenElement) {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                } else {
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                }
+            }
+        });
     </script>
 </body>
 </html>

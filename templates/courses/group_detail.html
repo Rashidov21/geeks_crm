@@ -62,7 +62,12 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mentor</p>
-                    <p class="text-lg font-bold text-gray-900 truncate">{{ group.mentor.get_full_name|default:"-"|truncatechars:15 }}</p>
+                    <p class="text-lg font-bold text-gray-900 truncate">
+                        {% if group.mentor %}
+                        {{ group.mentor.first_name|default:"Mentor belgilanmagan" }}
+                        {% else %}-
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-chalkboard-teacher text-blue-600 text-xl"></i>
@@ -74,7 +79,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Boshlanish</p>
-                    <p class="text-lg font-bold text-gray-900">{{ group.start_date|date:"d.m.Y"|default:"-" }}</p>
+                    <p class="text-lg font-bold text-gray-900">
+                        {{ group.created_at|date:"d.m.Y"|default:"-" }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-calendar text-purple-600 text-xl"></i>
@@ -139,7 +145,7 @@
                          }
                      }"
                      class="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border-b-2 border-green-200">
-                    <form method="post" action="{% url 'courses:group_students' group.pk %}" class="space-y-4">
+                    <form method="post" action="{% url 'courses:group_students' group.pk %}" class="space-y-4" @submit.prevent="if(selectedStudent) { loading=true; $el.submit(); }">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="student_id" :value="selectedStudent ? selectedStudent.id : ''" required>

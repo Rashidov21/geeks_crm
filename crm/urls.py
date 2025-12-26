@@ -16,6 +16,8 @@ urlpatterns = [
     path('leads/<int:pk>/edit/', views.LeadUpdateView.as_view(), name='lead_edit'),
     path('leads/<int:pk>/delete/', views.LeadDeleteView.as_view(), name='lead_delete'),
     path('leads/<int:pk>/assign/', views.LeadAssignView.as_view(), name='lead_assign'),
+    path('leads/<int:pk>/status/', views.LeadStatusUpdateView.as_view(), name='lead_status_update'),
+    path('leads/<int:pk>/group/', views.LeadGroupAssignView.as_view(), name='lead_group_assign'),
     path('leads/import/', views.LeadImportExcelView.as_view(), name='lead_import'),
     path('leads/google-sheets-import/', views.LeadGoogleSheetsImportView.as_view(), name='lead_google_import'),
     path('leads/export/', views.LeadExportView.as_view(), name='lead_export'),
@@ -80,9 +82,14 @@ urlpatterns = [
     # Analytics / KPI
     path('analytics/', views.CRMAnalyticsView.as_view(), name='analytics'),
     path('kpi/', views.SalesKPIListView.as_view(), name='sales_kpi'),
+    path('kpi/my/', views.SalesKPIDetailView.as_view(), name='sales_kpi_my'),
+    path('kpi/my/<int:year>/<int:month>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_my_month'),
     path('kpi/<int:sales_id>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_detail'),
     path('kpi/<int:sales_id>/<int:year>/<int:month>/', views.SalesKPIDetailView.as_view(), name='sales_kpi_detail_month'),
     path('kpi/ranking/', views.SalesKPIRankingView.as_view(), name='sales_kpi_ranking'),
+    
+    # Reactivations
+    path('reactivations/', views.ReactivationListView.as_view(), name='reactivation_list'),
     
     # Landing
     path('landing/', views.LandingView.as_view(), name='landing'),

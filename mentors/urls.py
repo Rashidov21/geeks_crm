@@ -22,5 +22,9 @@ urlpatterns = [
     
     # Parent Feedback
     path('feedback/create/', views.ParentFeedbackCreateView.as_view(), name='parent_feedback_create'),
+    
+    # Mentor CRUD
+    path('create/', views.MentorCreateView.as_view(), name='mentor_create'),
+    path('<int:pk>/edit/', views.MentorUpdateView.as_view(), name='mentor_edit'),
 ]
 

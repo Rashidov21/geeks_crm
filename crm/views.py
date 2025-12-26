@@ -362,13 +362,15 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
             Q(course__isnull=True) | Q(course=lead.interested_course)
         )
         
-        context['statuses'] = LeadStatus.objects.filter(is_active=True)
+        context['statuses'] = LeadStatus.objects.filter(is_active=True).order_by('order')
         context['groups'] = Group.objects.filter(is_active=True)
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
         
         # Permissions
         user = self.request.user
         context['can_edit'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
         context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['can_assign'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager)
         
         return context
 
@@ -486,6 +488,66 @@ class LeadAssignView(RoleRequiredMixin, View):
             )
             
             messages.success(request, f'Lid {sales.username} ga biriktirildi.')
+        
+        return redirect('crm:lead_detail', pk=pk)
+
+
+class LeadStatusUpdateView(RoleRequiredMixin, View):
+    """
+    Lead statusini o'zgartirish
+    """
+    allowed_roles = ['admin', 'manager', 'sales_manager', 'sales']
+    
+    def post(self, request, pk):
+        lead = get_object_or_404(Lead, pk=pk)
+        
+        # Sales faqat o'z lidlarini o'zgartira oladi
+        if request.user.is_sales and lead.assigned_sales != request.user:
+            messages.error(request, 'Siz faqat o\'z lidlaringizni o\'zgartira olasiz.')
+            return redirect('crm:lead_detail', pk=pk)
+        
+        status_id = request.POST.get('status_id')
+        if status_id:
+            status = get_object_or_404(LeadStatus, pk=status_id, is_active=True)
+            old_status = lead.status
+            lead.status = status
+            lead.save()
+            
+            LeadHistory.objects.create(
+                lead=lead,
+                old_status=old_status,
+                new_status=status,
+                changed_by=request.user,
+                notes=f"Status o'zgardi: {old_status} → {status}"
+            )
+            
+            messages.success(request, f'Status "{status.name}" ga o\'zgartirildi.')
+        
+        return redirect('crm:lead_detail', pk=pk)
+
+
+class LeadGroupAssignView(RoleRequiredMixin, View):
+    """
+    Lidni guruhga biriktirish
+    """
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    
+    def post(self, request, pk):
+        lead = get_object_or_404(Lead, pk=pk)
+        group_id = request.POST.get('group_id')
+        
+        if group_id:
+            group = get_object_or_404(Group, pk=group_id, is_active=True)
+            lead.enrolled_group = group
+            lead.save()
+            
+            LeadHistory.objects.create(
+                lead=lead,
+                changed_by=request.user,
+                notes=f"Guruhga biriktirildi: {group.name}"
+            )
+            
+            messages.success(request, f'Lid "{group.name}" guruhiga biriktirildi.')
         
         return redirect('crm:lead_detail', pk=pk)
 
@@ -1476,41 +1538,65 @@ class CRMAnalyticsView(RoleRequiredMixin, TemplateView):
     allowed_roles = ['admin', 'manager', 'sales_manager']
     
     def get_context_data(self, **kwargs):
+        from django.core.cache import cache
+        
         context = super().get_context_data(**kwargs)
         
-        # Umumiy statistika
-        context['total_leads'] = Lead.objects.count()
-        context['enrolled_leads'] = Lead.objects.filter(status__code='enrolled').count()
-        context['lost_leads'] = Lead.objects.filter(status__code='lost').count()
-        context['trial_leads'] = Lead.objects.filter(
-            status__code__in=['trial_registered', 'trial_attended']
-        ).count()
+        # Cache key
+        cache_key = 'crm_analytics_stats'
+        cached_stats = cache.get(cache_key)
         
-        # Bugungi statistika
-        today = timezone.now().date()
-        context['today_leads'] = Lead.objects.filter(created_at__date=today).count()
-        context['today_followups'] = FollowUp.objects.filter(due_date__date=today).count()
-        context['overdue_followups'] = FollowUp.objects.filter(
-            completed=False, due_date__lt=timezone.now()
-        ).count()
-        
-        # Konversiya
-        total = Lead.objects.count()
-        enrolled = Lead.objects.filter(status__code='enrolled').count()
-        context['conversion_rate'] = (enrolled / total * 100) if total > 0 else 0
-        
-        # Sotuvchilar statistikasi
-        context['sales_stats'] = User.objects.filter(
-            role__in=['sales', 'sales_manager'], is_active=True
-        ).annotate(
-            lead_count=Count('assigned_leads'),
-            enrolled_count=Count('assigned_leads', filter=Q(assigned_leads__status__code='enrolled'))
-        ).order_by('-enrolled_count')[:10]
-        
-        # Manbalar bo'yicha
-        context['source_stats'] = Lead.objects.values('source').annotate(
-            count=Count('id')
-        ).order_by('-count')
+        if cached_stats:
+            context.update(cached_stats)
+        else:
+            # Umumiy statistika
+            total_leads = Lead.objects.count()
+            enrolled_leads = Lead.objects.filter(status__code='enrolled').count()
+            lost_leads = Lead.objects.filter(status__code='lost').count()
+            trial_leads = Lead.objects.filter(
+                status__code__in=['trial_registered', 'trial_attended']
+            ).count()
+            
+            # Bugungi statistika
+            today = timezone.now().date()
+            today_leads = Lead.objects.filter(created_at__date=today).count()
+            today_followups = FollowUp.objects.filter(due_date__date=today).count()
+            overdue_followups = FollowUp.objects.filter(
+                completed=False, due_date__lt=timezone.now()
+            ).count()
+            
+            # Konversiya
+            conversion_rate = (enrolled_leads / total_leads * 100) if total_leads > 0 else 0
+            
+            # Sotuvchilar statistikasi
+            sales_stats = list(User.objects.filter(
+                role__in=['sales', 'sales_manager'], is_active=True
+            ).annotate(
+                lead_count=Count('assigned_leads'),
+                enrolled_count=Count('assigned_leads', filter=Q(assigned_leads__status__code='enrolled'))
+            ).order_by('-enrolled_count')[:10])
+            
+            # Manbalar bo'yicha
+            source_stats = list(Lead.objects.values('source').annotate(
+                count=Count('id')
+            ).order_by('-count'))
+            
+            stats = {
+                'total_leads': total_leads,
+                'enrolled_leads': enrolled_leads,
+                'lost_leads': lost_leads,
+                'trial_leads': trial_leads,
+                'today_leads': today_leads,
+                'today_followups': today_followups,
+                'overdue_followups': overdue_followups,
+                'conversion_rate': conversion_rate,
+                'sales_stats': sales_stats,
+                'source_stats': source_stats,
+            }
+            
+            # Cache for 5 minutes
+            cache.set(cache_key, stats, 300)
+            context.update(stats)
         
         return context
 
@@ -1579,7 +1665,11 @@ class SalesKPIDetailView(RoleRequiredMixin, DetailView):
     allowed_roles = ['admin', 'manager', 'sales_manager', 'sales']
     
     def get_object(self):
-        if self.request.user.is_sales:
+        # Check if this is "my" KPI (sales user viewing their own)
+        if 'sales_id' not in self.kwargs and self.request.user.is_sales:
+            sales = self.request.user
+        elif self.request.user.is_sales:
+            # Sales users can only view their own KPI
             sales = self.request.user
         else:
             sales_id = self.kwargs.get('sales_id')
@@ -1599,6 +1689,53 @@ class SalesKPIDetailView(RoleRequiredMixin, DetailView):
         )
         
         return kpi
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        kpi = self.object
+        sales = kpi.sales
+        
+        # Additional statistics for sales user
+        from django.db.models import Count, Q
+        
+        # Total leads assigned to this sales
+        total_leads = Lead.objects.filter(assigned_sales=sales).count()
+        context['total_leads'] = total_leads
+        
+        # Enrolled leads (sales count)
+        enrolled_leads = Lead.objects.filter(assigned_sales=sales, status__code='enrolled').count()
+        context['enrolled_leads'] = enrolled_leads
+        
+        # Conversion rate
+        conversion_rate = (enrolled_leads / total_leads * 100) if total_leads > 0 else 0
+        context['conversion_rate'] = conversion_rate
+        
+        # Trial lessons count
+        trial_lessons = TrialLesson.objects.filter(lead__assigned_sales=sales).count()
+        context['trial_lessons_count'] = trial_lessons
+        
+        # Lost leads
+        lost_leads = Lead.objects.filter(assigned_sales=sales, status__code='lost').count()
+        context['lost_leads'] = lost_leads
+        
+        # Overdue follow-ups
+        overdue_followups = FollowUp.objects.filter(
+            sales=sales,
+            completed=False,
+            due_date__lt=timezone.now()
+        ).count()
+        context['overdue_followups'] = overdue_followups
+        
+        # Today's follow-ups
+        today = timezone.now().date()
+        today_followups = FollowUp.objects.filter(
+            sales=sales,
+            completed=False,
+            due_date__date=today
+        ).count()
+        context['today_followups'] = today_followups
+        
+        return context
 
 
 class SalesKPIRankingView(RoleRequiredMixin, ListView):
@@ -1619,6 +1756,142 @@ class SalesKPIRankingView(RoleRequiredMixin, ListView):
             month=month,
             year=year
         ).select_related('sales').order_by('-total_kpi_score')
+
+
+# ==================== WORK SCHEDULE VIEWS ====================
+
+class WorkScheduleListView(RoleRequiredMixin, ListView):
+    """
+    Ish jadvallari ro'yxati
+    """
+    model = WorkSchedule
+    template_name = 'crm/work_schedule_list.html'
+    context_object_name = 'schedules'
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 30
+    
+    def get_queryset(self):
+        queryset = WorkSchedule.objects.select_related('sales').all()
+        
+        # Sales filtrlash
+        sales_id = self.request.GET.get('sales')
+        if sales_id:
+            queryset = queryset.filter(sales_id=sales_id)
+        
+        # Weekday filtrlash
+        weekday = self.request.GET.get('weekday')
+        if weekday:
+            queryset = queryset.filter(weekday=weekday)
+        
+        # Active filtrlash
+        is_active = self.request.GET.get('active')
+        if is_active == 'true':
+            queryset = queryset.filter(is_active=True)
+        elif is_active == 'false':
+            queryset = queryset.filter(is_active=False)
+        
+        return queryset.order_by('sales__first_name', 'weekday')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        context['weekdays'] = WorkSchedule.WEEKDAY_CHOICES
+        return context
+
+
+class WorkScheduleCreateView(TailwindFormMixin, RoleRequiredMixin, CreateView):
+    """
+    Ish jadvali yaratish
+    """
+    model = WorkSchedule
+    template_name = 'crm/work_schedule_form.html'
+    fields = ['sales', 'weekday', 'start_time', 'end_time', 'is_active']
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    success_url = reverse_lazy('crm:work_schedule_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        context['weekdays'] = WorkSchedule.WEEKDAY_CHOICES
+        return context
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Ish jadvali muvaffaqiyatli yaratildi.')
+        return super().form_valid(form)
+
+
+class WorkScheduleUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
+    """
+    Ish jadvalini tahrirlash
+    """
+    model = WorkSchedule
+    template_name = 'crm/work_schedule_form.html'
+    fields = ['sales', 'weekday', 'start_time', 'end_time', 'is_active']
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    success_url = reverse_lazy('crm:work_schedule_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        context['weekdays'] = WorkSchedule.WEEKDAY_CHOICES
+        context['is_edit'] = True
+        return context
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Ish jadvali muvaffaqiyatli yangilandi.')
+        return super().form_valid(form)
+
+
+class WorkScheduleDeleteView(RoleRequiredMixin, DeleteView):
+    """
+    Ish jadvalini o'chirish
+    """
+    model = WorkSchedule
+    template_name = 'crm/work_schedule_confirm_delete.html'
+    success_url = reverse_lazy('crm:work_schedule_list')
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Ish jadvali o\'chirildi.')
+        return super().delete(request, *args, **kwargs)
+
+
+# ==================== REACTIVATION VIEWS ====================
+
+class ReactivationListView(RoleRequiredMixin, ListView):
+    """
+    Reaktivatsiyalar ro'yxati
+    """
+    model = Reactivation
+    template_name = 'crm/reactivation_list.html'
+    context_object_name = 'reactivations'
+    allowed_roles = ['admin', 'manager', 'sales_manager']
+    paginate_by = 30
+    
+    def get_queryset(self):
+        queryset = Reactivation.objects.select_related('lead', 'lead__assigned_sales').all()
+        
+        # Filterlar
+        reactivation_type = self.request.GET.get('type')
+        if reactivation_type:
+            queryset = queryset.filter(reactivation_type=reactivation_type)
+        
+        result = self.request.GET.get('result')
+        if result:
+            queryset = queryset.filter(result=result)
+        
+        sales_id = self.request.GET.get('sales')
+        if sales_id:
+            queryset = queryset.filter(lead__assigned_sales_id=sales_id)
+        
+        return queryset.order_by('-sent_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['reactivation_types'] = Reactivation.REACTIVATION_TYPE_CHOICES
+        context['result_choices'] = Reactivation.RESULT_CHOICES
+        context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        return context
 
 
 # ==================== LANDING VIEW ====================

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Mentorni tahrirlash{% else %}Yangi mentor{% endif %} | GEEKS CRM{% endblock %}
+
+{% block content %}
+{% comment %}
+To'liq alohida template - component'siz
+Color: green (hardcoded)
+{% endcomment %}
+{% with gradient_from='from-green-500' gradient_to='to-green-600' ring_color='ring-green-500' text_color='text-green-600' bg_color='bg-green-50' hover_from='from-green-600' hover_to='to-green-700' hover_from_hover='from-green-700' hover_to_hover='to-green-800' %}
+<div class="max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div class="flex items-center gap-4">
+      <div class="bg-gradient-to-br {{ gradient_from }} {{ gradient_to }} rounded-full p-4">
+        <i class="fas fa-chalkboard-teacher text-3xl text-white"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-3xl font-bold text-gray-900">{% if is_edit %}Mentorni tahrirlash{% else %}Yangi mentor qo'shish{% endif %}</h1>
+        <p class="text-gray-600 mt-1">Mentor ma'lumotlarini kiriting</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-white rounded-xl shadow-lg p-8">
+    <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}" @submit.prevent="loading=true; $el.submit()">
+      {% csrf_token %}
+      
+      {% if messages %}
+        {% for message in messages %}
+          {% if message.tags == 'error' %}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+              <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                <div>
+                  <p class="font-semibold text-red-800">Xato</p>
+                  <p class="text-red-600 text-sm">{{ message }}</p>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Username -->
+        <div>
+          <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">
+            Username <span class="text-red-500">*</span>
+          </label>
+          <input type="text" 
+                 name="username" 
+                 id="username"
+                 value="{% if is_edit %}{{ user_obj.username }}{% endif %}"
+                 {% if not is_edit %}required{% endif %}
+                 {% if is_edit %}readonly class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"{% else %}class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"{% endif %}
+                 placeholder="Username">
+          {% if is_edit %}
+          <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+            <i class="fas fa-info-circle"></i> Username o'zgartirib bo'lmaydi
+          </p>
+          {% endif %}
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+            {% if is_edit %}Yangi parol (ixtiyoriy){% else %}Parol <span class="text-red-500">*</span>{% endif %}
+          </label>
+          <input type="password" 
+                 name="password" 
+                 id="password"
+                 {% if not is_edit %}required{% endif %}
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="{% if is_edit %}Parolni o'zgartirmaslik uchun bo'sh qoldiring{% else %}Parol kiriting{% endif %}">
+          {% if not is_edit %}
+          <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+            <i class="fas fa-info-circle"></i> Agar belgilanmasa, default parol: changeme123
+          </p>
+          {% endif %}
+        </div>
+
+        <!-- First Name -->
+        <div>
+          <label for="first_name" class="block text-sm font-semibold text-gray-700 mb-2">
+            Ism <span class="text-red-500">*</span>
+          </label>
+          <input type="text" 
+                 name="first_name" 
+                 id="first_name"
+                 value="{% if is_edit %}{{ user_obj.first_name }}{% endif %}"
+                 required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="Ism">
+        </div>
+
+        <!-- Last Name -->
+        <div>
+          <label for="last_name" class="block text-sm font-semibold text-gray-700 mb-2">
+            Familiya <span class="text-red-500">*</span>
+          </label>
+          <input type="text" 
+                 name="last_name" 
+                 id="last_name"
+                 value="{% if is_edit %}{{ user_obj.last_name }}{% endif %}"
+                 required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="Familiya">
+        </div>
+
+        <!-- Email -->
+        <div>
+          <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+            Email
+          </label>
+          <input type="email" 
+                 name="email" 
+                 id="email"
+                 value="{% if is_edit %}{{ user_obj.email }}{% endif %}"
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="email@example.com">
+        </div>
+
+        <!-- Phone -->
+        <div>
+          <label for="phone" class="block text-sm font-semibold text-gray-700 mb-2">
+            Telefon
+          </label>
+          <input type="text" 
+                 name="phone" 
+                 id="phone"
+                 value="{% if is_edit %}{{ user_obj.phone }}{% endif %}"
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="+998901234567">
+        </div>
+
+        <!-- Telegram ID -->
+        <div>
+          <label for="telegram_id" class="block text-sm font-semibold text-gray-700 mb-2">
+            Telegram ID
+          </label>
+          <input type="number" 
+                 name="telegram_id" 
+                 id="telegram_id"
+                 value="{% if is_edit and user_obj.telegram_id %}{{ user_obj.telegram_id }}{% endif %}"
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="123456789">
+          <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+            <i class="fas fa-info-circle"></i> Telegram bot uchun ID
+          </p>
+        </div>
+
+        <!-- Telegram Username -->
+        <div>
+          <label for="telegram_username" class="block text-sm font-semibold text-gray-700 mb-2">
+            Telegram Username
+          </label>
+          <input type="text" 
+                 name="telegram_username" 
+                 id="telegram_username"
+                 value="{% if is_edit %}{{ user_obj.telegram_username }}{% endif %}"
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all"
+                 placeholder="@username">
+        </div>
+
+        <!-- Is Active -->
+        <div class="md:col-span-2">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" 
+                   name="is_active" 
+                   id="is_active"
+                   {% if is_edit and user_obj.is_active %}checked{% elif not is_edit %}checked{% endif %}
+                   class="w-5 h-5 {{ text_color }} border-gray-300 rounded focus:ring-2 {{ ring_color }}">
+            <span class="text-sm font-medium text-gray-700">Faol</span>
+          </label>
+          <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+            <i class="fas fa-info-circle"></i> Faol bo'lmagan mentorlar tizimda ishlay olmaydi
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-6 border-t">
+        <a href="{% url 'mentors:mentor_ranking' %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all font-medium">
+          <i class="fas fa-arrow-left"></i>
+          <span>Orqaga</span>
+        </a>
+        <button type="submit" 
+                :disabled="loading"
+                class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r {{ hover_from }} {{ hover_to }} hover:{{ hover_from_hover }} hover:{{ hover_to_hover }} text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
+          <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>
+          <span x-text="loading ? 'Saqlanmoqda...' : 'Saqlash'">Saqlash</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}
+

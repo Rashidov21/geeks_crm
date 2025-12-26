@@ -42,7 +42,7 @@
     </div>
 
     <!-- Attendance Card -->
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-5">
+    <a href="{% url 'attendance:attendance_list' %}" class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-5 hover:shadow-xl transition block">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-green-100 text-sm">Davomat (bu oy)</p>
@@ -55,7 +55,7 @@
       <p class="text-green-100 text-xs mt-2">
         <i class="fas fa-check-circle"></i> {{ my_present_count }} keldi / {{ my_attendance_count }} jami
       </p>
-    </div>
+    </a>
 
     <!-- Homework Card -->
     <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl shadow-lg p-5">
@@ -80,7 +80,7 @@
     </div>
 
     <!-- Level Card -->
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-5">
+    <a href="{% url 'gamification:point_history' %}" class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-5 hover:shadow-xl transition block">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-purple-100 text-sm">Mening darajam</p>
@@ -93,7 +93,7 @@
       <p class="text-purple-100 text-xs mt-2">
         <i class="fas fa-award"></i> {{ my_badges.count }} badgega ega
       </p>
-    </div>
+    </a>
   </div>
 
   <!-- Two Column Layout -->
@@ -255,10 +255,15 @@
 
       <!-- My Progress -->
       <div class="bg-white rounded-xl shadow-lg p-6">
-        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-          <i class="fas fa-chart-pie text-green-600"></i>
-          Mening progressim
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-chart-pie text-green-600"></i>
+            Mening progressim
+          </h2>
+          {% if my_progress %}
+          <a href="{% url 'courses:course_list' %}" class="text-xs text-blue-600 hover:underline">Barchasi →</a>
+          {% endif %}
+        </div>
         {% if my_progress %}
           <div class="space-y-4">
             {% for progress in my_progress %}
@@ -289,7 +294,7 @@
             <i class="fas fa-medal text-yellow-500"></i>
             Mening badgelarim
           </h2>
-          <a href="{% url 'gamification:overall_ranking' %}" class="text-xs text-blue-600 hover:underline">Ko'proq</a>
+          <a href="{% url 'gamification:student_badges' %}" class="text-xs text-blue-600 hover:underline">Barchasi →</a>
         </div>
         {% if my_badges %}
           <div class="grid grid-cols-3 gap-3">
@@ -313,10 +318,13 @@
 
       <!-- My Rankings -->
       <div class="bg-white rounded-xl shadow-lg p-6">
-        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
-          <i class="fas fa-ranking-star text-purple-600"></i>
-          Guruh reyting
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-ranking-star text-purple-600"></i>
+            Guruh reyting
+          </h2>
+          <a href="{% url 'gamification:student_ranking' %}" class="text-xs text-blue-600 hover:underline">Barchasi →</a>
+        </div>
         {% if my_rankings %}
           <div class="space-y-2">
             {% for ranking in my_rankings %}

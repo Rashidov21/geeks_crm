@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ish jadvalini o'chirish | GEEKS CRM{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12">
+    <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-100">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Ish jadvalini o'chirish</h2>
+            <p class="text-gray-600">Bu ish jadvalini o'chirishni tasdiqlaysizmi?</p>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <div class="text-sm text-gray-700 space-y-2">
+                <p><strong>Sotuvchi:</strong> {{ object.sales.get_full_name|default:object.sales.username }}</p>
+                <p><strong>Hafta kuni:</strong> {{ object.get_weekday_display }}</p>
+                <p><strong>Vaqt:</strong> {{ object.start_time|time:"H:i" }} - {{ object.end_time|time:"H:i" }}</p>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="flex gap-3">
+                <a href="{% url 'crm:work_schedule_list' %}" 
+                   class="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition text-center font-medium">
+                    Bekor qilish
+                </a>
+                <button type="submit" 
+                        class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-medium">
+                    <i class="fas fa-trash mr-2"></i>O'chirish
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,10 +1,12 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView,TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.utils import timezone
 from .models import MentorKPI, MentorRanking, MonthlyReport, LessonQuality, ParentFeedback
-from accounts.mixins import MentorRequiredMixin, AdminRequiredMixin, TailwindFormMixin
+from accounts.mixins import MentorRequiredMixin, AdminRequiredMixin, TailwindFormMixin, RoleRequiredMixin
+from accounts.models import User, Branch
 
 
 class MentorKPIView(LoginRequiredMixin, DetailView):
@@ -16,7 +18,15 @@ class MentorKPIView(LoginRequiredMixin, DetailView):
     context_object_name = 'kpi'
     
     def get_object(self):
-        mentor = self.request.user if self.request.user.is_mentor else self.kwargs.get('mentor_id')
+        if self.request.user.is_mentor:
+            mentor = self.request.user
+        else:
+            mentor_id = self.kwargs.get('mentor_id')
+            if mentor_id:
+                mentor = get_object_or_404(User, pk=mentor_id, role='mentor')
+            else:
+                mentor = self.request.user
+        
         month = self.kwargs.get('month', timezone.now().month)
         year = self.kwargs.get('year', timezone.now().year)
         
@@ -214,3 +224,80 @@ class ParentFeedbackCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView
         form.instance.parent = self.request.user
         messages.success(self.request, 'Feedback muvaffaqiyatli yuborildi.')
         return super().form_valid(form)
+
+
+class MentorCreateView(RoleRequiredMixin, TemplateView):
+    """
+    Yangi mentor yaratish
+    """
+    template_name = 'mentors/mentor_form.html'
+    allowed_roles = ['admin', 'manager']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['branches'] = Branch.objects.filter(is_active=True)
+        context['is_edit'] = False
+        return context
+    
+    def post(self, request):
+        # User yaratish
+        username = request.POST.get('username')
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Bu username allaqachon mavjud.')
+            return redirect('mentors:mentor_create')
+        
+        user = User.objects.create(
+            username=username,
+            first_name=request.POST.get('first_name', ''),
+            last_name=request.POST.get('last_name', ''),
+            email=request.POST.get('email', ''),
+            phone=request.POST.get('phone', ''),
+            telegram_id=request.POST.get('telegram_id') or None,
+            telegram_username=request.POST.get('telegram_username') or None,
+            role='mentor',
+            is_active='is_active' in request.POST,
+        )
+        password = request.POST.get('password', 'changeme123')
+        user.set_password(password)
+        user.save()
+        
+        messages.success(request, f'Mentor muvaffaqiyatli yaratildi. Parol: {password}')
+        return redirect('mentors:mentor_ranking')
+
+
+class MentorUpdateView(RoleRequiredMixin, TemplateView):
+    """
+    Mentorni tahrirlash
+    """
+    template_name = 'mentors/mentor_form.html'
+    allowed_roles = ['admin', 'manager']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = get_object_or_404(User, pk=self.kwargs['pk'], role='mentor')
+        context['user_obj'] = user
+        context['branches'] = Branch.objects.filter(is_active=True)
+        context['is_edit'] = True
+        return context
+    
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk, role='mentor')
+        
+        # User yangilash
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.phone = request.POST.get('phone', '')
+        user.telegram_id = request.POST.get('telegram_id') or None
+        user.telegram_username = request.POST.get('telegram_username') or None
+        user.is_active = 'is_active' in request.POST
+        
+        # Parol yangilash (agar berilgan bo'lsa)
+        password = request.POST.get('password')
+        if password:
+            user.set_password(password)
+        
+        user.save()
+        
+        messages.success(request, 'Mentor muvaffaqiyatli yangilandi.')
+        return redirect('mentors:mentor_ranking')

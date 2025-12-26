@@ -35,10 +35,10 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*/5'),  # Har 5 daqiqada
     },
     
-    # Har soatda sinov darsi eslatmalarini tekshirish
+    # Har 15 daqiqada sinov darsi eslatmalarini tekshirish
     'send-trial-reminders': {
         'task': 'crm.tasks.send_trial_reminders',
-        'schedule': crontab(minute=0),  # Har soatda
+        'schedule': crontab(minute='*/15'),  # Har 15 daqiqada
     },
     
     # Har kuni kechqurun KPI hisoblash
@@ -63,6 +63,30 @@ CELERY_BEAT_SCHEDULE = {
     'import-leads-from-google-sheets': {
         'task': 'crm.tasks.import_leads_from_google_sheets',
         'schedule': crontab(minute='*/5'),  # Har 5 daqiqada
+    },
+    
+    # Har 10 daqiqada yangi lidlarni taqsimlash
+    'assign-leads-to-sales': {
+        'task': 'crm.tasks.assign_leads_to_sales',
+        'schedule': crontab(minute='*/10'),  # Har 10 daqiqada
+    },
+    
+    # Har 2 soatda 'contacted' status uchun ketma-ket follow-up yaratish
+    'create-contacted-followups': {
+        'task': 'crm.tasks.create_contacted_followups',
+        'schedule': crontab(minute=0, hour='*/2'),  # Har 2 soatda
+    },
+    
+    # Har kuni kechqurun kunlik statistika yuborish
+    'send-daily-statistics': {
+        'task': 'crm.tasks.send_daily_statistics',
+        'schedule': crontab(hour=20, minute=0),  # Har kuni soat 20:00
+    },
+    
+    # Har oyning 1-kuni oylik KPI hisoblash
+    'calculate-sales-kpi': {
+        'task': 'crm.tasks.calculate_monthly_kpi',
+        'schedule': crontab(day_of_month=1, hour=5, minute=0),  # Har oyning 1-kuni soat 5:00
     },
 }
 

@@ -25,7 +25,8 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
 {% endif %}
 
 {% if page_obj.has_other_pages %}
-<nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+<nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg" 
+     data-preserve-params="true">
     <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
             <p class="text-sm text-gray-700">
@@ -39,8 +40,8 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         <div>
             <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                   class="pagination-link relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
                     <span class="sr-only">Oldingi</span>
                     <i class="fas fa-chevron-left"></i>
                 </a>
@@ -57,16 +58,16 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
                         {{ num }}
                     </span>
                     {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                    <a href="?page={{ num }}" 
+                       class="pagination-link relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
                         {{ num }}
                     </a>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                <a href="?page={{ page_obj.next_page_number }}" 
+                   class="pagination-link relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
                     <span class="sr-only">Keyingi</span>
                     <i class="fas fa-chevron-right"></i>
                 </a>
@@ -82,8 +83,8 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
     <!-- Mobile Pagination -->
     <div class="flex flex-1 justify-between sm:hidden">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <a href="?page={{ page_obj.previous_page_number }}" 
+           class="pagination-link relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Oldingi
         </a>
         {% else %}
@@ -93,8 +94,8 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         {% endif %}
 
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <a href="?page={{ page_obj.next_page_number }}" 
+           class="pagination-link relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Keyingi
         </a>
         {% else %}
@@ -104,6 +105,26 @@ Color mapping for Tailwind classes - predefined classes to avoid dynamic class i
         {% endif %}
     </div>
 </nav>
+
+<script>
+// Preserve query parameters in pagination links
+(function() {
+    const paginationLinks = document.querySelectorAll('.pagination-link');
+    if (paginationLinks.length === 0) return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete('page'); // Remove page parameter as we'll add it from the link
+    
+    const queryString = urlParams.toString();
+    
+    paginationLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (queryString) {
+            link.setAttribute('href', href + (href.includes('?') ? '&' : '') + queryString);
+        }
+    });
+})();
+</script>
 {% endif %}
 
 {% endwith %}

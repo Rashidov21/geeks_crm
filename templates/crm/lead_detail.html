@@ -53,17 +53,142 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2" x-data="{ 
+                showStatusModal: false, 
+                showAssignModal: false, 
+                showGroupModal: false 
+            }">
                 <a href="tel:{{ lead.phone }}" 
                    class="bg-white text-purple-600 px-5 py-2.5 rounded-lg hover:bg-purple-50 transition-all font-semibold shadow-lg transform hover:scale-105 flex items-center gap-2">
                     <i class="fas fa-phone"></i>
                     <span>Qo'ng'iroq</span>
                 </a>
+                {% if can_edit %}
+                <button @click="showStatusModal = true" 
+                   class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Status o'zgartirish</span>
+                </button>
+                {% endif %}
+                {% if can_assign %}
+                <button @click="showAssignModal = true" 
+                   class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
+                    <i class="fas fa-user-tie"></i>
+                    <span>Sotuvchi biriktirish</span>
+                </button>
+                <button @click="showGroupModal = true" 
+                   class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
+                    <i class="fas fa-users"></i>
+                    <span>Guruh biriktirish</span>
+                </button>
+                {% endif %}
                 <a href="{% url 'crm:lead_edit' lead.pk %}" 
                    class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
                     <i class="fas fa-edit"></i>
                     <span>Tahrirlash</span>
                 </a>
+                
+                <!-- Status Update Modal -->
+                <div x-show="showStatusModal" 
+                     x-cloak
+                     @click.away="showStatusModal = false"
+                     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6" @click.stop>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Status o'zgartirish</h3>
+                        <form method="post" action="{% url 'crm:lead_status_update' lead.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Yangi status</label>
+                                <select name="status_id" required class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                                    <option value="">Tanlang...</option>
+                                    {% for status in statuses %}
+                                    <option value="{{ status.id }}" {% if lead.status.id == status.id %}selected{% endif %}>
+                                        {{ status.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" @click="showStatusModal = false" 
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                    Bekor qilish
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                    O'zgartirish
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Assign Sales Modal -->
+                <div x-show="showAssignModal" 
+                     x-cloak
+                     @click.away="showAssignModal = false"
+                     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6" @click.stop>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Sotuvchi biriktirish</h3>
+                        <form method="post" action="{% url 'crm:lead_assign' lead.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Sotuvchi</label>
+                                <select name="sales_id" required class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                                    <option value="">Tanlang...</option>
+                                    {% for sales in sales_users %}
+                                    <option value="{{ sales.id }}" {% if lead.assigned_sales.id == sales.id %}selected{% endif %}>
+                                        {{ sales.get_full_name|default:sales.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" @click="showAssignModal = false" 
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                    Bekor qilish
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                    Biriktirish
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Assign Group Modal -->
+                <div x-show="showGroupModal" 
+                     x-cloak
+                     @click.away="showGroupModal = false"
+                     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6" @click.stop>
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Guruh biriktirish</h3>
+                        <form method="post" action="{% url 'crm:lead_group_assign' lead.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Guruh</label>
+                                <select name="group_id" required class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                                    <option value="">Tanlang...</option>
+                                    {% for group in groups %}
+                                    <option value="{{ group.id }}" {% if lead.enrolled_group.id == group.id %}selected{% endif %}>
+                                        {{ group.name }} - {{ group.course.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="flex gap-2 justify-end">
+                                <button type="button" @click="showGroupModal = false" 
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                    Bekor qilish
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                    Biriktirish
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

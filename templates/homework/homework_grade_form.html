@@ -64,7 +64,7 @@
 
     <!-- Grade Form -->
     <div class="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-100">
-        <form method="post" class="space-y-6" x-data="{loading: false}">
+        <form method="post" class="space-y-6" x-data="{loading: false}" @submit.prevent="loading=true; $el.submit()">
             {% csrf_token %}
             
             {% if form.non_field_errors %}
@@ -134,7 +134,6 @@
                     <span>Orqaga</span>
                 </a>
                 <button type="submit" 
-                        @click="loading=true"
                         :disabled="loading"
                         class="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold disabled:opacity-50">
                     <i class="fas" :class="{'fa-spin fa-spinner': loading, 'fa-save': !loading}"></i>

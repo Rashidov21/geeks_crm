@@ -23,17 +23,30 @@ Color: orange (hardcoded)
                 <i class="fas fa-tasks {{ text_color }}"></i>
                 Uy vazifalari
             </h1>
-            <p class="text-gray-600 mt-1">Barcha uy vazifalari ro'yxati</p>
-            {% if homeworks %}<p class="text-sm text-gray-500 mt-1">Jami: {{ homeworks|length }} ta</p>{% endif %}
+            <p class="text-gray-600 mt-1">
+                {% if user.role == 'student' %}Mening vazifalarim{% elif user.role == 'mentor' %}Guruhlar vazifalari{% else %}Barcha uy vazifalari ro'yxati{% endif %}
+            </p>
+            {% if user.role == 'student' %}
+            <div class="mt-2 flex items-center gap-2 text-sm">
+                <span class="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-yellow-100 to-amber-100 border border-yellow-300 rounded-full text-yellow-800">
+                    <i class="fas fa-star text-yellow-600"></i>
+                    <span class="font-semibold">Vazifani vaqtida bajarsangiz +10 ball olasiz!</span>
+                </span>
+            </div>
+            {% endif %}
+            {% if page_obj %}<p class="text-sm text-gray-500 mt-1">Jami: {{ page_obj.paginator.count }} ta</p>{% elif homeworks %}<p class="text-sm text-gray-500 mt-1">Jami: {{ homeworks|length }} ta</p>{% endif %}
         </div>
         <div class="flex flex-wrap gap-2">
-            <div class="relative flex-1 sm:flex-initial sm:w-64">
+            <form method="get" class="relative flex-1 sm:flex-initial sm:w-64">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input type="text" 
-                       x-model="searchQuery"
+                       name="search"
+                       value="{{ request.GET.search|default:'' }}"
                        placeholder="Qidirish..." 
                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
-            </div>
+                {% if request.GET.group %}<input type="hidden" name="group" value="{{ request.GET.group }}">{% endif %}
+                {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+            </form>
             
             <button @click="showFilters = !showFilters" 
                     class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
@@ -41,7 +54,13 @@ Color: orange (hardcoded)
                 <span class="hidden sm:inline">Filterlar</span>
             </button>
             
-            {% if can_create %}
+            {% if can_assign %}
+            <a href="{% url 'homework:homework_assign' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-plus"></i>
+                <span>Vazifa berish</span>
+            </a>
+            {% elif can_create %}
             <a href="{% url 'homework:homework_create' %}" 
                class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
                 <i class="fas fa-plus"></i>
@@ -50,27 +69,6 @@ Color: orange (hardcoded)
             {% endif %}
         </div>
     </div>
-
-    <!-- Gamification Banner for Students -->
-    {% if user.role == 'student' %}
-    <div class="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 rounded-xl shadow-lg p-6 border-2 border-yellow-300">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <i class="fas fa-star text-white text-2xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-white mb-1">Ball to'plang va yutun!</h3>
-                    <p class="text-yellow-100 text-sm">Vazifalarni vaqtida bajarganingizda <span class="font-bold text-white">+10 ball</span> olasiz. Har bir bajarilgan vazifa sizga qo'shimcha imkoniyatlar beradi!</p>
-                </div>
-            </div>
-            <div class="hidden md:flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg backdrop-blur-sm">
-                <i class="fas fa-trophy text-white text-xl"></i>
-                <a href="{% url 'gamification:overall_ranking' %}" class="text-white font-semibold hover:underline">Reytingga o'tish</a>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Stats Cards -->
     {% if stats %}
@@ -127,9 +125,9 @@ Color: orange (hardcoded)
     </div>
 
     <!-- Items Grid -->
-    {% if homeworks %}
+    {% if page_obj or homeworks %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for homework in homeworks %}
+        {% for homework in page_obj|default:homeworks %}
         <div class="bg-white rounded-lg shadow-sm border hover:shadow-md transition overflow-hidden">
             <div class="p-6">
                 <div class="flex items-start justify-between mb-4">
@@ -139,12 +137,22 @@ Color: orange (hardcoded)
                                 {{ homework.title }}
                             </a>
                         </h3>
-                        {% if homework.lesson %}
-                        <p class="text-sm text-gray-600">{{ homework.lesson.group.name }}</p>
+                        {% if homework.lesson and homework.lesson.group %}
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-users mr-1"></i>{{ homework.lesson.group.name }}
+                        </p>
+                        {% if user.role == 'student' and homework.lesson %}
+                        <p class="text-xs text-orange-600 mt-1">
+                            <a href="{% url 'courses:lesson_detail' homework.lesson.pk %}" 
+                               class="hover:text-orange-800 hover:underline">
+                                <i class="fas fa-chalkboard mr-1"></i>Darsga o'tish
+                            </a>
+                        </p>
+                        {% endif %}
                         {% endif %}
                     </div>
-                    <span class="px-2 py-1 text-xs rounded-full {% if homework.is_submitted %}bg-green-100 text-green-700{% elif homework.deadline < now %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                        {% if homework.is_submitted %}Topshirilgan{% elif homework.deadline < now %}Kechikkan{% else %}Kutilmoqda{% endif %}
+                    <span class="px-2 py-1 text-xs rounded-full {% if homework.is_submitted %}bg-green-100 text-green-700{% elif homework.deadline|date:'Y-m-d H:i:s' < now|date:'Y-m-d H:i:s' %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {% if homework.is_submitted %}Topshirilgan{% elif homework.deadline|date:'Y-m-d H:i:s' < now|date:'Y-m-d H:i:s' %}Kechikkan{% else %}Kutilmoqda{% endif %}
                     </span>
                 </div>
                 
@@ -157,8 +165,13 @@ Color: orange (hardcoded)
                     {% endif %}
                     {% if homework.grade %}
                     <div class="flex items-center gap-2">
-                        <i class="fas fa-star w-4"></i>
-                        <span>Baholandi: {{ homework.grade.score }}/{{ homework.grade.max_score }}</span>
+                        <i class="fas fa-star w-4 text-yellow-500"></i>
+                        <span>Baholandi: {{ homework.grade.grade }} ball</span>
+                    </div>
+                    {% elif user.role == 'student' and not homework.is_submitted %}
+                    <div class="flex items-center gap-2 text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
+                        <i class="fas fa-star"></i>
+                        <span>Vaqtida topshiring va +10 ball oling!</span>
                     </div>
                     {% endif %}
                 </div>
@@ -188,19 +201,7 @@ Color: orange (hardcoded)
 
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}
-    <div class="flex items-center justify-between bg-white px-4 py-3 border rounded-lg">
-        <div class="text-sm text-gray-700">
-            {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Oldingi</a>
-            {% endif %}
-            <span class="px-3 py-1">Sahifa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
-               class="px-3 py-1 border rounded-lg hover:bg-gray-50">Keyingi</a>
-            {% endif %}
-        </div>
-    </div>
+    {% include 'components/pagination.html' with color='orange' %}
     {% endif %}
     {% else %}
     <!-- Empty State -->

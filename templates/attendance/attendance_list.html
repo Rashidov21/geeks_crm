@@ -22,17 +22,22 @@ Color: cyan (hardcoded)
                 <i class="fas fa-calendar-check {{ text_color }}"></i>
                 Davomat
             </h1>
-            <p class="text-gray-600 mt-1">Barcha davomat yozuvlari</p>
-            {% if attendances %}<p class="text-sm text-gray-500 mt-1">Jami: {{ attendances|length }} ta</p>{% endif %}
+            <p class="text-gray-600 mt-1">
+                {% if user.role == 'student' %}Mening davomatim{% elif user.role == 'mentor' %}Guruhlar davomati{% else %}Barcha davomat yozuvlari{% endif %}
+            </p>
+            {% if page_obj %}<p class="text-sm text-gray-500 mt-1">Jami: {{ page_obj.paginator.count }} ta</p>{% elif attendances %}<p class="text-sm text-gray-500 mt-1">Jami: {{ attendances|length }} ta</p>{% endif %}
         </div>
         <div class="flex flex-wrap gap-2">
-            <div class="relative flex-1 sm:flex-initial sm:w-64">
+            <form method="get" class="relative flex-1 sm:flex-initial sm:w-64">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input type="text" 
-                       x-model="searchQuery"
+                       name="search"
+                       value="{{ request.GET.search|default:'' }}"
                        placeholder="Qidirish..." 
                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 {{ ring_color }} focus:border-transparent text-sm">
-            </div>
+                {% if request.GET.group %}<input type="hidden" name="group" value="{{ request.GET.group }}">{% endif %}
+                {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+            </form>
             
             <button @click="showFilters = !showFilters" 
                     class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm flex items-center gap-2">
@@ -41,6 +46,13 @@ Color: cyan (hardcoded)
             </button>
             
             {% if can_create %}
+            {% if user.role == 'mentor' or user.is_admin or user.is_manager %}
+            <a href="{% url 'courses:group_list' %}" 
+               class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
+                <i class="fas fa-users"></i>
+                <span>Guruhlar davomati</span>
+            </a>
+            {% endif %}
             <a href="{% url 'attendance:attendance_form' %}" 
                class="px-4 py-2 {{ bg_color }} {{ hover_bg }} text-white rounded-lg transition text-sm flex items-center gap-2 font-medium">
                 <i class="fas fa-plus"></i>
@@ -104,7 +116,7 @@ Color: cyan (hardcoded)
     </div>
 
     <!-- Items Table -->
-    {% if attendances %}
+    {% if page_obj or attendances %}
     <div class="bg-white rounded-lg border shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -117,7 +129,7 @@ Color: cyan (hardcoded)
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for attendance in attendances %}
+                    {% for attendance in page_obj|default:attendances %}
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-4 py-3 text-sm text-gray-900">
                             {% if attendance.student %}

@@ -17,7 +17,7 @@ class HomeworkListView(LoginRequiredMixin, ListView):
     paginate_by = 25
     
     def get_queryset(self):
-        queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'grade')
+        queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'grade', 'grade__mentor')
         
         # Rol bo'yicha filter
         if self.request.user.is_student:
@@ -40,18 +40,36 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         if group_id:
             queryset = queryset.filter(lesson__group_id=group_id)
         
+        # Search query
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(student__first_name__icontains=search) |
+                Q(student__last_name__icontains=search)
+            )
+        
         return queryset.order_by('-deadline', '-submitted_at')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Use queryset from get_queryset() instead of querying again
-        homeworks = self.get_queryset()
-        
-        total_homeworks = homeworks.count()
-        submitted_count = homeworks.filter(is_submitted=True).count()
-        pending_count = homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
-        overdue_count = homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
-        graded_count = homeworks.filter(grade__isnull=False).count()
+        # Use paginated queryset for stats
+        paginator = context.get('paginator')
+        if paginator:
+            # Stats for all items (not just current page)
+            all_homeworks = self.get_queryset()
+            total_homeworks = all_homeworks.count()
+            submitted_count = all_homeworks.filter(is_submitted=True).count()
+            pending_count = all_homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
+            overdue_count = all_homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
+        else:
+            # Fallback if pagination not used
+            homeworks = self.get_queryset()
+            total_homeworks = homeworks.count()
+            submitted_count = homeworks.filter(is_submitted=True).count()
+            pending_count = homeworks.filter(is_submitted=False, deadline__gte=timezone.now()).count()
+            overdue_count = homeworks.filter(is_submitted=False, deadline__lt=timezone.now()).count()
         
         # Stats for cards
         context['stats'] = [
@@ -66,12 +84,19 @@ class HomeworkListView(LoginRequiredMixin, ListView):
             context['groups'] = Group.objects.filter(mentor=self.request.user, is_active=True)
         elif self.request.user.is_admin or self.request.user.is_manager:
             context['groups'] = Group.objects.filter(is_active=True)
+        elif self.request.user.is_student:
+            # Studentlar uchun o'z guruhlari
+            context['groups'] = Group.objects.filter(students=self.request.user, is_active=True)
         
         # Permissions
         user = self.request.user
         context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_mentor') and user.is_mentor)
+        context['can_assign'] = user.is_mentor or user.is_admin or user.is_manager  # Mentor uchun assign button
         context['can_edit'] = context['can_create']
         context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        
+        # Now for template deadline comparison
+        context['now'] = timezone.now()
         
         return context
 
@@ -93,27 +118,61 @@ class HomeworkAssignView(MentorRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.filter(mentor=self.request.user, is_active=True)
+        groups = Group.objects.filter(mentor=self.request.user, is_active=True).select_related('course')
+        context['groups'] = groups
+        
+        # Har bir guruh uchun oxirgi darslar
+        group_lessons = {}
+        for group in groups:
+            latest_lesson = Lesson.objects.filter(group=group).order_by('-date', '-start_time').first()
+            group_lessons[group.id] = latest_lesson
+        context['group_lessons'] = group_lessons
+        
         return context
     
     def post(self, request):
         group_id = request.POST.get('group')
+        lesson_id = request.POST.get('lesson')
         title = request.POST.get('title')
         description = request.POST.get('description')
-        deadline = request.POST.get('deadline')
+        deadline_str = request.POST.get('deadline')
         
-        group = get_object_or_404(Group, pk=group_id)
+        if not deadline_str:
+            messages.error(request, 'Muddati belgilash majburiy.')
+            return redirect('homework:homework_assign')
+        
+        from datetime import datetime
+        deadline = datetime.fromisoformat(deadline_str.replace('T', ' '))
+        
+        group = get_object_or_404(Group, pk=group_id, mentor=self.request.user)
+        lesson = None
+        
+        if lesson_id:
+            lesson = get_object_or_404(Lesson, pk=lesson_id, group=group)
+        
+        # Agar lesson belgilanmagan bo'lsa, guruhning oxirgi darsini ishlatish
+        if not lesson:
+            lesson = Lesson.objects.filter(group=group).order_by('-date', '-start_time').first()
+            if not lesson:
+                messages.error(request, 'Guruhda dars topilmadi. Avval dars yarating.')
+                return redirect('homework:homework_assign')
         
         # Har bir talaba uchun homework yaratish
+        created_count = 0
         for student in group.students.all():
-            Homework.objects.create(
+            homework, created = Homework.objects.get_or_create(
                 student=student,
+                lesson=lesson,
                 title=title,
-                description=description,
-                deadline=deadline
+                defaults={
+                    'description': description,
+                    'deadline': deadline
+                }
             )
+            if created:
+                created_count += 1
         
-        messages.success(request, f'{group.students.count()} ta talabaga vazifa berildi.')
+        messages.success(request, f'{created_count} ta talabaga vazifa berildi.')
         return redirect('homework:homework_list')
 
 

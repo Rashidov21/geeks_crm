@@ -28,6 +28,6 @@ urlpatterns = [
     path('dashboard/mentor/', dashboard_views.MentorDashboardView.as_view(), name='mentor_dashboard'),
     
     # Student Guide
-    path('guide/', dashboard_views.StudentGuideView.as_view(), name='student_guide'),
+    path('guide/', views.StudentGuideView.as_view(), name='student_guide'),
 ]
 

@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db.models import Q
 from datetime import datetime, timedelta
 import calendar
 from .models import Attendance, AttendanceStatistics
@@ -17,11 +18,30 @@ class AttendanceListView(LoginRequiredMixin, ListView):
     paginate_by = 50
     
     def get_queryset(self):
-        queryset = Attendance.objects.select_related('student', 'lesson', 'lesson__group')
+        queryset = Attendance.objects.select_related('student', 'lesson', 'lesson__group', 'lesson__group__course')
         if self.request.user.is_student:
             queryset = queryset.filter(student=self.request.user)
         elif self.request.user.is_mentor:
             queryset = queryset.filter(lesson__group__mentor=self.request.user)
+        
+        # Filterlar
+        group_id = self.request.GET.get('group')
+        if group_id:
+            queryset = queryset.filter(lesson__group_id=group_id)
+        
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # Search query
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(student__first_name__icontains=search) |
+                Q(student__last_name__icontains=search) |
+                Q(lesson__group__name__icontains=search)
+            )
+        
         return queryset.order_by('-lesson__date', '-lesson__start_time')
     
     def get_context_data(self, **kwargs):

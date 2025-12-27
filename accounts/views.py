@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.generic import DetailView, UpdateView
+from django.views.generic import DetailView, UpdateView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Sum
 from .models import User
@@ -98,43 +99,47 @@ class ProfileView(DetailView):
         # Studentlar uchun statistika
         if user_profile.is_student:
             from courses.models import Group
-            from attendance.models import Attendance, AttendanceStatistics
+            from attendance.models import Attendance
             from homework.models import Homework
-            from gamification.models import PointTransaction
+            from exams.models import Exam, ExamResult
+            from gamification.models import StudentPoints
+            from django.utils import timezone
+            from datetime import timedelta
             
             # Guruhlar
-            groups = user_profile.student_groups.filter(is_active=True)
-            context['student_groups_count'] = groups.count()
+            groups = Group.objects.filter(students=user_profile, is_active=True)
+            context['student_groups'] = groups
             
-            # Davomat foizi (umumiy)
-            total_attendance = 0
-            total_present = 0
-            if groups.exists():
-                for group in groups:
-                    stats = AttendanceStatistics.objects.filter(
-                        student=user_profile,
-                        group=group
-                    ).first()
-                    if stats:
-                        total_attendance += stats.total_lessons
-                        total_present += stats.present_count + stats.late_count
+            # Davomat
+            this_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            attendances = Attendance.objects.filter(
+                student=user_profile,
+                lesson__date__gte=this_month_start.date()
+            )
+            total_att = attendances.count()
+            present_att = attendances.filter(status__in=['present', 'late']).count()
+            context['student_attendance_percentage'] = (present_att / total_att * 100) if total_att > 0 else 0
             
-            if total_attendance > 0:
-                context['student_attendance_percentage'] = (total_present / total_attendance) * 100
-            else:
-                context['student_attendance_percentage'] = 0
+            # Uy vazifalari
+            completed_homeworks = Homework.objects.filter(student=user_profile, is_submitted=True).count()
+            total_homeworks = Homework.objects.filter(student=user_profile).count()
+            context['student_homework_completion'] = (completed_homeworks / total_homeworks * 100) if total_homeworks > 0 else 0
             
-            # Uy vazifalari soni
-            homework_count = Homework.objects.filter(
-                lesson__group__in=groups
-            ).count()
-            context['student_homework_count'] = homework_count
+            # Imtihonlar
+            exam_results = ExamResult.objects.filter(student=user_profile)
+            passed_exams = exam_results.filter(score__gte=60).count()
+            total_exams = exam_results.count()
+            context['student_exam_pass_rate'] = (passed_exams / total_exams * 100) if total_exams > 0 else 0
             
-            # Ballar (umumiy)
-            points = PointTransaction.objects.filter(
-                student=user_profile
-            ).aggregate(total=Sum('points'))['total'] or 0
-            context['student_points'] = points
+            # Progress
+            from courses.models import StudentProgress
+            progress_list = StudentProgress.objects.filter(student=user_profile)
+            avg_progress = progress_list.aggregate(avg=Sum('progress_percentage'))['avg'] or 0
+            context['student_progress_percentage'] = avg_progress / progress_list.count() if progress_list.count() > 0 else 0
+            
+            # Points
+            student_points_list = StudentPoints.objects.filter(student=user_profile)
+            context['student_total_points'] = sum(sp.total_points for sp in student_points_list)
         
         # Sales userlar uchun statistika
         if user_profile.is_sales or user_profile.is_sales_manager:
@@ -179,7 +184,7 @@ class ProfileView(DetailView):
             ).count()
             context['sales_today_followups'] = today_followups
             
-            # Joriy oy KPI
+            # Joriy oy uchun KPI
             current_month = timezone.now().month
             current_year = timezone.now().year
             try:
@@ -205,7 +210,7 @@ class ProfileView(DetailView):
 class ProfileEditView(UpdateView):
     model = User
     template_name = 'accounts/profile_edit.html'
-    fields = ['first_name', 'last_name', 'email', 'phone', 'avatar']
+    fields = ['first_name', 'last_name', 'email', 'phone']
     success_url = reverse_lazy('accounts:profile')
     
     def get_object(self):
@@ -216,7 +221,18 @@ class ProfileEditView(UpdateView):
         return super().form_valid(form)
 
 
-# Custom error handlers
+class StudentGuideView(LoginRequiredMixin, TemplateView):
+    """
+    Studentlar uchun platforma qo'llanmasi
+    """
+    template_name = 'accounts/student_guide.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.role != 'student':
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
+
+
 def custom_404(request, exception):
     return render(request, 'errors/404.html', status=404)
 

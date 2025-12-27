@@ -63,7 +63,7 @@
                     <i class="fas fa-phone"></i>
                     <span>Qo'ng'iroq</span>
                 </a>
-                {% if can_edit %}
+                {% if can_edit_lead %}
                 <button @click="showStatusModal = true" 
                    class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
                     <i class="fas fa-exchange-alt"></i>
@@ -82,11 +82,13 @@
                     <span>Guruh biriktirish</span>
                 </button>
                 {% endif %}
+                {% if can_edit_lead %}
                 <a href="{% url 'crm:lead_edit' lead.pk %}" 
                    class="bg-white bg-opacity-20 text-white px-5 py-2.5 rounded-lg hover:bg-opacity-30 transition-all font-semibold backdrop-blur-sm flex items-center gap-2">
                     <i class="fas fa-edit"></i>
                     <span>Tahrirlash</span>
                 </a>
+                {% endif %}
                 
                 <!-- Status Update Modal -->
                 <div x-show="showStatusModal" 

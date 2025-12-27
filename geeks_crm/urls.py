@@ -5,10 +5,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.decorators.cache import never_cache
+from ckeditor_uploader import views as ckeditor_views
 from accounts.dashboard_views import DashboardView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('', DashboardView.as_view(), name='dashboard'),
     path('accounts/', include('accounts.urls')),
     path('courses/', include('courses.urls')),

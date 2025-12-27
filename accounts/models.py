@@ -12,7 +12,6 @@ class User(AbstractUser):
         ('manager', 'Menejer'),
         ('mentor', 'Mentor'),
         ('student', "O'quvchi"),
-        ('parent', 'Ota-ona'),
         ('accountant', 'Buxgalter'),
         ('sales', 'Sotuvchi'),
         ('sales_manager', 'Sotuvchilar menejeri'),
@@ -57,10 +56,6 @@ class User(AbstractUser):
     @property
     def is_student(self):
         return self.role == 'student'
-    
-    @property
-    def is_parent(self):
-        return self.role == 'parent'
     
     @property
     def is_accountant(self):
@@ -108,6 +103,7 @@ class StudentProfile(models.Model):
     address = models.TextField(blank=True, null=True, verbose_name='Manzil')
     parent_name = models.CharField(max_length=200, blank=True, null=True, verbose_name='Ota-ona ismi')
     parent_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Ota-ona telefoni')
+    parent_telegram_id = models.BigIntegerField(blank=True, null=True, verbose_name='Ota-ona Telegram ID')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
     
@@ -117,22 +113,3 @@ class StudentProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} - O'quvchi"
-
-
-class ParentProfile(models.Model):
-    """
-    Ota-ona profili
-    """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent_profile',
-                                limit_choices_to={'role': 'parent'}, verbose_name='Foydalanuvchi')
-    students = models.ManyToManyField(User, related_name='parents', limit_choices_to={'role': 'student'},
-                                     verbose_name="O'quvchilar")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Yangilangan sana')
-    
-    class Meta:
-        verbose_name = 'Ota-ona profili'
-        verbose_name_plural = 'Ota-ona profillari'
-    
-    def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} - Ota-ona"

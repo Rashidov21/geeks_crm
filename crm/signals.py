@@ -148,6 +148,10 @@ def handle_trial_lesson(sender, instance, created, **kwargs):
                 if instance.result == 'accepted':
                     lead.enrolled_at = timezone.now()
                     lead.enrolled_group = instance.group
+                    
+                    # Leadni Studentga aylantirish
+                    convert_lead_to_student(lead, instance.group)
+                    
                 elif instance.result == 'rejected':
                     lead.lost_at = timezone.now()
                 
@@ -164,6 +168,69 @@ def handle_trial_lesson(sender, instance, created, **kwargs):
                 due_date=due_date,
                 notes=f"Sinov darsi natijasi: {instance.get_result_display()}"
             )
+
+
+def convert_lead_to_student(lead, group):
+    """
+    Leadni Studentga aylantirish va guruhga qo'shish
+    """
+    from accounts.models import User
+    
+    # Agar allaqachon studentga aylantirilgan bo'lsa, qayta yaratmaslik
+    if lead.converted_student:
+        student = lead.converted_student
+        # Agar guruhga qo'shilmagan bo'lsa, qo'shish
+        if group and student not in group.students.all():
+            group.students.add(student)
+        return student
+    
+    # Student allaqachon mavjudligini tekshirish (telefon bo'yicha)
+    existing_student = User.objects.filter(
+        phone=lead.phone,
+        role='student'
+    ).first()
+    
+    if existing_student:
+        # Agar student mavjud bo'lsa, faqat guruhga qo'shish va lead bilan bog'lash
+        if group and existing_student not in group.students.all():
+            group.students.add(existing_student)
+        lead.converted_student = existing_student
+        lead.save(update_fields=['converted_student'])
+        return existing_student
+    
+    # Yangi student yaratish
+    username = lead.phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+    # Username unique bo'lishini ta'minlash
+    base_username = username
+    counter = 1
+    while User.objects.filter(username=username).exists():
+        username = f"{base_username}_{counter}"
+        counter += 1
+    
+    # Ism va familiyani ajratish
+    name_parts = lead.name.split() if lead.name else []
+    first_name = name_parts[0] if name_parts else ''
+    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+    
+    student = User.objects.create_user(
+        username=username,
+        phone=lead.phone,
+        email='',  # Lead modelida email maydoni yo'q
+        first_name=first_name,
+        last_name=last_name,
+        role='student',
+        is_active=True
+    )
+    
+    # Guruhga qo'shish
+    if group:
+        group.students.add(student)
+    
+    # Lead bilan bog'lash
+    lead.converted_student = student
+    lead.save(update_fields=['converted_student'])
+    
+    return student
 
 
 @receiver(post_save, sender='crm.FollowUp')

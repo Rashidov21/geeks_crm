@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Branch, StudentProfile, ParentProfile
+from .models import User, Branch, StudentProfile
 
 
 @admin.register(User)
@@ -33,15 +33,7 @@ class BranchAdmin(admin.ModelAdmin):
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'branch', 'parent_name', 'parent_phone', 'created_at']
+    list_display = ['user', 'branch', 'parent_name', 'parent_phone', 'parent_telegram_id', 'created_at']
     list_filter = ['branch', 'created_at']
     search_fields = ['user__username', 'user__email', 'parent_name', 'parent_phone']
-    ordering = ['-created_at']
-
-
-@admin.register(ParentProfile)
-class ParentProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'created_at']
-    filter_horizontal = ['students']
-    search_fields = ['user__username', 'user__email']
     ordering = ['-created_at']

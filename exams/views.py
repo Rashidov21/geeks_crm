@@ -37,20 +37,44 @@ class ExamListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        total_exams = self.get_queryset().count()
-        upcoming_exams = self.get_queryset().filter(date__gte=timezone.now().date()).count()
+        queryset = self.get_queryset()
+        total_exams = queryset.count()
+        upcoming_exams = queryset.filter(date__gte=timezone.now().date()).count()
+        completed_exams = queryset.filter(date__lt=timezone.now().date()).count()
+        
+        # For students, add exam results
+        if self.request.user.is_student:
+            from .models import ExamResult
+            exam_results = {}
+            for exam in queryset:
+                result = ExamResult.objects.filter(
+                    exam=exam,
+                    student=self.request.user
+                ).first()
+                exam_results[exam.id] = result
+            context['exam_results'] = exam_results
+            
+            # Calculate stats
+            passed_exams = sum(1 for r in exam_results.values() if r and r.is_passed)
+            context['passed_exams'] = passed_exams
         
         # Stats for cards
         context['stats'] = [
             {'label': 'Jami imtihonlar', 'value': total_exams, 'icon': 'fas fa-file-alt', 'color': 'text-rose-600'},
             {'label': 'Kutilayotgan', 'value': upcoming_exams, 'icon': 'fas fa-calendar', 'color': 'text-blue-600'},
+            {'label': 'O\'tgan', 'value': completed_exams, 'icon': 'fas fa-check-circle', 'color': 'text-green-600'},
         ]
+        
+        if self.request.user.is_student:
+            context['stats'].append({'label': 'O\'tdi', 'value': context.get('passed_exams', 0), 'icon': 'fas fa-trophy', 'color': 'text-yellow-600'})
         
         if self.request.user.is_mentor:
             context['groups'] = Group.objects.filter(mentor=self.request.user, is_active=True)
         elif self.request.user.is_admin or self.request.user.is_manager:
             context['groups'] = Group.objects.filter(is_active=True)
             context['courses'] = Course.objects.filter(is_active=True)
+        elif self.request.user.is_student:
+            context['groups'] = Group.objects.filter(students=self.request.user, is_active=True)
         
         # Permissions
         user = self.request.user
@@ -219,22 +243,81 @@ class ExamDeleteView(RoleRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-class ExamResultsView(RoleRequiredMixin, TemplateView):
-    """Imtihon natijalari (mentor/admin uchun)"""
+class ExamResultsView(LoginRequiredMixin, TemplateView):
+    """Imtihon natijalari (student/mentor/admin uchun)"""
     template_name = 'exams/exam_results.html'
-    allowed_roles = ['admin', 'manager', 'mentor']
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Check if user has permission to view results"""
+        if not request.user.is_authenticated:
+            return redirect('accounts:login')
+        # Allow admin, manager, mentor, and students
+        if not (request.user.is_admin or request.user.is_manager or 
+                request.user.is_mentor or request.user.is_student):
+            messages.error(request, 'Sizda bu sahifaga kirish huquqi yo\'q.')
+            return redirect('exams:exam_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         exam = get_object_or_404(Exam, pk=self.kwargs['pk'])
         
-        results = ExamResult.objects.filter(exam=exam).select_related('student').order_by('-score')
+        # Get results - filter by group if student
+        if self.request.user.is_student:
+            # Students see only their group's results
+            if exam.group and self.request.user in exam.group.students.all():
+                results = ExamResult.objects.filter(
+                    exam=exam,
+                    student__in=exam.group.students.all()
+                ).select_related('student').order_by('-score')
+            else:
+                # If not in group, show only their own result
+                results = ExamResult.objects.filter(
+                    exam=exam,
+                    student=self.request.user
+                ).select_related('student').order_by('-score')
+        else:
+            # Admin/Manager/Mentor see all results
+            results = ExamResult.objects.filter(exam=exam).select_related('student').order_by('-score')
+        
+        # Calculate student's position
+        student_rank = None
+        student_result = None
+        if self.request.user.is_student:
+            try:
+                student_result = results.get(student=self.request.user)
+                # Calculate rank (1-based)
+                better_results = results.filter(score__gt=student_result.score).count()
+                student_rank = better_results + 1
+            except ExamResult.DoesNotExist:
+                pass
+        
+        # Motivational messages
+        motivational_message = None
+        if student_result and self.request.user.is_student:
+            percentage = student_result.percentage or 0
+            if percentage >= 90:
+                motivational_message = "🎉 Ajoyib! Siz eng yaxshi natijalardan birini ko'rsatdingiz! Davom eting!"
+            elif percentage >= 80:
+                motivational_message = "👍 Yaxshi ish qildingiz! Biroz ko'proq harakat qilsangiz, eng yaxshilardan bo'lasiz!"
+            elif percentage >= 70:
+                motivational_message = "💪 Yaxshi! Harakat qilayapsiz. Keyingi marta yanada yaxshi natija olishga harakat qiling!"
+            elif percentage >= 60:
+                motivational_message = "📚 O'tdingiz! Lekin yanada yaxshi natija uchun ko'proq o'qish kerak. Qo'yib bering!"
+            elif student_result.is_passed:
+                motivational_message = "✅ O'tdingiz! Lekin yaxshilash uchun ko'proq harakat qilish kerak."
+            else:
+                motivational_message = "📖 Kechirasiz, o'ta olmadingiz. Lekin qo'yib bermang! Ko'proq o'qib, keyingi marta yaxshiroq natija ko'rsating!"
         
         context['exam'] = exam
         context['results'] = results
         context['avg_score'] = results.aggregate(avg=Avg('score'))['avg'] or 0
         context['passed_count'] = results.filter(is_passed=True).count()
         context['total_count'] = results.count()
+        context['student_rank'] = student_rank
+        context['student_result'] = student_result
+        context['motivational_message'] = motivational_message
+        context['is_student_view'] = self.request.user.is_student
         
         return context
 

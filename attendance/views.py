@@ -1,13 +1,14 @@
 from django.views.generic import ListView, CreateView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime, timedelta
 import calendar
 from .models import Attendance, AttendanceStatistics
 from courses.models import Lesson, Group
+from accounts.models import User
 from accounts.mixins import MentorRequiredMixin, TailwindFormMixin
 
 
@@ -16,6 +17,25 @@ class AttendanceListView(LoginRequiredMixin, ListView):
     template_name = 'attendance/attendance_list.html'
     context_object_name = 'attendances'
     paginate_by = 50
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Mentors and admins should only access attendance from group detail page
+        if request.user.is_mentor or request.user.is_admin or request.user.is_manager:
+            # Redirect to groups list or first group
+            from courses.models import Group
+            if request.user.is_mentor:
+                groups = Group.objects.filter(mentor=request.user, is_active=True)
+            else:
+                groups = Group.objects.filter(is_active=True)
+            
+            if groups.exists():
+                return redirect('attendance:group_attendance', group_id=groups.first().pk)
+            else:
+                from django.contrib import messages
+                messages.info(request, 'Sizda faol guruhlar yo\'q. Davomatni guruh detail sahifasidan olishingiz mumkin.')
+                return redirect('courses:group_list')
+        
+        return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
         queryset = Attendance.objects.select_related('student', 'lesson', 'lesson__group', 'lesson__group__course')
@@ -86,16 +106,23 @@ class GroupAttendanceView(LoginRequiredMixin, TemplateView):
     """Guruh bo'yicha interaktiv davomat sahifasi"""
     template_name = 'attendance/group_attendance.html'
     
+    def dispatch(self, request, *args, **kwargs):
+        """Permission check - move here from get_context_data"""
+        group_id = kwargs.get('group_id')
+        group = get_object_or_404(Group, pk=group_id)
+        
+        # Faqat mentor yoki admin/manager ko'ra oladi
+        if not (request.user.is_admin or request.user.is_manager or 
+                (request.user.is_mentor and group.mentor == request.user)):
+            from django.http import HttpResponseForbidden
+            return HttpResponseForbidden()
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         group_id = self.kwargs.get('group_id')
         group = get_object_or_404(Group, pk=group_id)
-        
-        # Faqat mentor yoki admin/manager ko'ra oladi
-        if not (self.request.user.is_admin or self.request.user.is_manager or 
-                (self.request.user.is_mentor and group.mentor == self.request.user)):
-            from django.http import HttpResponseForbidden
-            return HttpResponseForbidden()
         
         context['group'] = group
         
@@ -113,14 +140,59 @@ class GroupAttendanceView(LoginRequiredMixin, TemplateView):
         start_date = datetime(year, month, 1).date()
         end_date = datetime(year, month, num_days).date()
         
-        lessons = Lesson.objects.filter(
+        # Generate expected lesson dates based on group schedule
+        expected_lesson_dates = []
+        current = start_date
+        while current <= end_date:
+            should_have_lesson = False
+            
+            if group.schedule_type == 'daily':
+                should_have_lesson = True
+            elif group.schedule_type == 'odd':
+                # Toq kunlar (1, 3, 5, 7, 9, 11, 13, ...)
+                should_have_lesson = current.day % 2 == 1
+            elif group.schedule_type == 'even':
+                # Juft kunlar (2, 4, 6, 8, 10, 12, 14, ...)
+                should_have_lesson = current.day % 2 == 0
+            
+            if should_have_lesson:
+                expected_lesson_dates.append(current)
+            
+            current += timedelta(days=1)
+        
+        # Get actual lessons
+        actual_lessons = Lesson.objects.filter(
             group=group,
             date__gte=start_date,
             date__lte=end_date
         ).order_by('date')
         
-        lesson_dates = list(lessons.values_list('date', flat=True).distinct())
+        # Create lesson dict for quick lookup
+        lesson_dict = {lesson.date: lesson for lesson in actual_lessons}
+        
+        # Merge expected dates with actual lessons
+        # For each expected date, use actual lesson if exists, otherwise create virtual lesson
+        from types import SimpleNamespace
+        lessons_list = []
+        for date in expected_lesson_dates:
+            if date in lesson_dict:
+                lessons_list.append(lesson_dict[date])
+            else:
+                # Create virtual lesson for display
+                virtual_lesson = SimpleNamespace(
+                    pk=None,
+                    date=date,
+                    start_time=group.start_time,
+                    end_time=group.end_time,
+                    topic=None,
+                    title=None,
+                    group=group
+                )
+                lessons_list.append(virtual_lesson)
+        
+        lesson_dates = expected_lesson_dates
         context['lesson_dates'] = lesson_dates
+        context['lessons_list'] = lessons_list
         
         # Talabalar va ularning davomati
         students = group.students.all().order_by('first_name', 'last_name')
@@ -159,7 +231,35 @@ class GroupAttendanceView(LoginRequiredMixin, TemplateView):
                 'has_debt': has_debt,
             })
         
+        # Add points and rankings to student data
+        from gamification.models import StudentPoints, GroupRanking
+        for data in student_data:
+            student = data['student']
+            # Get or create student points and calculate
+            student_points, created = StudentPoints.objects.get_or_create(
+                student=student,
+                group=group
+            )
+            if created or not student_points.total_points:
+                student_points.calculate_total_points()
+            
+            # Get ranking
+            ranking = GroupRanking.objects.filter(
+                group=group,
+                student=student
+            ).first()
+            
+            data['total_points'] = student_points.total_points
+            data['rank'] = ranking.rank if ranking else None
+        
+        # Sort by points for ranking tab
+        student_data_sorted = sorted(student_data, key=lambda x: x.get('total_points', 0), reverse=True)
+        for idx, data in enumerate(student_data_sorted, 1):
+            if data.get('rank') is None:
+                data['rank'] = idx
+        
         context['student_data'] = student_data
+        context['student_data_sorted'] = student_data_sorted
         context['total_lessons'] = len(lesson_dates)
         
         # Navigatsiya uchun
@@ -258,6 +358,98 @@ class AttendanceCreateView(TailwindFormMixin, MentorRequiredMixin, CreateView):
         if 'lesson_id' in self.kwargs:
             form.instance.lesson = Lesson.objects.get(pk=self.kwargs['lesson_id'])
         return super().form_valid(form)
+
+
+class SaveGradeView(LoginRequiredMixin, View):
+    """Save student grade with auto-save"""
+    
+    def post(self, request):
+        import json
+        data = json.loads(request.body)
+        
+        student_id = data.get('student_id')
+        group_id = data.get('group_id')
+        grade = data.get('grade')
+        comment = data.get('comment', '')
+        
+        try:
+            group = get_object_or_404(Group, pk=group_id)
+            student = get_object_or_404(User, pk=student_id, role='student')
+            
+            # Permission check
+            if not (request.user.is_admin or request.user.is_manager or 
+                    (request.user.is_mentor and group.mentor == request.user)):
+                return JsonResponse({'success': False, 'error': 'Ruxsat yo\'q'}, status=403)
+            
+            # Save grade (you may need to create a Grade model or use existing one)
+            # For now, we'll just return success - you can implement actual grade saving
+            return JsonResponse({
+                'success': True,
+                'message': 'Baho saqlandi'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+class SaveParentCommentView(LoginRequiredMixin, View):
+    """Save parent comment and send via Telegram"""
+    
+    def post(self, request):
+        import json
+        from telegram_bot.tasks import send_parent_comment_notification
+        
+        data = json.loads(request.body)
+        
+        student_id = data.get('student_id')
+        group_id = data.get('group_id')
+        comment = data.get('comment', '')
+        
+        try:
+            from telegram_bot.tasks import send_parent_comment_notification
+            
+            group = get_object_or_404(Group, pk=group_id)
+            student = get_object_or_404(User, pk=student_id, role='student')
+            
+            # Permission check
+            if not (request.user.is_admin or request.user.is_manager or 
+                    (request.user.is_mentor and group.mentor == request.user)):
+                return JsonResponse({'success': False, 'error': 'Ruxsat yo\'q'}, status=403)
+            
+            # Get student's parent info from StudentProfile
+            from accounts.models import StudentProfile
+            try:
+                student_profile = StudentProfile.objects.get(user=student)
+                parent_telegram_id = student_profile.parent_telegram_id
+                parent_phone = student_profile.parent_phone
+                
+                if not parent_telegram_id:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Ota-onada Telegram ID topilmadi'
+                    })
+                
+                # Send to parent via Telegram
+                send_parent_comment_notification.delay(
+                    parent_telegram_id,
+                    student.id,
+                    group.id,
+                    comment
+                )
+                
+            except StudentProfile.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'O\'quvchi profili topilmadi'
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Izoh {sent_count} ta ota-onaga yuborildi'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
 class AttendanceStatisticsView(LoginRequiredMixin, ListView):

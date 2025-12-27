@@ -64,6 +64,174 @@ def send_lesson_reminder():
 
 
 @shared_task
+def send_homework_assigned_notification(homework_id):
+    """
+    Vazifa berilganda o'quvchiga va ota-onaga xabar
+    """
+    try:
+        from telegram import Bot
+        from homework.models import Homework
+        from accounts.models import StudentProfile
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        homework = Homework.objects.select_related('student', 'lesson', 'lesson__group').get(pk=homework_id)
+        student = homework.student
+        
+        # O'quvchiga xabar
+        if student.telegram_id:
+            try:
+                message = f"📝 Yangi vazifa\n\n"
+                message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                if homework.lesson and homework.lesson.group:
+                    message += f"Guruh: {homework.lesson.group.name}\n"
+                if homework.assignment_description:
+                    message += f"\nTavsif:\n{homework.assignment_description[:200]}...\n"
+                message += f"Muddati: {homework.deadline.strftime('%d.%m.%Y %H:%M')}"
+                bot.send_message(chat_id=student.telegram_id, text=message)
+            except Exception as e:
+                logger.error(f"Error sending homework notification to student: {e}")
+        
+        # Ota-onaga xabar
+        try:
+            student_profile = StudentProfile.objects.get(user=student)
+            parent_telegram_id = student_profile.parent_telegram_id
+            
+            if parent_telegram_id:
+                try:
+                    message = f"📝 Farzandingizga yangi vazifa berildi\n\n"
+                    message += f"Farzand: {student.get_full_name() or student.username}\n"
+                    message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                    if homework.lesson and homework.lesson.group:
+                        message += f"Guruh: {homework.lesson.group.name}\n"
+                    message += f"Muddati: {homework.deadline.strftime('%d.%m.%Y %H:%M')}"
+                    bot.send_message(chat_id=parent_telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending homework notification to parent: {e}")
+        except StudentProfile.DoesNotExist:
+            pass
+    
+    except Exception as e:
+        logger.error(f"Error in send_homework_assigned_notification: {e}")
+
+
+@shared_task
+def send_homework_submitted_notification(homework_id):
+    """
+    Vazifa topshirilganda mentor va ota-onaga xabar
+    """
+    try:
+        from telegram import Bot
+        from homework.models import Homework
+        from accounts.models import StudentProfile
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        homework = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'lesson__group__mentor').get(pk=homework_id)
+        student = homework.student
+        
+        # Mentorga xabar
+        if homework.lesson and homework.lesson.group and homework.lesson.group.mentor:
+            mentor = homework.lesson.group.mentor
+            if mentor.telegram_id:
+                try:
+                    message = f"✅ Vazifa topshirildi\n\n"
+                    message += f"O'quvchi: {student.get_full_name() or student.username}\n"
+                    message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                    if homework.lesson.group:
+                        message += f"Guruh: {homework.lesson.group.name}\n"
+                    message += f"Topshirilgan: {homework.submitted_at.strftime('%d.%m.%Y %H:%M')}"
+                    if homework.is_late:
+                        message += f"\n⚠️ Kech topshirildi"
+                    bot.send_message(chat_id=mentor.telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending homework submitted notification to mentor: {e}")
+        
+        # Ota-onaga xabar
+        try:
+            student_profile = StudentProfile.objects.get(user=student)
+            parent_telegram_id = student_profile.parent_telegram_id
+            
+            if parent_telegram_id:
+                try:
+                    message = f"✅ Farzandingiz vazifani topshirdi\n\n"
+                    message += f"Farzand: {student.get_full_name() or student.username}\n"
+                    message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                    if homework.is_late:
+                        message += f"⚠️ Kech topshirildi"
+                    else:
+                        message += f"✅ Vaqtida topshirildi"
+                    bot.send_message(chat_id=parent_telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending homework submitted notification to parent: {e}")
+        except StudentProfile.DoesNotExist:
+            pass
+    
+    except Exception as e:
+        logger.error(f"Error in send_homework_submitted_notification: {e}")
+
+
+@shared_task
+def send_homework_graded_notification(homework_id):
+    """
+    Vazifa baholanganida o'quvchiga va ota-onaga xabar
+    """
+    try:
+        from telegram import Bot
+        from homework.models import Homework
+        from accounts.models import StudentProfile
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        homework = Homework.objects.select_related('student', 'grade', 'lesson', 'lesson__group').get(pk=homework_id)
+        student = homework.student
+        
+        if not homework.grade:
+            return
+        
+        # O'quvchiga xabar
+        if student.telegram_id:
+            try:
+                message = f"⭐ Vazifa baholandi\n\n"
+                message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                message += f"Baho: {homework.grade.grade}/100\n"
+                if homework.grade.comment:
+                    message += f"\nIzoh:\n{homework.grade.comment[:200]}"
+                bot.send_message(chat_id=student.telegram_id, text=message)
+            except Exception as e:
+                logger.error(f"Error sending homework graded notification to student: {e}")
+        
+        # Ota-onaga xabar
+        try:
+            student_profile = StudentProfile.objects.get(user=student)
+            parent_telegram_id = student_profile.parent_telegram_id
+            
+            if parent_telegram_id:
+                try:
+                    message = f"⭐ Farzandingizning vazifasi baholandi\n\n"
+                    message += f"Farzand: {student.get_full_name() or student.username}\n"
+                    message += f"Vazifa: {homework.title or 'Vazifa'}\n"
+                    message += f"Baho: {homework.grade.grade}/100"
+                    bot.send_message(chat_id=parent_telegram_id, text=message)
+                except Exception as e:
+                    logger.error(f"Error sending homework graded notification to parent: {e}")
+        except StudentProfile.DoesNotExist:
+            pass
+    
+    except Exception as e:
+        logger.error(f"Error in send_homework_graded_notification: {e}")
+
+
+@shared_task
 def send_homework_deadline_reminder():
     """
     Uy vazifasi deadline yaqinlashganda eslatma
@@ -121,29 +289,32 @@ def send_attendance_notification_to_parents():
         ).select_related('student', 'lesson', 'lesson__group')
         
         for attendance in attendances:
-            # Ota-onalarni topish
-            parents = User.objects.filter(
-                role='parent',
-                parent_profile__students=attendance.student,
-                telegram_id__isnull=False
-            )
-            
-            status_text = {
-                'present': '✅ Keldi',
-                'late': '⏰ Kech qoldi',
-                'absent': '❌ Kelmadi'
-            }
-            
-            for parent in parents:
+            # Ota-ona ma'lumotlarini StudentProfile dan olish
+            from accounts.models import StudentProfile
+            try:
+                student_profile = StudentProfile.objects.get(user=attendance.student)
+                parent_telegram_id = student_profile.parent_telegram_id
+                
+                if not parent_telegram_id:
+                    continue
+                
+                status_text = {
+                    'present': '✅ Keldi',
+                    'late': '⏰ Kech qoldi',
+                    'absent': '❌ Kelmadi'
+                }
+                
                 try:
                     message = f"👨‍👩‍👦 Farzandingizning davomati\n\n"
                     message += f"Ism: {attendance.student.get_full_name() or attendance.student.username}\n"
                     message += f"Guruh: {attendance.lesson.group.name}\n"
                     message += f"Holat: {status_text.get(attendance.status, attendance.get_status_display())}\n"
                     message += f"Sana: {attendance.lesson.date}"
-                    bot.send_message(chat_id=parent.telegram_id, text=message)
+                    bot.send_message(chat_id=parent_telegram_id, text=message)
                 except Exception as e:
                     logger.error(f"Error sending attendance notification: {e}")
+            except StudentProfile.DoesNotExist:
+                continue
     
     except Exception as e:
         logger.error(f"Error in send_attendance_notification_to_parents: {e}")
@@ -165,41 +336,43 @@ def send_monthly_report_to_parent(report_id):
         bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
         report = MonthlyReport.objects.select_related('mentor', 'student', 'group').get(pk=report_id)
         
-        # Ota-onalarni topish
-        parents = User.objects.filter(
-            role='parent',
-            parent_profile__students=report.student,
-            telegram_id__isnull=False
-        )
-        
-        character_text = {
-            'excellent': 'A\'lo',
-            'good': 'Yaxshi',
-            'satisfactory': 'Qoniqarli',
-            'needs_improvement': 'Yaxshilash kerak',
-        }
-        
-        attendance_text = {
-            'excellent': 'A\'lo (95-100%)',
-            'good': 'Yaxshi (85-94%)',
-            'satisfactory': 'Qoniqarli (70-84%)',
-            'poor': 'Qoniqarsiz (<70%)',
-        }
-        
-        mastery_text = {
-            'excellent': 'A\'lo',
-            'good': 'Yaxshi',
-            'satisfactory': 'Qoniqarli',
-            'needs_improvement': 'Yaxshilash kerak',
-        }
-        
-        progress_text = {
-            'improved': 'Yaxshilandi',
-            'stable': 'Barqaror',
-            'declined': 'Pasaydi',
-        }
-        
-        for parent in parents:
+        # Ota-ona ma'lumotlarini StudentProfile dan olish
+        from accounts.models import StudentProfile
+        try:
+            student_profile = StudentProfile.objects.get(user=report.student)
+            parent_telegram_id = student_profile.parent_telegram_id
+            
+            if not parent_telegram_id:
+                logger.warning(f"Student {report.student.username} has no parent telegram_id")
+                return
+            
+            character_text = {
+                'excellent': 'A\'lo',
+                'good': 'Yaxshi',
+                'satisfactory': 'Qoniqarli',
+                'needs_improvement': 'Yaxshilash kerak',
+            }
+            
+            attendance_text = {
+                'excellent': 'A\'lo (95-100%)',
+                'good': 'Yaxshi (85-94%)',
+                'satisfactory': 'Qoniqarli (70-84%)',
+                'poor': 'Qoniqarsiz (<70%)',
+            }
+            
+            mastery_text = {
+                'excellent': 'A\'lo',
+                'good': 'Yaxshi',
+                'satisfactory': 'Qoniqarli',
+                'needs_improvement': 'Yaxshilash kerak',
+            }
+            
+            progress_text = {
+                'improved': 'Yaxshilandi',
+                'stable': 'Barqaror',
+                'declined': 'Pasaydi',
+            }
+            
             try:
                 message = f"📊 Oylik hisobot\n\n"
                 message += f"Farzand: {report.student.get_full_name() or report.student.username}\n"
@@ -219,12 +392,45 @@ def send_monthly_report_to_parent(report_id):
                 if report.additional_notes:
                     message += f"\nQo'shimcha izoh:\n{report.additional_notes}"
                 
-                bot.send_message(chat_id=parent.telegram_id, text=message)
+                bot.send_message(chat_id=parent_telegram_id, text=message)
             except Exception as e:
                 logger.error(f"Error sending monthly report to parent: {e}")
+        except StudentProfile.DoesNotExist:
+            logger.warning(f"StudentProfile not found for student {report.student.username}")
     
     except Exception as e:
         logger.error(f"Error in send_monthly_report_to_parent: {e}")
+
+
+@shared_task
+def send_parent_comment_notification(telegram_id, student_id, group_id, comment):
+    """
+    Ota-onaga izoh yuborish
+    """
+    try:
+        from telegram import Bot
+        from accounts.models import User
+        from courses.models import Group
+        
+        if not settings.TELEGRAM_BOT_TOKEN:
+            logger.warning("Telegram bot token not configured")
+            return
+        
+        bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+        student = User.objects.get(pk=student_id, role='student')
+        group = Group.objects.get(pk=group_id)
+        
+        message = f"💬 Farzandingiz haqida izoh\n\n"
+        message += f"Farzand: {student.get_full_name() or student.username}\n"
+        message += f"Guruh: {group.name}\n"
+        message += f"Mentor: {group.mentor.get_full_name() if group.mentor else 'Belgilanmagan'}\n\n"
+        message += f"Izoh:\n{comment}"
+        
+        bot.send_message(chat_id=telegram_id, text=message)
+        logger.info(f"Parent comment sent to {telegram_id}")
+        
+    except Exception as e:
+        logger.error(f"Error sending parent comment notification: {e}")
 
 
 @shared_task
@@ -256,22 +462,26 @@ def send_lesson_completion_notification(lesson_id):
                 logger.error(f"Error sending lesson completion: {e}")
         
         # Ota-onalarga xabar
+        from accounts.models import StudentProfile
         for student in lesson.group.students.filter(role='student'):
-            parents = User.objects.filter(
-                role='parent',
-                parent_profile__students=student,
-                telegram_id__isnull=False
-            )
-            for parent in parents:
+            try:
+                student_profile = StudentProfile.objects.get(user=student)
+                parent_telegram_id = student_profile.parent_telegram_id
+                
+                if not parent_telegram_id:
+                    continue
+                
                 try:
                     message = f"✅ Farzandingizning darsi yakunlandi\n\n"
                     message += f"Ism: {student.get_full_name() or student.username}\n"
                     message += f"Guruh: {lesson.group.name}\n"
                     if lesson.topic:
                         message += f"Mavzu: {lesson.topic.name}\n"
-                    bot.send_message(chat_id=parent.telegram_id, text=message)
+                    bot.send_message(chat_id=parent_telegram_id, text=message)
                 except Exception as e:
                     logger.error(f"Error sending lesson completion to parent: {e}")
+            except StudentProfile.DoesNotExist:
+                continue
     
     except Exception as e:
         logger.error(f"Error in send_lesson_completion_notification: {e}")

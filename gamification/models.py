@@ -76,25 +76,46 @@ class StudentPoints(models.Model):
     
     def calculate_total_points(self):
         """Jami ballarni hisoblash"""
-        transactions = PointTransaction.objects.filter(
+        # Guruhga tegishli barcha transaksiyalarni to'g'ri filtrlash
+        from django.db.models import Q
+        
+        # Attendance transaksiyalar
+        attendance_transactions = PointTransaction.objects.filter(
             student=self.student,
-            created_at__gte=self.group.created_at
+            attendance__lesson__group=self.group
         )
         
-        # Guruhga tegishli transaksiyalarni filtrlash
-        group_transactions = []
-        for transaction in transactions:
-            if transaction.attendance and transaction.attendance.lesson.group == self.group:
-                group_transactions.append(transaction)
-            elif transaction.homework and transaction.homework.lesson.group == self.group:
-                group_transactions.append(transaction)
-            elif transaction.exam_result and transaction.exam_result.exam.group == self.group:
-                group_transactions.append(transaction)
-            elif transaction.point_type == 'manual':
-                # Manual balllar barcha guruhlar uchun
-                group_transactions.append(transaction)
+        # Homework transaksiyalar
+        homework_transactions = PointTransaction.objects.filter(
+            student=self.student,
+            homework__lesson__group=self.group
+        )
         
-        self.total_points = sum(t.points for t in group_transactions)
+        # Exam transaksiyalar
+        exam_transactions = PointTransaction.objects.filter(
+            student=self.student,
+            exam_result__exam__group=self.group
+        )
+        
+        # Manual transaksiyalar (guruhga bog'liq emas, lekin barcha guruhlar uchun)
+        # Agar manual transaksiya description'da guruh nomi bo'lsa, uni qo'shish
+        manual_transactions = PointTransaction.objects.filter(
+            student=self.student,
+            point_type='manual'
+        ).filter(
+            Q(description__icontains=self.group.name) | Q(description='')
+        )
+        
+        # Barcha transaksiyalarni birlashtirish
+        all_transactions = (
+            attendance_transactions |
+            homework_transactions |
+            exam_transactions |
+            manual_transactions
+        ).distinct()
+        
+        # Jami ballarni hisoblash
+        self.total_points = sum(t.points for t in all_transactions)
         self.save()
         return self.total_points
 

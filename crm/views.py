@@ -45,10 +45,9 @@ class LeadKanbanView(LoginRequiredMixin, TemplateView):
         # Lidlarni olish
         leads = Lead.objects.select_related('status', 'assigned_sales', 'interested_course', 'branch')
         
-        # Role bo'yicha filtrlash
-        if self.request.user.is_sales:
-            leads = leads.filter(assigned_sales=self.request.user)
-        elif self.request.user.is_sales_manager:
+        # Sales users see ALL leads (not filtered)
+        # Sales managers see branch leads only
+        if self.request.user.is_sales_manager:
             if hasattr(self.request.user, 'sales_profile') and self.request.user.sales_profile:
                 branch = self.request.user.sales_profile.branch
                 if branch:
@@ -89,6 +88,7 @@ class LeadKanbanView(LoginRequiredMixin, TemplateView):
         context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'])
         context['courses'] = Course.objects.filter(is_active=True)
         context['sources'] = Lead.SOURCE_CHOICES
+        context['is_sales'] = self.request.user.is_sales
         
         return context
 
@@ -105,10 +105,9 @@ class LeadTableView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Lead.objects.select_related('status', 'assigned_sales', 'interested_course', 'branch')
         
-        # Role bo'yicha filtrlash
-        if self.request.user.is_sales:
-            queryset = queryset.filter(assigned_sales=self.request.user)
-        elif self.request.user.is_sales_manager:
+        # Sales users see ALL leads (not filtered)
+        # Sales managers see branch leads only
+        if self.request.user.is_sales_manager:
             if hasattr(self.request.user, 'sales_profile') and self.request.user.sales_profile:
                 branch = self.request.user.sales_profile.branch
                 if branch:
@@ -145,6 +144,8 @@ class LeadTableView(LoginRequiredMixin, ListView):
         context['sources'] = Lead.SOURCE_CHOICES
         context['courses'] = Course.objects.filter(is_active=True)
         context['sales_users'] = User.objects.filter(role__in=['sales', 'sales_manager'], is_active=True)
+        context['is_sales'] = self.request.user.is_sales
+        context['user'] = self.request.user
         return context
 
 
@@ -274,9 +275,9 @@ class LeadListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Lead.objects.select_related('status', 'assigned_sales', 'interested_course', 'branch')
         
-        if self.request.user.is_sales:
-            queryset = queryset.filter(assigned_sales=self.request.user)
-        elif self.request.user.is_sales_manager:
+        # Sales users see ALL leads (not filtered)
+        # Sales managers see branch leads only
+        if self.request.user.is_sales_manager:
             if hasattr(self.request.user, 'sales_profile') and self.request.user.sales_profile:
                 branch = self.request.user.sales_profile.branch
                 if branch:
@@ -314,6 +315,7 @@ class LeadListView(LoginRequiredMixin, ListView):
         context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
         context['can_edit'] = context['can_create']
         context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+        context['is_sales'] = user.is_sales
         return context
 
 
@@ -331,8 +333,8 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
             'trial_group', 'trial_room', 'enrolled_group'
         )
         
-        if self.request.user.is_sales:
-            queryset = queryset.filter(assigned_sales=self.request.user)
+        # Sales users see ALL leads (not filtered) - can view but only edit assigned ones
+        # No filtering here - all leads are visible
         
         return queryset
     
@@ -368,9 +370,17 @@ class LeadDetailView(LoginRequiredMixin, DetailView):
         
         # Permissions
         user = self.request.user
-        context['can_edit'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
-        context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
-        context['can_assign'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager)
+        # Sales users can only edit/assign leads assigned to them
+        if user.is_sales:
+            context['can_edit_lead'] = lead.assigned_sales == user
+            context['can_delete'] = False
+            context['can_assign'] = False
+        else:
+            context['can_edit_lead'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager)
+            context['can_delete'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager)
+            context['can_assign'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager)
+        
+        context['can_edit'] = context.get('can_edit_lead', False)  # For backward compatibility
         
         return context
 
@@ -650,6 +660,8 @@ class FollowUpTodayView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['today_count'] = self.get_queryset().filter(due_date__date=timezone.now().date()).count()
         context['overdue_count'] = self.get_queryset().filter(is_overdue=True).count()
+        user = self.request.user
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
         return context
 
 
@@ -672,6 +684,12 @@ class FollowUpOverdueView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(sales=self.request.user)
         
         return queryset.order_by('due_date')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['can_create'] = user.is_superuser or (hasattr(user, 'is_admin') and user.is_admin) or (hasattr(user, 'is_manager') and user.is_manager) or (hasattr(user, 'is_sales_manager') and user.is_sales_manager) or (hasattr(user, 'is_sales') and user.is_sales)
+        return context
 
 
 class FollowUpCompleteView(LoginRequiredMixin, View):
@@ -953,12 +971,21 @@ class TrialResultView(RoleRequiredMixin, View):
                 if result == 'accepted':
                     lead.enrolled_at = timezone.now()
                     lead.enrolled_group = trial.group
+                    
+                    # Leadni Studentga aylantirish
+                    from crm.signals import convert_lead_to_student
+                    student = convert_lead_to_student(lead, trial.group)
+                    if student:
+                        messages.success(request, f'Sinov natijasi saqlandi. {lead.name} studentga aylantirildi va {trial.group.name} guruhiga qo\'shildi.')
+                    else:
+                        messages.success(request, 'Sinov natijasi saqlandi.')
                 elif result == 'rejected':
                     lead.lost_at = timezone.now()
                 
                 lead.save()
             
-            messages.success(request, 'Sinov natijasi saqlandi.')
+            if result != 'accepted':
+                messages.success(request, 'Sinov natijasi saqlandi.')
         
         return redirect('crm:lead_detail', pk=trial.lead.pk)
 

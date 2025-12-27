@@ -1,6 +1,7 @@
 {% load static %}
 {% load humanize %}
 {% load crud_tags %}
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
@@ -10,6 +11,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- CKEditor 4.24.0 (latest open-source version) -->
+    <script src="https://cdn.ckeditor.com/4.24.0/standard/ckeditor.js"></script>
+    <script type="text/javascript">
+        // Disable version check to suppress security warnings
+        if (typeof CKEDITOR !== 'undefined') {
+            CKEDITOR.config.versionCheck = false;
+        }
+    </script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
@@ -147,9 +156,12 @@
                     <i class="fas fa-calendar-check w-5 text-center text-cyan-500"></i>
                     <span>Davomat</span>
                 </a>
-                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 relative">
                     <i class="fas fa-tasks w-5 text-center text-orange-500"></i>
                     <span>Uy vazifalari</span>
+                    {% if submitted_homeworks_count and submitted_homeworks_count > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ submitted_homeworks_count }}</span>
+                    {% endif %}
                 </a>
                 <a href="{% url 'exams:exam_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-file-alt w-5 text-center text-rose-500"></i>
@@ -164,9 +176,12 @@
                     <i class="fas fa-book w-5 text-center text-blue-500"></i>
                     <span>Kurslarim</span>
                 </a>
-                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+                <a href="{% url 'homework:homework_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100 relative">
                     <i class="fas fa-tasks w-5 text-center text-orange-500"></i>
                     <span>Vazifalarim</span>
+                    {% if pending_homeworks_count and pending_homeworks_count > 0 %}
+                    <span class="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ pending_homeworks_count }}</span>
+                    {% endif %}
                 </a>
                 <a href="{% url 'exams:exam_list' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-file-alt w-5 text-center text-rose-500"></i>

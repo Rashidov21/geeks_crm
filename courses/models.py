@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from accounts.models import User, Branch
+from ckeditor.fields import RichTextField
 
 
 class Course(models.Model):
@@ -55,7 +56,7 @@ class Topic(models.Model):
     """
     module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='topics')
     name = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
+    description = RichTextField(blank=True, null=True)
     order = models.IntegerField(default=0)
     duration_minutes = models.IntegerField(default=90)  # Dars davomiyligi
     created_at = models.DateTimeField(auto_now_add=True)

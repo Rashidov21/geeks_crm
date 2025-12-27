@@ -1,6 +1,6 @@
 from django.views.generic import ListView, DetailView, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, F, Avg, Count
+from django.db.models import Sum, F, Avg, Count, Q
 from django.utils import timezone
 from .models import (
     StudentPoints, StudentBadge, GroupRanking, BranchRanking,
@@ -135,7 +135,69 @@ class OverallRankingView(LoginRequiredMixin, ListView):
     context_object_name = 'rankings'
     
     def get_queryset(self):
-        return OverallRanking.objects.select_related('student').order_by('rank')[:100]  # Top 100
+        queryset = OverallRanking.objects.select_related('student').order_by('rank')
+        
+        # Group filter for students
+        group_id = self.request.GET.get('group')
+        if group_id and self.request.user.is_student:
+            # Filter by group - get students in the group
+            from courses.models import Group
+            try:
+                group = Group.objects.get(pk=group_id, students=self.request.user)
+                group_student_ids = group.students.values_list('id', flat=True)
+                queryset = queryset.filter(student_id__in=group_student_ids)
+            except Group.DoesNotExist:
+                pass
+        
+        return queryset[:100]  # Top 100
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Convert rankings to student list with points for template
+        from .models import StudentPoints
+        from accounts.models import User
+        
+        students_data = []
+        for ranking in context['rankings']:
+            student = ranking.student
+            # Get total points from StudentPoints
+            total_points = StudentPoints.objects.filter(student=student).aggregate(
+                total=Sum('total_points')
+            )['total'] or 0
+            
+            # Get badges count
+            badges_count = student.student_badges.count() if hasattr(student, 'student_badges') else 0
+            
+            students_data.append({
+                'student': student,
+                'total_points': total_points,
+                'badges_count': badges_count,
+                'rank': ranking.rank
+            })
+        
+        # Top 3 for podium
+        context['top_students'] = students_data[:3] if len(students_data) >= 3 else students_data
+        context['students'] = students_data
+        
+        # Current student's position
+        if self.request.user.is_student:
+            try:
+                student_ranking = OverallRanking.objects.get(student=self.request.user)
+                context['current_student_rank'] = student_ranking.rank
+            except OverallRanking.DoesNotExist:
+                context['current_student_rank'] = None
+        
+        # Groups for filter (students only)
+        if self.request.user.is_student:
+            from courses.models import Group
+            context['student_groups'] = Group.objects.filter(
+                students=self.request.user, 
+                is_active=True
+            )
+            context['selected_group'] = self.request.GET.get('group')
+        
+        return context
 
 
 class MonthlyRankingView(LoginRequiredMixin, ListView):
@@ -185,6 +247,9 @@ class PointHistoryView(LoginRequiredMixin, ListView):
         # Studentlar uchun faqat o'z ballari
         if self.request.user.is_student:
             student = self.request.user
+            queryset = PointTransaction.objects.filter(student=student).select_related(
+                'attendance', 'homework', 'exam_result', 'student'
+            ).order_by('-created_at')
         else:
             # Admin yoki boshqa rollar uchun student_id query parameter orqali
             student_id = self.request.GET.get('student_id')
@@ -192,17 +257,16 @@ class PointHistoryView(LoginRequiredMixin, ListView):
                 from accounts.models import User
                 try:
                     student = User.objects.get(pk=student_id, role='student')
+                    queryset = PointTransaction.objects.filter(student=student).select_related(
+                        'attendance', 'homework', 'exam_result', 'student'
+                    ).order_by('-created_at')
                 except User.DoesNotExist:
-                    student = None
+                    queryset = PointTransaction.objects.none()
             else:
-                student = None
-        
-        if student:
-            queryset = PointTransaction.objects.filter(student=student).select_related(
-                'attendance', 'homework', 'exam_result', 'student'
-            ).order_by('-created_at')
-        else:
-            queryset = PointTransaction.objects.none()
+                # Admin/Manager uchun student_id bo'lmaganda barcha tarixni ko'rsatish
+                queryset = PointTransaction.objects.select_related(
+                    'attendance', 'homework', 'exam_result', 'student'
+                ).order_by('-created_at')
         
         return queryset
 

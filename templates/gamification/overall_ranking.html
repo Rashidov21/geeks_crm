@@ -13,8 +13,30 @@
                 Umumiy reyting
             </h1>
             <p class="text-gray-600 mt-1">O'quvchilar reytingi va yutuqlari</p>
+            {% if user.is_student %}
+            <p class="text-sm font-semibold text-yellow-600 mt-1">
+                <i class="fas fa-trophy"></i> 
+                {% if current_student_rank %}
+                Sizning o'rningiz: {{ current_student_rank }}
+                {% else %}
+                Sizning reytingingiz hali hisoblanmagan
+                {% endif %}
+            </p>
+            {% endif %}
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+            {% if user.is_student and student_groups %}
+            <form method="get" class="flex gap-2">
+                <select name="group" 
+                        onchange="this.form.submit()"
+                        class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm">
+                    <option value="">Barcha o'quvchilar</option>
+                    {% for group in student_groups %}
+                    <option value="{{ group.id }}" {% if selected_group == group.id|stringformat:"s" %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
             <a href="{% url 'gamification:groups_ranking' %}" 
                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition text-sm font-semibold">
                 Guruh bo'yicha
@@ -29,27 +51,37 @@
     <!-- Top 3 Podium -->
     {% if top_students %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% for student in top_students|slice:":3" %}
-        <div class="bg-white rounded-xl shadow-lg p-6 border-2 {% if forloop.first %}border-yellow-400 ring-4 ring-yellow-200 md:order-2{% elif forloop.counter == 2 %}border-gray-300 md:order-1{% else %}border-orange-300 md:order-3{% endif %} text-center transform hover:scale-105 transition">
+        {% for item in top_students|slice:":3" %}
+        {% with student=item.student %}
+        <div class="bg-white rounded-xl shadow-lg p-6 border-2 {% if item.rank == 1 %}border-yellow-400 ring-4 ring-yellow-200 md:order-2{% elif item.rank == 2 %}border-gray-300 md:order-1{% else %}border-orange-300 md:order-3{% endif %} text-center transform hover:scale-105 transition">
             <div class="relative inline-block mb-4">
-                <div class="w-20 h-20 {% if forloop.first %}bg-gradient-to-br from-yellow-400 to-yellow-600{% elif forloop.counter == 2 %}bg-gradient-to-br from-gray-400 to-gray-600{% else %}bg-gradient-to-br from-orange-400 to-orange-600{% endif %} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-xl">
+                <div class="w-20 h-20 {% if item.rank == 1 %}bg-gradient-to-br from-yellow-400 to-yellow-600{% elif item.rank == 2 %}bg-gradient-to-br from-gray-400 to-gray-600{% else %}bg-gradient-to-br from-orange-400 to-orange-600{% endif %} rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-xl">
                     {{ student.first_name.0|upper|default:"S" }}
                 </div>
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 {% if forloop.first %}bg-yellow-500{% elif forloop.counter == 2 %}bg-gray-500{% else %}bg-orange-500{% endif %} rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
-                    {{ forloop.counter }}
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 {% if item.rank == 1 %}bg-yellow-500{% elif item.rank == 2 %}bg-gray-500{% else %}bg-orange-500{% endif %} rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+                    {{ item.rank }}
                 </div>
             </div>
             <a href="{% url 'accounts:profile_detail' student.pk %}" 
                class="text-xl font-bold text-gray-900 hover:text-yellow-600 transition">
                 {{ student.get_full_name|default:student.username }}
             </a>
-            <p class="text-gray-500 text-sm mb-3">{{ student.student_profile.group.name|default:"-" }}</p>
+            <p class="text-gray-500 text-sm mb-3">
+                {% if student.student_groups.exists %}
+                {% for group in student.student_groups.all|slice:":1" %}
+                {{ group.name }}
+                {% endfor %}
+                {% else %}
+                -
+                {% endif %}
+            </p>
             <div class="flex items-center justify-center gap-2">
                 <i class="fas fa-star text-yellow-500 text-xl"></i>
-                <span class="text-3xl font-bold text-gray-900">{{ student.total_points|default:0 }}</span>
+                <span class="text-3xl font-bold text-gray-900">{{ item.total_points|default:0 }}</span>
                 <span class="text-gray-500">ball</span>
             </div>
         </div>
+        {% endwith %}
         {% endfor %}
     </div>
     {% endif %}
@@ -74,45 +106,55 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for student in students %}
-                    <tr class="hover:bg-indigo-50 transition {% if student == request.user %}bg-indigo-100{% endif %}">
+                    {% for item in students %}
+                    {% with student=item.student %}
+                    <tr class="hover:bg-indigo-50 transition {% if student == user %}bg-blue-100 ring-2 ring-blue-400{% endif %}">
                         <td class="px-6 py-4">
-                            {% if forloop.counter <= 3 %}
-                            <span class="w-10 h-10 {% if forloop.counter == 1 %}bg-yellow-100 text-yellow-600{% elif forloop.counter == 2 %}bg-gray-100 text-gray-600{% else %}bg-orange-100 text-orange-600{% endif %} rounded-full flex items-center justify-center text-sm font-bold">
-                                {{ forloop.counter }}
+                            {% if item.rank <= 3 %}
+                            <span class="w-10 h-10 {% if item.rank == 1 %}bg-yellow-100 text-yellow-600{% elif item.rank == 2 %}bg-gray-100 text-gray-600{% else %}bg-orange-100 text-orange-600{% endif %} rounded-full flex items-center justify-center text-sm font-bold">
+                                {{ item.rank }}
                             </span>
                             {% else %}
-                            <span class="text-gray-500 font-bold">{{ forloop.counter }}</span>
+                            <span class="text-gray-500 font-bold {% if student == user %}text-blue-600 font-bold{% endif %}">{{ item.rank }}</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                                <div class="w-10 h-10 bg-gradient-to-br {% if student == user %}from-blue-500 to-blue-600{% else %}from-indigo-500 to-indigo-600{% endif %} rounded-full flex items-center justify-center text-white font-bold shadow-md">
                                     {{ student.first_name.0|upper|default:"S" }}
                                 </div>
                                 <a href="{% url 'accounts:profile_detail' student.pk %}" 
                                    class="font-semibold text-gray-900 hover:text-indigo-600 transition">
                                     {{ student.get_full_name|default:student.username }}
                                 </a>
-                                {% if student == request.user %}
-                                <span class="px-2 py-1 bg-indigo-600 text-white rounded-full text-xs font-semibold">Siz</span>
+                                {% if student == user %}
+                                <span class="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold">Siz</span>
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-gray-600">{{ student.student_profile.group.name|default:"-" }}</td>
+                        <td class="px-6 py-4 text-gray-600">
+                            {% if student.student_groups.exists %}
+                            {% for group in student.student_groups.all|slice:":1" %}
+                            {{ group.name }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-1">
                                 <i class="fas fa-star text-yellow-500"></i>
-                                <span class="text-lg font-bold text-indigo-600">{{ student.total_points|default:0 }}</span>
+                                <span class="text-lg font-bold {% if student == user %}text-blue-600{% else %}text-indigo-600{% endif %}">{{ item.total_points|default:0 }}</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">
                                 <i class="fas fa-medal"></i>
-                                {{ student.badges_count|default:0 }}
+                                {{ item.badges_count|default:0 }}
                             </span>
                         </td>
                     </tr>
+                    {% endwith %}
                     {% empty %}
                     <tr>
                         <td colspan="5" class="px-6 py-12 text-center">

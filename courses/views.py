@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.db.models import Count
 import json
 from .models import Course, Module, Topic, TopicMaterial, Group, GroupTransfer, Lesson, StudentProgress, Room
 from accounts.models import User, Branch
@@ -358,6 +359,28 @@ class TopicDetailView(LoginRequiredMixin, DetailView):
     
     def get_queryset(self):
         return Topic.objects.prefetch_related('materials')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get lessons related to this topic for mentor's groups
+        if self.request.user.is_mentor:
+            mentor_groups = Group.objects.filter(mentor=self.request.user, is_active=True)
+            context['lessons'] = Lesson.objects.filter(
+                topic=self.object,
+                group__in=mentor_groups
+            ).select_related('group').order_by('-date', '-start_time')[:20]
+            context['can_edit_lessons'] = True
+        elif self.request.user.is_admin or self.request.user.is_manager:
+            context['lessons'] = Lesson.objects.filter(
+                topic=self.object
+            ).select_related('group').order_by('-date', '-start_time')[:20]
+            context['can_edit_lessons'] = True
+        else:
+            context['lessons'] = []
+            context['can_edit_lessons'] = False
+        
+        return context
 
 
 class GroupListView(LoginRequiredMixin, ListView):
@@ -425,7 +448,13 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Admin, Manager va o'z guruhlarini boshqaruvchi mentorlar uchun tahrirlash ruxsati
         user = self.request.user
+        # Mentorlar guruhni tahrirlay olmaydi, faqat o'quvchi qo'sha oladi
         context['can_edit'] = (
+            user.is_admin or 
+            user.is_manager
+        )
+        # Mentorlar o'z guruhlariga o'quvchi qo'sha oladi
+        context['can_add_students'] = (
             user.is_admin or 
             user.is_manager or 
             (user.is_mentor and self.object.mentor == user)
@@ -433,6 +462,40 @@ class GroupDetailView(LoginRequiredMixin, DetailView):
         context['available_students'] = User.objects.filter(role='student', is_active=True).exclude(
             pk__in=self.object.students.values_list('pk', flat=True)
         )
+        
+        # Student data with points and ratings for tabs
+        from gamification.models import StudentPoints, GroupRanking
+        student_data = []
+        for student in self.object.students.all().order_by('first_name', 'last_name'):
+            # Get or create student points and calculate
+            student_points, created = StudentPoints.objects.get_or_create(
+                student=student,
+                group=self.object
+            )
+            if created or not student_points.total_points:
+                student_points.calculate_total_points()
+            
+            # Get ranking
+            ranking = GroupRanking.objects.filter(
+                group=self.object,
+                student=student
+            ).first()
+            
+            student_data.append({
+                'student': student,
+                'total_points': student_points.total_points,
+                'rank': ranking.rank if ranking else None,
+            })
+        
+        # Sort by points descending for ranking tab
+        student_data_sorted = sorted(student_data, key=lambda x: x['total_points'], reverse=True)
+        for idx, data in enumerate(student_data_sorted, 1):
+            if data['rank'] is None:
+                data['rank'] = idx
+        
+        context['student_data'] = student_data
+        context['student_data_sorted'] = student_data_sorted
+        
         return context
 
 
@@ -490,9 +553,122 @@ class GroupDeleteView(RoleRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
+class GroupAddStudentView(LoginRequiredMixin, TemplateView):
+    """
+    Guruhga o'quvchi qo'shish sahifasi
+    Admin, Manager va o'z guruhlarini boshqaruvchi mentorlar uchun
+    """
+    template_name = 'courses/group_add_student.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Ruxsatni tekshirish
+        pk = kwargs.get('pk')
+        group = get_object_or_404(Group, pk=pk)
+        
+        user = request.user
+        if not (user.is_admin or user.is_manager or (user.is_mentor and group.mentor == user)):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Sizga bu guruhga o'quvchi qo'shish ruxsati yo'q")
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group = get_object_or_404(Group, pk=self.kwargs['pk'])
+        context['group'] = group
+        
+        # 1. Aktiv studentlar (guruhda bo'lmagan)
+        context['available_students'] = User.objects.filter(
+            role='student', 
+            is_active=True
+        ).exclude(
+            pk__in=group.students.values_list('pk', flat=True)
+        ).order_by('first_name', 'last_name')
+        
+        # 2. Guruhi yo'q studentlar (hech qanday guruhda bo'lmagan)
+        context['students_without_group'] = User.objects.filter(
+            role='student',
+            is_active=True
+        ).exclude(
+            pk__in=group.students.values_list('pk', flat=True)
+        ).annotate(
+            group_count=Count('student_groups')
+        ).filter(
+            group_count=0
+        ).order_by('first_name', 'last_name')
+        
+        # 3. Lidlar (sinov darsiga yozilgan yoki qabul qilingan, hali studentga aylantirilmagan)
+        from crm.models import Lead, LeadStatus
+        
+        trial_statuses = LeadStatus.objects.filter(
+            code__in=['trial_registered', 'trial_attended', 'enrolled']
+        )
+        
+        context['available_leads'] = Lead.objects.filter(
+            status__in=trial_statuses,
+            converted_student__isnull=True  # Hali studentga aylantirilmagan
+        ).exclude(
+            phone__in=group.students.values_list('phone', flat=True)
+        ).select_related('status', 'interested_course').order_by('-created_at')[:50]
+        
+        return context
+    
+    def post(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        student_id = request.POST.get('student_id')
+        
+        if student_id:
+            student = get_object_or_404(User, pk=student_id, role='student')
+            if student not in group.students.all():
+                group.students.add(student)
+                messages.success(request, f'{student.get_full_name()} guruhga qo\'shildi.')
+                return redirect('courses:group_detail', pk=pk)
+            else:
+                messages.warning(request, f'{student.get_full_name()} allaqachon guruhda.')
+        else:
+            messages.error(request, 'Iltimos, o\'quvchini tanlang.')
+        
+        return redirect('courses:group_add_student', pk=pk)
+
+
+class ConvertLeadToStudentView(LoginRequiredMixin, View):
+    """
+    Leadni Studentga aylantirish va guruhga qo'shish
+    """
+    def dispatch(self, request, *args, **kwargs):
+        # Ruxsatni tekshirish
+        pk = kwargs.get('pk')
+        group = get_object_or_404(Group, pk=pk)
+        
+        user = request.user
+        if not (user.is_admin or user.is_manager or (user.is_mentor and group.mentor == user)):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Sizga bu guruhga o'quvchi qo'shish ruxsati yo'q")
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        lead_id = request.POST.get('lead_id')
+        
+        if lead_id:
+            from crm.models import Lead
+            from crm.signals import convert_lead_to_student
+            
+            lead = get_object_or_404(Lead, pk=lead_id)
+            student = convert_lead_to_student(lead, group)
+            
+            if student:
+                messages.success(request, f'{lead.name} studentga aylantirildi va {group.name} guruhiga qo\'shildi.')
+                return redirect('courses:group_detail', pk=pk)
+        
+        messages.error(request, 'Xato: Lid topilmadi.')
+        return redirect('courses:group_add_student', pk=pk)
+
+
 class GroupStudentsView(LoginRequiredMixin, View):
     """
-    Guruhga o'quvchi qo'shish/chiqarish
+    Guruhdan o'quvchi chiqarish (AJAX uchun)
     Admin, Manager va o'z guruhlarini boshqaruvchi mentorlar uchun
     """
     
@@ -504,7 +680,7 @@ class GroupStudentsView(LoginRequiredMixin, View):
         user = request.user
         if not (user.is_admin or user.is_manager or (user.is_mentor and group.mentor == user)):
             from django.core.exceptions import PermissionDenied
-            raise PermissionDenied("Sizga bu guruhga o'quvchi qo'shish/chiqarish ruxsati yo'q")
+            raise PermissionDenied("Sizga bu guruhdan o'quvchi chiqarish ruxsati yo'q")
         
         return super().dispatch(request, *args, **kwargs)
     
@@ -513,14 +689,12 @@ class GroupStudentsView(LoginRequiredMixin, View):
         action = request.POST.get('action')
         student_id = request.POST.get('student_id')
         
-        if action == 'add' and student_id:
-            student = get_object_or_404(User, pk=student_id, role='student')
-            group.students.add(student)
-            messages.success(request, f'{student.get_full_name()} guruhga qo\'shildi.')
-        elif action == 'remove' and student_id:
+        if action == 'remove' and student_id:
             student = get_object_or_404(User, pk=student_id, role='student')
             group.students.remove(student)
             messages.success(request, f'{student.get_full_name()} guruhdan chiqarildi.')
+        else:
+            messages.error(request, 'Xato: O\'quvchi tanlanmagan yoki noto\'g\'ri amal.')
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
@@ -540,7 +714,29 @@ class LessonListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(group__students=self.request.user)
         elif self.request.user.is_mentor:
             queryset = queryset.filter(group__mentor=self.request.user)
+        
+        # Group filter
+        group_id = self.request.GET.get('group')
+        if group_id:
+            queryset = queryset.filter(group_id=group_id)
+        
         return queryset.order_by('-date', '-start_time')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get available groups for filter
+        if self.request.user.is_student:
+            groups = Group.objects.filter(students=self.request.user, is_active=True)
+        elif self.request.user.is_mentor:
+            groups = Group.objects.filter(mentor=self.request.user, is_active=True)
+        else:
+            groups = Group.objects.filter(is_active=True)
+        
+        context['groups'] = groups.order_by('course__name', 'name')
+        context['selected_group'] = self.request.GET.get('group')
+        
+        return context
 
 
 class LessonDetailView(LoginRequiredMixin, DetailView):
@@ -554,17 +750,57 @@ class LessonDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Get previous and next lessons in the same group
-        group_lessons = list(Lesson.objects.filter(group=self.object.group).order_by('date', 'start_time'))
+        lesson_obj = context.get('lesson') or self.object
+        group_lessons = list(Lesson.objects.filter(group=lesson_obj.group).select_related('topic', 'group').order_by('date', 'start_time'))
         try:
-            current_index = next(i for i, lesson in enumerate(group_lessons) if lesson.id == self.object.id)
+            current_index = next(i for i, lesson in enumerate(group_lessons) if lesson.id == lesson_obj.id)
             if current_index > 0:
                 context['prev_lesson'] = group_lessons[current_index - 1]
             if current_index < len(group_lessons) - 1:
                 context['next_lesson'] = group_lessons[current_index + 1]
         except StopIteration:
             pass
-        
         return context
+
+
+class LessonUpdateView(LoginRequiredMixin, View):
+    """Lesson tahrirlash - mentor va admin uchun"""
+    
+    def dispatch(self, request, *args, **kwargs):
+        lesson = get_object_or_404(Lesson, pk=kwargs.get('pk'))
+        
+        # Permission check
+        if request.user.is_mentor:
+            if lesson.group.mentor != request.user:
+                from django.core.exceptions import PermissionDenied
+                raise PermissionDenied("Siz bu darsni tahrirlay olmaysiz")
+        elif not (request.user.is_admin or request.user.is_manager):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("Sizga bu funksiya uchun ruxsat yo'q")
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, pk):
+        from .forms import LessonForm
+        lesson = get_object_or_404(Lesson, pk=pk)
+        
+        # Use form for validation and CKEditor support
+        form = LessonForm(request.POST, instance=lesson)
+        if form.is_valid():
+            form.save()
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Dars muvaffaqiyatli yangilandi'})
+            else:
+                messages.success(request, 'Dars muvaffaqiyatli yangilandi')
+                return redirect('courses:lesson_detail', pk=lesson.pk)
+        else:
+            # Form validation failed
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Form validatsiyadan o\'tmadi', 'errors': form.errors})
+            else:
+                messages.error(request, 'Form validatsiyadan o\'tmadi')
+                return redirect('courses:topic_detail', pk=lesson.topic.pk if lesson.topic else 0)
 
 
 class StudentProgressView(LoginRequiredMixin, DetailView):

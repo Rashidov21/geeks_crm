@@ -21,6 +21,7 @@ urlpatterns = [
     # Profile
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/<int:pk>/', views.ProfileView.as_view(), name='profile_detail'),
+    path('profile/<int:pk>/change-password/', views.AdminChangePasswordView.as_view(), name='admin_change_password'),
     path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
     
     # Dashboards

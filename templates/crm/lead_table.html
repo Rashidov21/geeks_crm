@@ -181,11 +181,21 @@
                                    title="Ko'rish">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{% url 'crm:lead_edit' lead.pk %}" 
-                                   class="text-blue-600 hover:text-blue-800 transition" 
-                                   title="Tahrirlash">
-                                    <i class="fas fa-edit"></i>
-                                </a>
+                                {% if is_sales %}
+                                    {% if lead.assigned_sales == user %}
+                                    <a href="{% url 'crm:lead_edit' lead.pk %}" 
+                                       class="text-blue-600 hover:text-blue-800 transition" 
+                                       title="Tahrirlash">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'crm:lead_edit' lead.pk %}" 
+                                       class="text-blue-600 hover:text-blue-800 transition" 
+                                       title="Tahrirlash">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

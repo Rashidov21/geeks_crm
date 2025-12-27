@@ -14,6 +14,21 @@
             </h1>
             <p class="text-gray-600 mt-1">Barcha darslar ro'yxati</p>
         </div>
+        <div class="flex items-center gap-3">
+            <form method="get" class="flex items-center gap-2">
+                <label for="group_filter" class="text-sm font-semibold text-gray-700">Guruh:</label>
+                <select name="group" id="group_filter" 
+                        onchange="this.form.submit()"
+                        class="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+                    <option value="">Barcha guruhlar</option>
+                    {% for group in groups %}
+                    <option value="{{ group.pk }}" {% if selected_group == group.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ group.course.name }} - {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
     </div>
 
     <!-- Table -->

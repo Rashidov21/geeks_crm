@@ -5,17 +5,13 @@
 {% block title %}Uy vazifalari{% endblock %}
 
 {% block content %}
-{% comment %}
-To'liq alohida template - component'siz
-Color: orange (hardcoded)
-{% endcomment %}
-{% with text_color='text-orange-600' bg_color='bg-orange-600' hover_bg='hover:bg-orange-700' ring_color='ring-orange-500' bg_light='bg-orange-50' border_color='border-orange-200' text_dark='text-orange-900' %}
 <div class="space-y-6" x-data="{ 
     showFilters: false, 
     selectedItems: [],
     showBulkActions: false,
     searchQuery: '{{ request.GET.search|default:"" }}'
 }">
+{% with text_color='text-orange-600' bg_color='bg-orange-600' hover_bg='hover:bg-orange-700' ring_color='ring-orange-500' bg_light='bg-orange-50' border_color='border-orange-200' text_dark='text-orange-900' %}
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -157,21 +153,57 @@ Color: orange (hardcoded)
                 </div>
                 
                 <div class="space-y-2 text-sm text-gray-600 mb-4">
+                    <!-- Kim bergani va kim topshirgani -->
+                    <div class="flex items-center gap-2 text-xs">
+                        {% if homework.lesson and homework.lesson.group and homework.lesson.group.mentor %}
+                        <span class="text-gray-500">
+                            <i class="fas fa-user-tie mr-1"></i>Bergan: {{ homework.lesson.group.mentor.get_full_name|default:homework.lesson.group.mentor.username }}
+                        </span>
+                        {% endif %}
+                        {% if homework.student %}
+                        <span class="text-gray-500">
+                            <i class="fas fa-user-graduate mr-1"></i>Topshirgan: {{ homework.student.get_full_name|default:homework.student.username }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
                     {% if homework.deadline %}
                     <div class="flex items-center gap-2">
                         <i class="fas fa-calendar w-4"></i>
-                        <span>{{ homework.deadline|date:"d.m.Y" }}</span>
+                        <span>{{ homework.deadline|date:"d.m.Y H:i" }}</span>
+                        {% if not homework.is_submitted %}
+                        <span id="countdown-{{ homework.pk }}" 
+                              class="text-xs font-semibold px-2 py-1 rounded"
+                              data-deadline="{{ homework.deadline|date:'Y-m-d H:i:s' }}">
+                        </span>
+                        {% endif %}
                     </div>
                     {% endif %}
+                    
+                    <!-- Ball ma'lumotlari -->
+                        {% if homework.is_submitted %}
+                        {% if homework.is_late %}
+                        <div class="flex items-center gap-2 text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
+                            <i class="fas fa-clock"></i>
+                            <span>Kech topshirildi: +3 ball</span>
+                        </div>
+                        {% else %}
+                        <div class="flex items-center gap-2 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Vaqtida topshirildi: +10 ball</span>
+                        </div>
+                        {% endif %}
+                    {% elif user.role == 'student' and not homework.is_submitted %}
+                    <div class="flex items-center gap-2 text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
+                        <i class="fas fa-star"></i>
+                        <span>Vaqtida topshiring va +10 ball oling! (Kech qolsangiz +3 ball)</span>
+                    </div>
+                    {% endif %}
+                    
                     {% if homework.grade %}
                     <div class="flex items-center gap-2">
                         <i class="fas fa-star w-4 text-yellow-500"></i>
                         <span>Baholandi: {{ homework.grade.grade }} ball</span>
-                    </div>
-                    {% elif user.role == 'student' and not homework.is_submitted %}
-                    <div class="flex items-center gap-2 text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
-                        <i class="fas fa-star"></i>
-                        <span>Vaqtida topshiring va +10 ball oling!</span>
                     </div>
                     {% endif %}
                 </div>
@@ -224,4 +256,59 @@ Color: orange (hardcoded)
     {% endif %}
 </div>
 {% endwith %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Countdown timer for each homework
+    const countdownElements = document.querySelectorAll('[id^="countdown-"]');
+    
+    countdownElements.forEach(function(element) {
+        const deadlineStr = element.getAttribute('data-deadline');
+        if (!deadlineStr) return;
+        
+        const deadline = new Date(deadlineStr.replace(' ', 'T'));
+        
+        function updateCountdown() {
+            const now = new Date();
+            const diff = deadline - now;
+            
+            if (diff <= 0) {
+                element.textContent = 'Muddati o\'tgan';
+                element.className = 'text-xs font-semibold px-2 py-1 rounded bg-red-100 text-red-700';
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let text = '';
+            if (days > 0) {
+                text = `${days} kun ${hours} soat`;
+            } else if (hours > 0) {
+                text = `${hours} soat ${minutes} daqiqa`;
+            } else if (minutes > 0) {
+                text = `${minutes} daqiqa ${seconds} soniya`;
+            } else {
+                text = `${seconds} soniya`;
+            }
+            
+            element.textContent = text;
+            
+            // Color based on time remaining
+            if (days < 1) {
+                element.className = 'text-xs font-semibold px-2 py-1 rounded bg-red-100 text-red-700';
+            } else if (days < 3) {
+                element.className = 'text-xs font-semibold px-2 py-1 rounded bg-yellow-100 text-yellow-700';
+            } else {
+                element.className = 'text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-700';
+            }
+        }
+        
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    });
+});
+</script>
 {% endblock %}

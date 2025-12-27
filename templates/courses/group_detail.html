@@ -108,107 +108,19 @@
         <!-- Left Column (2/3) -->
         <div class="lg:col-span-2 space-y-6">
             <!-- O'quvchilar -->
-            <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100" x-data="{ showAddStudent: false }">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-100">
                 <div class="px-6 py-4 border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 flex items-center justify-between">
                     <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                         <i class="fas fa-users text-green-600"></i>
                         O'quvchilar
                     </h2>
-                    {% if can_edit %}
-                    <button @click="showAddStudent = !showAddStudent" 
-                            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-semibold flex items-center gap-2">
+                    {% if can_add_students %}
+                    <a href="{% url 'courses:group_add_student' group.pk %}" 
+                       class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-semibold flex items-center gap-2">
                         <i class="fas fa-plus"></i>
                         <span>O'quvchi qo'shish</span>
-                    </button>
+                    </a>
                     {% endif %}
-                </div>
-                
-                <!-- O'quvchi qo'shish formasi -->
-                <div x-show="showAddStudent" 
-                     x-transition
-                     x-data="{ 
-                         studentSearch: '', 
-                         selectedStudent: null,
-                         students: [
-                             {% for student in available_students %}
-                             {id: {{ student.id }}, name: '{{ student.get_full_name|default:student.username|escapejs }}', phone: '{{ student.phone|default:""|escapejs }}', email: '{{ student.email|default:""|escapejs }}'}{% if not forloop.last %},{% endif %}
-                             {% endfor %}
-                         ],
-                         get filteredStudents() {
-                             if (!this.studentSearch) return this.students;
-                             const search = this.studentSearch.toLowerCase();
-                             return this.students.filter(s => 
-                                 s.name.toLowerCase().includes(search) || 
-                                 s.phone.includes(search) ||
-                                 s.email.toLowerCase().includes(search)
-                             );
-                         }
-                     }"
-                     class="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border-b-2 border-green-200">
-                    <form method="post" action="{% url 'courses:group_students' group.pk %}" class="space-y-4" @submit.prevent="if(selectedStudent) { loading=true; $el.submit(); }">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add">
-                        <input type="hidden" name="student_id" :value="selectedStudent ? selectedStudent.id : ''" required>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">O'quvchi qidirish</label>
-                            <div class="relative">
-                                <input type="text" 
-                                       x-model="studentSearch"
-                                       @click.away="selectedStudent = null"
-                                       placeholder="Ism, telefon yoki email bo'yicha qidirish..."
-                                       class="w-full px-4 py-2.5 pl-10 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 transition">
-                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            </div>
-                            <!-- Search Results Dropdown -->
-                            <div x-show="studentSearch && filteredStudents.length > 0" 
-                                 x-transition
-                                 class="mt-2 max-h-60 overflow-y-auto bg-white border-2 border-gray-200 rounded-lg shadow-lg z-50">
-                                <template x-for="student in filteredStudents" :key="student.id">
-                                    <button type="button"
-                                            @click="selectedStudent = student; studentSearch = student.name + (student.phone ? ' (' + student.phone + ')' : '')"
-                                            class="w-full text-left px-4 py-3 hover:bg-green-50 border-b border-gray-100 transition"
-                                            :class="selectedStudent && selectedStudent.id === student.id ? 'bg-green-100' : ''">
-                                        <div class="font-semibold text-gray-900" x-text="student.name"></div>
-                                        <div class="text-sm text-gray-600" x-show="student.phone" x-text="'📞 ' + student.phone"></div>
-                                        <div class="text-sm text-gray-600" x-show="student.email" x-text="'✉️ ' + student.email"></div>
-                                    </button>
-                                </template>
-                            </div>
-                            <div x-show="studentSearch && filteredStudents.length === 0" 
-                                 class="mt-2 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
-                                <i class="fas fa-exclamation-circle mr-1"></i>
-                                O'quvchi topilmadi
-                            </div>
-                            <!-- Selected Student Display -->
-                            <div x-show="selectedStudent" class="mt-2 p-3 bg-green-100 border border-green-300 rounded-lg">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="font-semibold text-gray-900" x-text="selectedStudent.name"></div>
-                                        <div class="text-sm text-gray-600" x-show="selectedStudent.phone" x-text="'📞 ' + selectedStudent.phone"></div>
-                                    </div>
-                                    <button type="button" 
-                                            @click="selectedStudent = null; studentSearch = ''"
-                                            class="text-red-600 hover:text-red-800">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <button type="submit" 
-                                    :disabled="!selectedStudent"
-                                    :class="selectedStudent ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
-                                    class="px-5 py-2.5 text-white rounded-lg transition font-semibold flex items-center gap-2">
-                                <i class="fas fa-plus"></i>
-                                <span>Qo'shish</span>
-                            </button>
-                            <button type="button" 
-                                    @click="showAddStudent = false; studentSearch = ''; selectedStudent = null" 
-                                    class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
-                                Bekor
-                            </button>
-                        </div>
-                    </form>
                 </div>
                 
                 <div class="overflow-x-auto">
@@ -218,7 +130,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">O'quvchi</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Telefon</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
-                                {% if can_edit %}
+                                {% if can_add_students %}
                                 <th class="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Amallar</th>
                                 {% endif %}
                             </tr>
@@ -227,12 +139,12 @@
                             {% for student in group.students.all %}
                             <tr class="hover:bg-green-50 transition">
                                 <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
+                                    <a href="{% url 'accounts:profile_detail' student.pk %}" class="flex items-center gap-3 hover:text-green-600 transition">
                                         <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
                                             {{ student.first_name.0|upper|default:student.username.0|upper }}
                                         </div>
                                         <span class="font-semibold text-gray-900">{{ student.get_full_name|default:student.username }}</span>
-                                    </div>
+                                    </a>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-700">
                                     {% if student.phone %}
@@ -252,7 +164,7 @@
                                     <span class="text-gray-400">-</span>
                                     {% endif %}
                                 </td>
-                                {% if can_edit %}
+                                {% if can_add_students %}
                                 <td class="px-6 py-4 text-center">
                                     <form method="post" 
                                           action="{% url 'courses:group_students' group.pk %}" 
@@ -274,11 +186,11 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="{% if can_edit %}4{% else %}3{% endif %}" class="px-6 py-12 text-center">
+                                <td colspan="{% if can_add_students %}4{% else %}3{% endif %}" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <i class="fas fa-users text-5xl text-gray-300 mb-3"></i>
                                         <p class="text-gray-500 font-medium">Hozircha o'quvchi yo'q</p>
-                                        {% if can_edit %}
+                                        {% if can_add_students %}
                                         <p class="text-gray-400 text-sm mt-1">O'quvchi qo'shish uchun yuqoridagi tugmani bosing</p>
                                         {% endif %}
                                     </div>

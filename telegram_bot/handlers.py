@@ -315,25 +315,19 @@ async def student_points(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def parent_children(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ota-ona uchun farzandlar ro'yxati"""
+    """Ota-ona uchun farzandlar ro'yxati - StudentProfile orqali"""
     user = update.effective_user
     
     try:
-        db_user = User.objects.filter(telegram_id=user.id, role='parent').first()
+        from accounts.models import StudentProfile
+        # Find students where parent_telegram_id matches
+        student_profiles = StudentProfile.objects.filter(parent_telegram_id=user.id)
         
-        if not db_user:
-            await update.message.reply_text("❌ Siz ota-ona sifatida ro'yxatdan o'tmagansiz.")
+        if not student_profiles.exists():
+            await update.message.reply_text("❌ Sizning farzandlaringiz topilmadi yoki Telegram ID mos kelmaydi.")
             return
         
-        try:
-            students = db_user.parent_profile.students.all()
-        except:
-            await update.message.reply_text("❌ Farzandlar topilmadi.")
-            return
-        
-        if not students:
-            await update.message.reply_text("❌ Sizda farzandlar ro'yxatdan o'tmagan.")
-            return
+        students = [profile.user for profile in student_profiles]
         
         message = "👨‍👩‍👦 <b>Farzandlarim:</b>\n\n"
         
@@ -367,28 +361,32 @@ async def parent_children(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def parent_reports(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ota-ona uchun oylik hisobotlar"""
+    """Ota-ona uchun oylik hisobotlar - StudentProfile orqali"""
     user = update.effective_user
     
     try:
-        db_user = User.objects.filter(telegram_id=user.id, role='parent').first()
+        from accounts.models import StudentProfile
+        # Find students where parent_telegram_id matches
+        student_profiles = StudentProfile.objects.filter(parent_telegram_id=user.id)
         
-        if not db_user:
-            await update.message.reply_text("❌ Siz ota-ona sifatida ro'yxatdan o'tmagansiz.")
+        if not student_profiles.exists():
+            await update.message.reply_text("❌ Sizning farzandlaringiz topilmadi yoki Telegram ID mos kelmaydi.")
             return
         
-        # Oxirgi 3 ta hisobot
-        reports = MonthlyParentReport.objects.filter(
-            parent=db_user
+        students = [profile.user for profile in student_profiles]
+        
+        # Oxirgi 3 ta hisobot (har bir farzand uchun)
+        all_reports = MonthlyParentReport.objects.filter(
+            student__in=students
         ).select_related('student', 'group').order_by('-year', '-month')[:3]
         
-        if not reports:
+        if not all_reports:
             await update.message.reply_text("📊 Hozircha oylik hisobotlar yo'q.")
             return
         
         message = "📊 <b>Oylik hisobotlar:</b>\n\n"
         
-        for report in reports:
+        for report in all_reports:
             message += f"👤 {report.student.get_full_name() or report.student.username}\n"
             message += f"📅 {report.year}-{report.month:02d}\n"
             message += f"📖 {report.group.name}\n"

@@ -13,13 +13,20 @@
                 {{ exam.title }}
             </h1>
             <p class="text-gray-600 mt-1">Imtihon natijalari</p>
+            {% if is_student_view and student_rank %}
+            <p class="text-sm font-semibold text-rose-600 mt-1">
+                <i class="fas fa-trophy"></i> Sizning o'rningiz: {{ student_rank }}/{{ total_count }}
+            </p>
+            {% endif %}
         </div>
         <div class="flex gap-2">
+            {% if not is_student_view %}
             <a href="{% url 'exams:exam_result_entry' exam.pk %}" 
                class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2">
                 <i class="fas fa-edit"></i>
                 <span>Natija kiritish</span>
             </a>
+            {% endif %}
             <a href="{% url 'exams:exam_detail' exam.pk %}" 
                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition text-sm font-semibold flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
@@ -27,6 +34,16 @@
             </a>
         </div>
     </div>
+    
+    <!-- Motivational Message for Students -->
+    {% if motivational_message %}
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg shadow-sm">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-lightbulb text-blue-500 text-xl mt-0.5"></i>
+            <p class="text-gray-800 font-medium">{{ motivational_message }}</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Stats -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -92,14 +109,25 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for result in results %}
-                    <tr class="hover:bg-rose-50 transition">
-                        <td class="px-6 py-4 text-gray-500 font-semibold">{{ forloop.counter }}</td>
+                    <tr class="hover:bg-rose-50 transition {% if is_student_view and result.student == user %}bg-blue-100 ring-2 ring-blue-400{% endif %}">
+                        <td class="px-6 py-4 text-gray-500 font-semibold">
+                            {% if is_student_view and result.student == user %}
+                            <span class="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-bold">{{ forloop.counter }}</span>
+                            {% else %}
+                            {{ forloop.counter }}
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                                <div class="w-10 h-10 bg-gradient-to-br {% if is_student_view and result.student == user %}from-blue-500 to-blue-600{% else %}from-rose-500 to-rose-600{% endif %} rounded-full flex items-center justify-center text-white font-bold shadow-md">
                                     {{ result.student.first_name.0|upper|default:result.student.username.0|upper }}
                                 </div>
-                                <span class="font-semibold text-gray-900">{{ result.student.get_full_name|default:result.student.username }}</span>
+                                <span class="font-semibold text-gray-900">
+                                    {{ result.student.get_full_name|default:result.student.username }}
+                                    {% if is_student_view and result.student == user %}
+                                    <span class="ml-2 px-2 py-0.5 bg-blue-600 text-white rounded-full text-xs font-semibold">Siz</span>
+                                    {% endif %}
+                                </span>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">

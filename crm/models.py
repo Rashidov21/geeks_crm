@@ -97,6 +97,17 @@ class Lead(models.Model):
     enrolled_group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name='enrolled_leads', verbose_name='Yozilgan guruh')
     
+    # Studentga aylantirilgan
+    converted_student = models.OneToOneField(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='converted_from_lead',
+        verbose_name='Studentga aylantirilgan',
+        limit_choices_to={'role': 'student'}
+    )
+    
     # Qo'shimcha ma'lumotlar
     notes = models.TextField(blank=True, null=True, verbose_name='Izohlar')
     

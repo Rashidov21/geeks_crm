@@ -75,14 +75,13 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ hw.lesson.group.name|default:"-" }}</td>
                         <td class="px-6 py-4 text-center">
-                            <select name="grades" 
-                                    class="px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm font-semibold">
-                                <option value="">-</option>
-                                <option value="5">5 - A'lo</option>
-                                <option value="4">4 - Yaxshi</option>
-                                <option value="3">3 - Qoniqarli</option>
-                                <option value="2">2 - Yomon</option>
-                            </select>
+                            <input type="number" 
+                                   name="grades" 
+                                   min="0" 
+                                   max="100" 
+                                   step="1"
+                                   class="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition text-sm font-semibold text-center" 
+                                   placeholder="0-100">
                         </td>
                         <td class="px-6 py-4">
                             <input type="text" 

@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.generic import DetailView, UpdateView, TemplateView
+from django.views.generic import DetailView, UpdateView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.db.models import Sum
+from django.core.exceptions import PermissionDenied
 from .models import User
 from .decorators import role_required
 
@@ -96,8 +97,8 @@ class ProfileView(DetailView):
             else:
                 context['mentor_active_students_count'] = 0
         
-        # Studentlar uchun statistika
-        if user_profile.is_student:
+        # Studentlar uchun statistika (viewing any student profile)
+        if user_profile.role == 'student':
             from courses.models import Group
             from attendance.models import Attendance
             from homework.models import Homework
@@ -219,6 +220,41 @@ class ProfileEditView(UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Profil muvaffaqiyatli yangilandi.')
         return super().form_valid(form)
+
+
+class AdminChangePasswordView(LoginRequiredMixin, View):
+    """
+    Admin boshqa user parolini o'zgartirish
+    Faqat admin va manager uchun
+    """
+    def dispatch(self, request, *args, **kwargs):
+        # Faqat admin va manager
+        if not (request.user.is_admin or request.user.is_manager or request.user.is_superuser):
+            raise PermissionDenied("Sizga bu funksiya uchun ruxsat yo'q")
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, pk):
+        target_user = get_object_or_404(User, pk=pk)
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if not new_password or not confirm_password:
+            messages.error(request, 'Parol maydonlari to\'ldirilishi kerak.')
+            return redirect('accounts:profile_detail', pk=pk)
+        
+        if new_password != confirm_password:
+            messages.error(request, 'Parollar mos kelmaydi.')
+            return redirect('accounts:profile_detail', pk=pk)
+        
+        if len(new_password) < 8:
+            messages.error(request, 'Parol kamida 8 belgidan iborat bo\'lishi kerak.')
+            return redirect('accounts:profile_detail', pk=pk)
+        
+        target_user.set_password(new_password)
+        target_user.save()
+        
+        messages.success(request, f'{target_user.get_full_name() or target_user.username} paroli muvaffaqiyatli o\'zgartirildi.')
+        return redirect('accounts:profile_detail', pk=pk)
 
 
 class StudentGuideView(LoginRequiredMixin, TemplateView):

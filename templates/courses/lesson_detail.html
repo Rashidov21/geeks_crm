@@ -2,7 +2,7 @@
 {% load static %}
 {% load crud_tags %}
 
-{% block title %}Dars: {{ lesson.title|default:lesson.topic.name }} | GEEKS CRM{% endblock %}
+{% block title %}Dars: {% if lesson.title %}{{ lesson.title }}{% elif lesson.topic %}{{ lesson.topic.name }}{% else %}Dars{% endif %} | GEEKS CRM{% endblock %}
 
 {% block content %}
 {% comment %}
@@ -54,7 +54,7 @@ Blog-style lesson detail page for reading and learning
                         </span>
                         {% endif %}
                     </div>
-                    <h1 class="text-4xl font-bold mb-4">{{ lesson.title|default:lesson.topic.name|default:"Dars" }}</h1>
+                    <h1 class="text-4xl font-bold mb-4">{% if lesson.title %}{{ lesson.title }}{% elif lesson.topic %}{{ lesson.topic.name }}{% else %}Dars{% endif %}</h1>
                     {% if lesson.topic %}
                     <p class="text-blue-100 text-lg">{{ lesson.topic.name }}</p>
                     {% endif %}
@@ -247,7 +247,7 @@ Blog-style lesson detail page for reading and learning
             <i class="fas fa-chevron-left text-gray-400 group-hover:text-blue-600"></i>
             <div class="text-left">
                 <div class="text-xs text-gray-500">Oldingi dars</div>
-                <div class="font-semibold text-gray-900 group-hover:text-blue-600">{{ prev_lesson.title|default:prev_lesson.topic.name|default:"Dars"|truncatechars:30 }}</div>
+                <div class="font-semibold text-gray-900 group-hover:text-blue-600">{% if prev_lesson.title %}{{ prev_lesson.title|truncatechars:30 }}{% elif prev_lesson.topic %}{{ prev_lesson.topic.name|truncatechars:30 }}{% else %}Dars{% endif %}</div>
             </div>
         </a>
         {% else %}
@@ -259,7 +259,7 @@ Blog-style lesson detail page for reading and learning
            class="flex items-center gap-3 px-6 py-3 bg-white border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition group text-right">
             <div class="text-right">
                 <div class="text-xs text-gray-500">Keyingi dars</div>
-                <div class="font-semibold text-gray-900 group-hover:text-blue-600">{{ next_lesson.title|default:next_lesson.topic.name|default:"Dars"|truncatechars:30 }}</div>
+                <div class="font-semibold text-gray-900 group-hover:text-blue-600">{% if next_lesson.title %}{{ next_lesson.title|truncatechars:30 }}{% elif next_lesson.topic %}{{ next_lesson.topic.name|truncatechars:30 }}{% else %}Dars{% endif %}</div>
             </div>
             <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-600"></i>
         </a>

@@ -27,6 +27,7 @@ Color: orange (hardcoded)
   <div class="bg-white rounded-xl shadow-lg p-8">
     <form method="post" enctype="multipart/form-data" class="space-y-6" x-data="{loading: false}" @submit.prevent="loading=true; $el.submit()">
       {% csrf_token %}
+      {{ form.media }}
       
       {% if form.non_field_errors %}
         <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
@@ -51,11 +52,15 @@ Color: orange (hardcoded)
             </label>
             
             {% if field.field.widget.input_type == 'textarea' or field.name == 'code' or field.name == 'description' %}
-              <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
-                        {% if field.field.required %}required{% endif %}
-                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all resize-none"
-                        rows="{% if field.name == 'code' %}8{% else %}4{% endif %}" 
-                        placeholder="{{ field.help_text|default:field.label }}">{{ field.value|default:'' }}</textarea>
+              {% if field.name == 'description' %}
+                {{ field }}
+              {% else %}
+                <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                          {% if field.field.required %}required{% endif %}
+                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 {{ ring_color }} focus:border-transparent transition-all resize-none"
+                          rows="{% if field.name == 'code' %}8{% else %}4{% endif %}" 
+                          placeholder="{{ field.help_text|default:field.label }}">{{ field.value|default:'' }}</textarea>
+              {% endif %}
             
             {% elif field.field.widget.input_type == 'select' %}
               {{ field }}

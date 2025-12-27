@@ -123,23 +123,60 @@ class CalendarView(LoginRequiredMixin, TemplateView):
         context['month_names'] = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 
                                    'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr']
         
-        # Darslar
-        lessons = Lesson.objects.filter(
-            date__gte=first_day - timedelta(days=7),
-            date__lte=last_day + timedelta(days=7)
-        ).select_related('group')
-        
+        # Get groups for the user
+        from courses.models import Group
         if self.request.user.is_student:
-            lessons = lessons.filter(group__students=self.request.user)
+            groups = Group.objects.filter(students=self.request.user, is_active=True)
         elif self.request.user.is_mentor:
-            lessons = lessons.filter(group__mentor=self.request.user)
+            groups = Group.objects.filter(mentor=self.request.user, is_active=True)
+        else:
+            groups = Group.objects.filter(is_active=True)
         
-        # Kunlar bo'yicha guruhlash
+        # Generate lessons based on group schedule
         lessons_by_date = {}
-        for lesson in lessons:
-            if lesson.date not in lessons_by_date:
-                lessons_by_date[lesson.date] = []
-            lessons_by_date[lesson.date].append(lesson)
+        
+        for group in groups:
+            current = first_day
+            while current <= last_day:
+                # Check if this day matches the group's schedule
+                should_have_lesson = False
+                
+                if group.schedule_type == 'daily':
+                    should_have_lesson = True
+                elif group.schedule_type == 'odd':
+                    # Toq kunlar (1, 3, 5, 7, 9, 11, 13, ...)
+                    should_have_lesson = current.day % 2 == 1
+                elif group.schedule_type == 'even':
+                    # Juft kunlar (2, 4, 6, 8, 10, 12, 14, ...)
+                    should_have_lesson = current.day % 2 == 0
+                
+                if should_have_lesson:
+                    # Check if lesson already exists
+                    existing_lesson = Lesson.objects.filter(
+                        group=group,
+                        date=current
+                    ).first()
+                    
+                    if existing_lesson:
+                        lesson = existing_lesson
+                    else:
+                        # Create a virtual lesson object for display
+                        from types import SimpleNamespace
+                        lesson = SimpleNamespace(
+                            group=group,
+                            date=current,
+                            start_time=group.start_time,
+                            end_time=group.end_time,
+                            topic=None,
+                            title=f'{group.name} - {current}',
+                            pk=None
+                        )
+                    
+                    if current not in lessons_by_date:
+                        lessons_by_date[current] = []
+                    lessons_by_date[current].append(lesson)
+                
+                current += timedelta(days=1)
         
         # Template uchun har bir kun uchun alohida list
         for week in weeks:

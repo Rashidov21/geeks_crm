@@ -29,11 +29,14 @@ urlpatterns = [
     path('groups/<int:pk>/', views.GroupDetailView.as_view(), name='group_detail'),
     path('groups/<int:pk>/edit/', views.GroupUpdateView.as_view(), name='group_edit'),
     path('groups/<int:pk>/delete/', views.GroupDeleteView.as_view(), name='group_delete'),
+    path('groups/<int:pk>/add-student/', views.GroupAddStudentView.as_view(), name='group_add_student'),
+    path('groups/<int:pk>/convert-lead/', views.ConvertLeadToStudentView.as_view(), name='convert_lead_to_student'),
     path('groups/<int:pk>/students/', views.GroupStudentsView.as_view(), name='group_students'),
     
     # Lessons
     path('lessons/', views.LessonListView.as_view(), name='lesson_list'),
     path('lessons/<int:pk>/', views.LessonDetailView.as_view(), name='lesson_detail'),
+    path('lessons/<int:pk>/edit/', views.LessonUpdateView.as_view(), name='lesson_edit'),
     
     # Progress
     path('progress/', views.StudentProgressView.as_view(), name='progress'),

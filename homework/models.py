@@ -13,7 +13,8 @@ class Homework(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='homeworks',
                                limit_choices_to={'role': 'student'})
     title = models.CharField(max_length=200, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)  # Student tomonidan yozilgan
+    assignment_description = models.TextField(blank=True, null=True, verbose_name='Vazifa tavsifi')  # Mentor tomonidan yozilgan
+    student_response = models.TextField(blank=True, null=True, verbose_name='O\'quvchi javobi')  # Student tomonidan yozilgan
     file = models.FileField(upload_to='homeworks/', blank=True, null=True)
     link = models.URLField(blank=True, null=True)  # GitHub, CodePen va hokazo
     code = models.TextField(blank=True, null=True)  # Kod matn shaklida
@@ -40,8 +41,16 @@ class Homework(models.Model):
     def clean(self):
         """Model validatsiyasi"""
         from django.core.exceptions import ValidationError
+        
+        # Deadline validatsiyasi
         if self.deadline and self.deadline < timezone.now() and not self.is_submitted:
             raise ValidationError("Deadline o'tib ketgan bo'lishi mumkin emas.")
+        
+        # File upload validatsiyasi
+        if self.file:
+            max_size = 10 * 1024 * 1024  # 10MB
+            if self.file.size > max_size:
+                raise ValidationError("Fayl hajmi 10MB dan oshmasligi kerak")
     
     def save(self, *args, **kwargs):
         if self.submitted_at and self.deadline:

@@ -5,7 +5,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+from django.db.models import Q
 from .models import Homework, HomeworkGrade
+from .forms import HomeworkForm, HomeworkGradeForm
 from accounts.mixins import MentorRequiredMixin, RoleRequiredMixin, TailwindFormMixin
 from courses.models import Group, Lesson
 
@@ -45,7 +47,8 @@ class HomeworkListView(LoginRequiredMixin, ListView):
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) |
-                Q(description__icontains=search) |
+                Q(assignment_description__icontains=search) |
+                Q(student_response__icontains=search) |
                 Q(student__first_name__icontains=search) |
                 Q(student__last_name__icontains=search)
             )
@@ -104,7 +107,7 @@ class HomeworkListView(LoginRequiredMixin, ListView):
 class HomeworkCreateView(TailwindFormMixin, LoginRequiredMixin, CreateView):
     model = Homework
     template_name = 'homework/homework_form.html'
-    fields = ['lesson', 'title', 'description', 'file', 'link', 'code', 'deadline']
+    form_class = HomeworkForm
     success_url = reverse_lazy('homework:homework_list')
     
     def form_valid(self, form):
@@ -165,7 +168,7 @@ class HomeworkAssignView(MentorRequiredMixin, TemplateView):
                 lesson=lesson,
                 title=title,
                 defaults={
-                    'description': description,
+                    'assignment_description': description,
                     'deadline': deadline
                 }
             )
@@ -185,8 +188,17 @@ class HomeworkSubmitView(LoginRequiredMixin, View):
         homework.file = request.FILES.get('file') or homework.file
         homework.link = request.POST.get('link') or homework.link
         homework.code = request.POST.get('code') or homework.code
+        homework.student_response = request.POST.get('student_response') or homework.student_response
         homework.is_submitted = True
         homework.submitted_at = timezone.now()
+        
+        # Validatsiya
+        try:
+            homework.full_clean()
+        except Exception as e:
+            messages.error(request, f'Xatolik: {str(e)}')
+            return redirect('homework:homework_detail', pk=pk)
+        
         homework.save()
         
         messages.success(request, 'Vazifa muvaffaqiyatli topshirildi.')
@@ -241,13 +253,15 @@ class HomeworkDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'homework'
     
     def get_queryset(self):
-        queryset = Homework.objects.select_related('student', 'lesson', 'grade__mentor')
+        queryset = Homework.objects.select_related('student', 'lesson', 'lesson__group', 'grade__mentor', 'grade')
         
         # Rol bo'yicha filter
         if self.request.user.is_student:
             queryset = queryset.filter(student=self.request.user)
         elif self.request.user.is_mentor:
+            # Mentor faqat o'z guruhlaridagi vazifalarni ko'ra oladi
             queryset = queryset.filter(lesson__group__mentor=self.request.user)
+        # Admin va manager barcha vazifalarni ko'ra oladi
         
         return queryset
     
@@ -259,16 +273,47 @@ class HomeworkDetailView(LoginRequiredMixin, DetailView):
                                 hasattr(self.object.lesson, 'group') and 
                                 self.object.lesson.group.mentor == self.request.user))
         context['today'] = timezone.now().date()
+        # Students can submit homework if they haven't submitted yet
+        context['can_submit'] = (self.request.user.is_student and 
+                                self.object.student == self.request.user and 
+                                not self.object.is_submitted)
+        
+        # can_grade ni to'g'ri o'rnatish (mentor uchun)
+        context['can_grade'] = False
+        if self.request.user.is_mentor:
+            if self.object.lesson and hasattr(self.object.lesson, 'group'):
+                context['can_grade'] = (self.object.lesson.group.mentor == self.request.user)
+            elif self.request.user.is_admin or self.request.user.is_manager:
+                context['can_grade'] = True
+        
+        # Mentor uchun: agar vazifa guruhga berilgan bo'lsa, barcha o'quvchilar uchun yaratilgan vazifalarni ko'rsatish
+        if self.request.user.is_mentor and self.object.lesson and self.object.title:
+            related_homeworks = Homework.objects.filter(
+                lesson=self.object.lesson,
+                title=self.object.title
+            ).select_related('student', 'grade__mentor', 'lesson__group').order_by('student__first_name', 'student__last_name')
+            
+            context['related_homeworks'] = related_homeworks
+            context['is_group_homework'] = related_homeworks.count() > 1
+        else:
+            context['is_group_homework'] = False
+            context['related_homeworks'] = []
+        
         return context
 
 
 class HomeworkGradeView(TailwindFormMixin, MentorRequiredMixin, UpdateView):
     model = HomeworkGrade
     template_name = 'homework/homework_grade_form.html'
-    fields = ['grade', 'comment']
+    form_class = HomeworkGradeForm
     
     def get_object(self):
-        homework = Homework.objects.get(pk=self.kwargs['pk'])
+        try:
+            homework = Homework.objects.get(pk=self.kwargs['pk'])
+        except Homework.DoesNotExist:
+            from django.http import Http404
+            raise Http404("Uy vazifasi topilmadi")
+        
         grade, created = HomeworkGrade.objects.get_or_create(homework=homework)
         if created:
             grade.mentor = self.request.user
@@ -283,7 +328,7 @@ class HomeworkUpdateView(TailwindFormMixin, RoleRequiredMixin, UpdateView):
     """Homework tahrirlash"""
     model = Homework
     template_name = 'homework/homework_form.html'
-    fields = ['lesson', 'title', 'description', 'file', 'link', 'code', 'deadline']
+    form_class = HomeworkForm
     allowed_roles = ['admin', 'manager', 'mentor']
     
     def get_queryset(self):
